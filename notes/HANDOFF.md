@@ -188,3 +188,14 @@ Findings: steering as designed does not raise the smother rate at any Elo
 strength at 3000 (0.968 -> 0.905). The 50% bar vs 3000 is far from binding
 (90-97%), so there is a lot of strength to spend on smothers.
 Raw games are in notes/results/*.jsonl.
+
+### Session 2 findings (won mode, shaping, seek, brutal)
+
+Elo 1500, 400 games each, smothers per 100 games: won mode 1.0, shaping
+0.2-1.0, won-mode steering 1.0, seek mode 1.0, SmotherBrutal 1.2. Scores
+0.998-1.000. Elo 3000, 300 games: default 0.982, SmotherSeek=30 0.980.
+Ceiling: in 200 won brutal games at 1500, a forced smother (12 moves,
+3 quiet, non-strict) existed in only 10 games, 3 delivered. Every strictly
+forced smother was delivered. End-game methods are capped near 5/100 games;
+gains must come from earlier (openings, middlegame plans).
+Raw games: notes/results/exp1, exp2 branches exp2-w1..w3.
