@@ -229,3 +229,9 @@ Findings:
   and were respawned forever; fixed (lazy engine start, watchdog, hang
   records). A debug stack-dump timer armed before fork also deadlocked
   workers; fixed.
+- Prover regression test (replaces the zip's puzzle harness): all 24,506
+  Lichess `smotheredMate` puzzles (CC0), `notes/scripts/puzzles.py`.
+  Current build and the build before tonight's prover changes both give
+  claimed=24482 verified=24482 bad=0. The 24 unclaimed are smothers only in
+  the puzzle's main line (another defence avoids them and is not mated
+  faster), so not forced under the prover's rule.
