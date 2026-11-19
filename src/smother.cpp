@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <cstdlib>
 #include <deque>
+#include <limits>
 #include <vector>
 
 #include "attacks.h"
@@ -58,6 +59,15 @@ constexpr Key QuietSalt = 0xC2B2AE3D27D4EB4FULL;
 
 inline Key salted(Key k, Kind kind, int q) {
     return k ^ (kind == ANY ? AnySalt : 0) ^ (QuietSalt * Key(q));
+}
+
+// An attacker move on a smother line that brings back a position seen before,
+// earlier in the game or on this line, goes round in circles: the defender
+// who escaped from it once escapes the same way again, and the third time is
+// a draw. Plain-mate (ANY) lines keep the usual draw rule.
+inline bool loops(const Position& pos, int ply, Kind kind) {
+    return pos.is_draw(ply)
+        || (kind == SMOTHER && pos.is_repetition(std::numeric_limits<int>::max()));
 }
 
 struct ScoredMove {
@@ -198,9 +208,9 @@ bool Prover::attack(int n, Kind kind, int q) {
                 if (replies.size() == 0)  // in check with no moves: mate
                     ok = kind == ANY || smothered_given_mate(pos, lim.style);
                 else
-                    ok = n > 1 && !pos.is_draw(ply) && defend(n - 1, kind, q, replies);
+                    ok = n > 1 && !loops(pos, ply, kind) && defend(n - 1, kind, q, replies);
             }
-            else if (replies.size() && !pos.is_draw(ply))  // no replies here = stalemate
+            else if (replies.size() && !loops(pos, ply, kind))  // no replies here = stalemate
             {
                 // Threat test: if the defender could pass, would a smother
                 // follow? Only moves that pass are searched in full.

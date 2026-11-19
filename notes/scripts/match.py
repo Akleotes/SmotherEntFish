@@ -204,7 +204,11 @@ def play_game(job):
         b.push(m); moves.append(mv)
         if b.is_checkmate():
             result = "1-0" if b.turn == chess.BLACK else "0-1"; reason = "mate"
-        elif b.is_stalemate() or b.is_insufficient_material() or b.can_claim_draw():
+        # Draw only when it has happened: a third occurrence, fifty moves.
+        # can_claim_draw() also counts a repetition the side to move could
+        # make next, which ended winning games the winner would not repeat.
+        elif (b.is_stalemate() or b.is_insufficient_material()
+              or b.is_repetition(3) or b.is_fifty_moves()):
             result = "1/2-1/2"; reason = "draw"
         elif len(moves) >= 400:
             result = "1/2-1/2"; reason = "cap"
