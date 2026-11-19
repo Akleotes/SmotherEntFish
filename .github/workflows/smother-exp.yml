@@ -1,0 +1,128 @@
+# Smother experiments: paired-game matches against stock Stockfish 19 at
+# UCI_Elo N, spread over parallel runners. Triggered by a push to a branch
+# named actions-exp/<anything>; the plan is notes/exp/plan.json on that branch
+# (see notes/scripts/expand_plan.py). Results are committed back to the
+# branch under notes/results/<exp>/ and summarised in the run summary.
+name: Smother experiment
+
+on:
+  push:
+    branches: ["actions-exp/**"]
+    paths: ["notes/exp/plan.json"]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  OPPONENT_COMMIT: edb0d9db6731067ec50ce619ff372b463bc4dd5d  # stock Stockfish 19
+  ARCH: x86-64-avx2
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.m.outputs.matrix }}
+      exp: ${{ steps.m.outputs.exp }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: m
+        run: python3 notes/scripts/expand_plan.py notes/exp/plan.json >> "$GITHUB_OUTPUT"
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build Smotherfish
+        run: |
+          cd src
+          make -j"$(nproc)" net
+          make -j"$(nproc)" build ARCH=$ARCH
+          ./stockfish bench 2>&1 | grep "Nodes searched"
+      - name: Build stock Stockfish 19 (opponent)
+        run: |
+          git fetch --depth 1 origin $OPPONENT_COMMIT
+          mkdir -p opp && git archive $OPPONENT_COMMIT src scripts | tar -x -C opp
+          cp src/nn-*.nnue opp/src/
+          cd opp/src && make -j"$(nproc)" build ARCH=$ARCH
+          ./stockfish bench 2>&1 | grep "Nodes searched"
+      - name: Collect engines
+        run: |
+          mkdir -p engines
+          cp src/stockfish engines/ours
+          cp opp/src/stockfish engines/opp
+      - uses: actions/upload-artifact@v4
+        with:
+          name: engines
+          path: engines/
+          retention-days: 3
+
+  match:
+    needs: [plan, build]
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    strategy:
+      fail-fast: false
+      max-parallel: 20
+      matrix:
+        include: ${{ fromJson(needs.plan.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: engines
+          path: engines
+      - run: chmod +x engines/*
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -q chess
+      - name: Play ${{ matrix.name }} chunk ${{ matrix.chunk }}
+        run: |
+          mkdir -p out
+          args=()
+          for o in ${{ matrix.opts }}; do args+=(--opt "$o"); done
+          python -I notes/scripts/match.py "out/${{ matrix.name }}-${{ matrix.chunk }}.jsonl" \
+            engines/ours engines/opp ${{ matrix.elo }} ${{ matrix.games }} \
+            --seed ${{ matrix.seed }} --conc "$(nproc)" --tc "${{ matrix.tc }}" \
+            --book notes/openings.txt "${args[@]}" | tail -1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: res-${{ matrix.name }}-${{ matrix.chunk }}
+          path: out/
+          retention-days: 7
+
+  collect:
+    needs: [plan, match]
+    if: always() && needs.plan.result == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: res-*
+          path: res
+          merge-multiple: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -q chess
+      - name: Merge chunks and summarise
+        run: |
+          exp=${{ needs.plan.outputs.exp }}
+          mkdir -p notes/results/$exp
+          for f in res/*.jsonl; do
+            b=$(basename "$f" .jsonl); name=${b%-*}
+            cat "$f" >> "notes/results/$exp/$name.jsonl"
+          done
+          { echo '```'; python -I notes/scripts/summary.py notes/results/$exp/*.jsonl; echo '```'; } \
+            | tee notes/results/$exp/SUMMARY.md >> "$GITHUB_STEP_SUMMARY"
+      - name: Commit results
+        run: |
+          git config user.name "smother-exp bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add notes/results
+          git commit -m "results: ${{ needs.plan.outputs.exp }} [skip ci]" && git push || echo "nothing to commit"
