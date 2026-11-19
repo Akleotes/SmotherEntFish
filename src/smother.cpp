@@ -488,6 +488,29 @@ int potential(const Position& pos, Color us) {
     return std::max(score, 0);
 }
 
+int shape(const Position& pos, Color us) {
+    const Color    them  = ~us;
+    const Square   ksq   = pos.square<KING>(them);
+    const Bitboard ring  = Attacks::attacks_bb<KING>(ksq);
+    const int      boxed = popcount(ring & pos.pieces(them));
+    const int      holes = popcount(ring & ~pos.pieces(them));
+
+    const int f    = file_of(ksq), r = rank_of(ksq);
+    const int edge = std::min(std::min(f, 7 - f), std::min(r, 7 - r));  // 0 = on an edge
+
+    int score = 5 * boxed - 3 * holes + 6 * (3 - edge);
+
+    Bitboard knights = pos.pieces(us, KNIGHT);
+    while (knights)
+        score += 3 * std::max(0, 5 - sq_distance(pop_lsb(knights), ksq));
+
+    Bitboard queens = pos.pieces(us, QUEEN);
+    while (queens)
+        score += 2 * std::max(0, 5 - sq_distance(pop_lsb(queens), ksq));
+
+    return std::max(score, 0);
+}
+
 bool is_smothered_mate(const Position& pos, Style style) {
     return pos.checkers() && MoveList<LEGAL>(pos).size() == 0 && smothered_given_mate(pos, style);
 }

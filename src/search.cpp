@@ -566,6 +566,10 @@ bool Search::Worker::iterative_deepening() {
     Value  alpha, beta;
     Value  bestValue     = -VALUE_INFINITE;
     Color  us            = rootPos.side_to_move();
+
+    shapeWeight = threads.main_manager()->smotherWon ? int(options["SmotherShape"]) : 0;
+    shapeCap    = int(options["SmotherShapeCap"]);
+    shapeUs     = us;
     double timeReduction = 1, totBestMoveChanges = 0;
     int    delta, iterIdx                        = 0;
 
@@ -2205,8 +2209,20 @@ TimePoint Search::Worker::elapsed() const {
 // Evaluate the current position of the game tree, from the point of view of
 // the side to move.
 Value Search::Worker::evaluate(const Position& pos) {
-    return Eval::evaluate(network[numaAccessToken], pos, accumulatorStack, refreshTable,
-                          optimism[pos.side_to_move()]);
+    Value v = Eval::evaluate(network[numaAccessToken], pos, accumulatorStack, refreshTable,
+                             optimism[pos.side_to_move()]);
+
+    // Won mode: a small, capped bonus for positions that favour a smothered
+    // mate, so the search converts the win in a smother-friendly way. The cap
+    // keeps it well below the winning margin.
+    if (shapeWeight)
+    {
+        const int b = std::min(Smother::shape(pos, shapeUs) * shapeWeight / 16,
+                               shapeCap);
+        v += pos.side_to_move() == shapeUs ? b : -b;
+        v = std::clamp(v, VALUE_TB_LOSS_IN_MAX_PLY + 1, VALUE_TB_WIN_IN_MAX_PLY - 1);
+    }
+    return v;
 }
 
 namespace {

@@ -168,6 +168,11 @@ Engine::Engine(std::optional<std::filesystem::path> path) :
 
     options.add("SmotherWinSteerTime", Option(50, 0, 200));
 
+    // Won-mode eval shaping towards smother-friendly positions (0 = off).
+    options.add("SmotherShape", Option(0, 0, 64));
+
+    options.add("SmotherShapeCap", Option(100, 0, 1000));
+
     options.add("SmotherSteer", Option(0, 0, 500));
 
     options.add("SmotherSteerFloor", Option(150, -1000, 1000));

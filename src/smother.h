@@ -60,6 +60,11 @@ struct Result {
 // delivering a smother). Used only by the optional steering.
 int potential(const Position& pos, Color us);
 
+// Smother-friendliness of pos for side us, used as a won-mode eval bonus:
+// the enemy king boxed in by its own pieces, near an edge or corner, with
+// our knights and queen close. Cheap (a few bitboard operations).
+int shape(const Position& pos, Color us);
+
 // Smother traps: pos has the DEFENDER to move (we just played our candidate).
 // For every legal reply, try to prove a forced smother for us with perReply
 // limits. hit/total is the plausibility-weighted share of replies that walk

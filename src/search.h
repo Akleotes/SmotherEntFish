@@ -402,6 +402,11 @@ class Worker {
 
     Value evaluate(const Position&);
 
+    // Won-mode smother shaping (SmotherShape): eval bonus for the root side.
+    int   shapeWeight = 0;
+    int   shapeCap    = 0;
+    Color shapeUs     = WHITE;
+
     LimitsType limits;
 
     usize              pvIdx, pvLast;
