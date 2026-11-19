@@ -577,7 +577,10 @@ bool Search::Worker::iterative_deepening() {
     Value  bestValue     = -VALUE_INFINITE;
     Color  us            = rootPos.side_to_move();
 
-    shapeWeight = threads.main_manager()->smotherWon ? int(options["SmotherShape"]) : 0;
+    // Shaping applies in won mode, or on every move with SmotherShapeAlways.
+    shapeWeight = threads.main_manager()->smotherWon || options["SmotherShapeAlways"]
+                  ? int(options["SmotherShape"])
+                  : 0;
     shapeCap    = int(options["SmotherShapeCap"]);
     shapeUs     = us;
     {
