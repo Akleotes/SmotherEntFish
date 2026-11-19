@@ -173,6 +173,13 @@ Engine::Engine(std::optional<std::filesystem::path> path) :
 
     options.add("SmotherShapeCap", Option(100, 0, 1000));
 
+    // Seek mode: in won mode, plain mates count below smothered ones, for at
+    // most SmotherSeek of our moves per game (0 = off), and only while the
+    // 50-move counter is below SmotherSeekRule50 half-moves.
+    options.add("SmotherSeek", Option(0, 0, 200));
+
+    options.add("SmotherSeekRule50", Option(60, 0, 99));
+
     options.add("SmotherSteer", Option(0, 0, 500));
 
     options.add("SmotherSteerFloor", Option(150, -1000, 1000));

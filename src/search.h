@@ -319,6 +319,7 @@ class SearchManager: public ISearchManager {
     std::vector<Move> smotherPV;
     int               smotherMateIn = 0;
     bool              smotherWon    = false;  // won mode for this move
+    int               smotherSeeks  = 0;      // moves played in seek mode this game
     int               smotherDelays = 0;  // mate-phase steering choices this game
     std::atomic_bool  smotherReady{false};
     std::atomic_bool  smotherStop{false};
@@ -405,6 +406,9 @@ class Worker {
     // Won-mode smother shaping (SmotherShape): eval bonus for the root side.
     int   shapeWeight = 0;
     int   shapeCap    = 0;
+    bool  seekSmother = false;  // won mode: only smothered mates score as mate
+    bool  seekClassic = false;
+    Value mated_value(const Position& pos, int ply) const;
     Color shapeUs     = WHITE;
 
     LimitsType limits;

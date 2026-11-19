@@ -204,6 +204,15 @@ void Search::Worker::start_smother_prover() {
     mgr.smotherReady  = false;
     mgr.smotherStop   = false;
 
+    // "Won mode": the last search said we are clearly winning. The result
+    // is not in doubt, so the prover gets a larger share of the move's time,
+    // and the move waits for it (see start_searching()).
+    const Value prev = mgr.bestPreviousScore;
+    mgr.smotherWon   = prev != VALUE_INFINITE && prev != -VALUE_INFINITE
+                  && (prev >= VALUE_MATE_IN_MAX_PLY
+                      || (!is_decisive(prev)
+                          && UCIEngine::to_cp(prev, rootPos) >= int(options["SmotherWinCp"])));
+
     if (!options["SmotherMate"] || rootMoves.empty())
         return;
 
@@ -214,14 +223,6 @@ void Search::Worker::start_smother_prover() {
     sl.quietMoves = int(options["SmotherQuietMoves"]);
     sl.maxNodes   = std::uint64_t(int(options["SmotherNodes"]));
 
-    // "Won mode": the last search said we are clearly winning. The result
-    // is not in doubt, so the prover gets a larger share of the move's time,
-    // and the move waits for it (see start_searching()).
-    const Value prev = mgr.bestPreviousScore;
-    mgr.smotherWon   = prev != VALUE_INFINITE && prev != -VALUE_INFINITE
-                  && (prev >= VALUE_MATE_IN_MAX_PLY
-                      || (!is_decisive(prev)
-                          && UCIEngine::to_cp(prev, rootPos) >= int(options["SmotherWinCp"])));
 
     const int pct = mgr.smotherWon ? int(options["SmotherWinTimePercent"])
                                    : int(options["SmotherTimePercent"]);
@@ -570,6 +571,17 @@ bool Search::Worker::iterative_deepening() {
     shapeWeight = threads.main_manager()->smotherWon ? int(options["SmotherShape"]) : 0;
     shapeCap    = int(options["SmotherShapeCap"]);
     shapeUs     = us;
+    {
+        // Seek mode needs won mode, room before the 50-move rule, enough enemy
+        // pieces to box their king in, and per-game budget left.
+        auto& mgr   = *threads.main_manager();
+        seekClassic = bool(options["SmotherClassic"]);
+        seekSmother = mgr.smotherWon && int(options["SmotherSeek"]) > mgr.smotherSeeks
+                   && rootPos.rule50_count() < int(options["SmotherSeekRule50"])
+                   && popcount(rootPos.pieces(~us)) >= 4;
+        if (seekSmother && mainThread)
+            ++mgr.smotherSeeks;
+    }
     double timeReduction = 1, totBestMoveChanges = 0;
     int    delta, iterIdx                        = 0;
 
@@ -998,6 +1010,8 @@ void Search::Worker::undo_null_move(Position& pos) { pos.undo_null_move(); }
 void Search::Worker::clear() {
     if (is_mainthread())
         main_manager()->smotherDelays = 0;  // new game
+    if (is_mainthread())
+        main_manager()->smotherSeeks = 0;
     mainHistory.fill(-5);
     captureHistory.fill(-742);
 
@@ -1873,7 +1887,7 @@ moves_loop:  // When in check, search starts here
     // must be a mate or a stalemate (just a fail low score if we are in a
     // singular extension search).
     if (!moveCount)
-        bestValue = excludedMove ? alpha : ss->inCheck ? mated_in(ss->ply) : VALUE_DRAW;
+        bestValue = excludedMove ? alpha : ss->inCheck ? mated_value(pos, ss->ply) : VALUE_DRAW;
 
     // If there is a move that produces search value greater than alpha,
     // we update the stats of searched moves.
@@ -2167,7 +2181,7 @@ Value Search::Worker::qsearch(Position& pos, Stack* ss, Value alpha, Value beta)
         if (ss->inCheck)  // Checkmate!
         {
             assert(!MoveList<LEGAL>(pos).size());
-            return mated_in(ss->ply);  // Plies to mate from the root
+            return mated_value(pos, ss->ply);  // Plies to mate from the root
         }
 
         // Only check for stalemate under specific conditions
@@ -2208,6 +2222,18 @@ TimePoint Search::Worker::elapsed() const {
 
 // Evaluate the current position of the game tree, from the point of view of
 // the side to move.
+// Score for the side to move being checkmated. In seek mode a mate of the
+// opponent that is not smothered counts only as a TB-style win: still a sure
+// win, above any evaluation, but below every real (smothered) mate. So the
+// search prefers any smothered mate it can see and otherwise still mates.
+Value Search::Worker::mated_value(const Position& pos, int ply) const {
+    if (seekSmother && pos.side_to_move() != shapeUs
+        && !Smother::smothered_if_mate(pos, seekClassic ? Smother::Style::Classic
+                                                        : Smother::Style::AnyPiece))
+        return -(VALUE_TB - ply);
+    return mated_in(ply);
+}
+
 Value Search::Worker::evaluate(const Position& pos) {
     Value v = Eval::evaluate(network[numaAccessToken], pos, accumulatorStack, refreshTable,
                              optimism[pos.side_to_move()]);

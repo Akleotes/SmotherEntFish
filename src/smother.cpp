@@ -511,6 +511,10 @@ int shape(const Position& pos, Color us) {
     return std::max(score, 0);
 }
 
+bool smothered_if_mate(const Position& pos, Style style) {
+    return smothered_given_mate(pos, style);
+}
+
 bool is_smothered_mate(const Position& pos, Style style) {
     return pos.checkers() && MoveList<LEGAL>(pos).size() == 0 && smothered_given_mate(pos, style);
 }

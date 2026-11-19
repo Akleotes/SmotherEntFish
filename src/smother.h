@@ -37,6 +37,9 @@ enum class Style {
 // True if the side to move is checkmated and the mate is smothered.
 bool is_smothered_mate(const Position& pos, Style style);
 
+// Same, for a position already known to be checkmate (cheap: no movegen).
+bool smothered_if_mate(const Position& pos, Style style);
+
 struct Limits {
     int           maxMoves   = 8;  // attacker moves (mate in N)
     Style         style      = Style::AnyPiece;
