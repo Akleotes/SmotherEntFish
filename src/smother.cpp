@@ -53,7 +53,12 @@ enum Kind {
     ANY
 };
 
-constexpr Key AnySalt = 0x9E3779B97F4A7C15ULL;
+constexpr Key AnySalt   = 0x9E3779B97F4A7C15ULL;
+constexpr Key QuietSalt = 0xC2B2AE3D27D4EB4FULL;
+
+inline Key salted(Key k, Kind kind, int q) {
+    return k ^ (kind == ANY ? AnySalt : 0) ^ (QuietSalt * Key(q));
+}
 
 struct ScoredMove {
     Move m;
@@ -71,9 +76,9 @@ class Prover {
     Result run();
 
    private:
-    bool attack(int n, Kind kind);
-    bool defend(int n, Kind kind, const MoveList<LEGAL>& replies);
-    int  min_moves(Kind kind, int limit);
+    bool attack(int n, Kind kind, int q);
+    bool defend(int n, Kind kind, int q, const MoveList<LEGAL>& replies);
+    int  min_moves(Kind kind, int limit, int q);
     void extract_pv(int n, std::vector<Move>& pv);
     void poll();
 
@@ -109,13 +114,16 @@ void Prover::poll() {
 
 // Attacker to move: is there a check after which every defence still ends in
 // a smothered mate within n attacker moves (this one included)?
-bool Prover::attack(int n, Kind kind) {
+// q = quiet (non-checking) attacker moves still allowed on this line.
+bool Prover::attack(int n, Kind kind, int q) {
     ++nodes;
     poll();
     if (aborted)
         return false;
 
-    const Key k = pos.key() ^ (kind == ANY ? AnySalt : 0);
+    if (kind == ANY)
+        q = 0;
+    const Key k = salted(pos.key(), kind, q);
     Entry*    e = probe(k);
     if (e->proveN && e->proveN <= n)
         return true;
@@ -136,13 +144,18 @@ bool Prover::attack(int n, Kind kind) {
         return false;
     }
 
+    // Quiet set-up moves are allowed only with budget left and at least one
+    // more attacker move to follow.
+    const bool allowQuiet = kind == SMOTHER && q > 0 && n >= 2;
+
     ScoredMove moves[MAX_MOVES];
     int        cnt = 0;
     for (const Move m : MoveList<LEGAL>(pos))
     {
         if (kind == SMOTHER && n == 1 && (holes & ~square_bb(m.to_sq())))
             continue;
-        if (!pos.gives_check(m))
+        const bool check = pos.gives_check(m);
+        if (!check && !allowQuiet)
             continue;
 
         PieceType pt =
@@ -150,6 +163,8 @@ bool Prover::attack(int n, Kind kind) {
         int score = pt == KNIGHT ? 600 : pt == QUEEN ? 500 : pt == ROOK ? 300 : pt == BISHOP ? 200 : 100;
         score += pos.capture(m) ? 50 : 0;
         score -= 10 * sq_distance(m.to_sq(), ksq);
+        if (!check)
+            score -= 10000;  // forcing moves first
         if (m == e->move)
             score += 100000;
         moves[cnt++] = {m, score};
@@ -159,18 +174,32 @@ bool Prover::attack(int n, Kind kind) {
 
     for (int i = 0; i < cnt; ++i)
     {
-        const Move m = moves[i].m;
+        const Move m     = moves[i].m;
+        const bool quiet = moves[i].score < -5000 && !pos.gives_check(m);
         StateInfo  st;
         pos.do_move(m, st);
         ++ply;
 
-        bool ok;
+        bool ok = false;
         {
             MoveList<LEGAL> replies(pos);
-            if (replies.size() == 0)  // in check with no moves: mate
-                ok = kind == ANY || smothered_given_mate(pos, lim.style);
-            else
-                ok = n > 1 && !pos.is_draw(ply) && defend(n - 1, kind, replies);
+            if (!quiet)
+            {
+                if (replies.size() == 0)  // in check with no moves: mate
+                    ok = kind == ANY || smothered_given_mate(pos, lim.style);
+                else
+                    ok = n > 1 && !pos.is_draw(ply) && defend(n - 1, kind, q, replies);
+            }
+            else if (replies.size() && !pos.is_draw(ply))  // no replies here = stalemate
+            {
+                // Threat test: if the defender could pass, would a smother
+                // follow? Only moves that pass are searched in full.
+                StateInfo nst;
+                pos.do_null_move(nst);
+                const bool threat = attack(n - 1, SMOTHER, 0);
+                pos.undo_null_move();
+                ok = !aborted && threat && defend(n - 1, SMOTHER, q - 1, replies);
+            }
         }
 
         --ply;
@@ -194,10 +223,12 @@ bool Prover::attack(int n, Kind kind) {
 
 // Defender to move (in check): does every reply still lose to a smothered
 // mate within n attacker moves?
-bool Prover::defend(int n, Kind kind, const MoveList<LEGAL>& replies) {
+bool Prover::defend(int n, Kind kind, int q, const MoveList<LEGAL>& replies) {
     ++nodes;
 
-    const Key k = pos.key() ^ (kind == ANY ? AnySalt : 0);
+    if (kind == ANY)
+        q = 0;
+    const Key k = salted(pos.key(), kind, q);
     Entry*    e = probe(k);
     if (e->proveN && e->proveN <= n)
         return true;
@@ -235,7 +266,7 @@ bool Prover::defend(int n, Kind kind, const MoveList<LEGAL>& replies) {
             StateInfo  st;
             pos.do_move(r, st);
             ++ply;
-            const bool ok = !pos.is_draw(ply) && attack(n, kind);
+            const bool ok = !pos.is_draw(ply) && attack(n, kind, q);
             --ply;
             pos.undo_move(r);
 
@@ -266,10 +297,10 @@ bool Prover::defend(int n, Kind kind, const MoveList<LEGAL>& replies) {
             if (!dead)
             {
                 for (int j = 1; j <= n && !len && !aborted; ++j)
-                    if (attack(j, SMOTHER))
+                    if (attack(j, SMOTHER, q))
                         len = j;
                 // No smother: it must at least be a quicker plain mate.
-                if (!len && !aborted && !(n > 1 && attack(n - 1, ANY)))
+                if (!len && !aborted && !(n > 1 && attack(n - 1, ANY, 0)))
                     dead = true;
             }
 
@@ -295,7 +326,7 @@ bool Prover::defend(int n, Kind kind, const MoveList<LEGAL>& replies) {
             StateInfo  st;
             pos.do_move(r, st);
             ++ply;
-            const bool ok = S > 1 && attack(S - 1, ANY);
+            const bool ok = S > 1 && attack(S - 1, ANY, 0);
             --ply;
             pos.undo_move(r);
 
@@ -312,9 +343,9 @@ bool Prover::defend(int n, Kind kind, const MoveList<LEGAL>& replies) {
 }
 
 // Smallest k <= limit such that attack(k, kind) holds, or 0.
-int Prover::min_moves(Kind kind, int limit) {
+int Prover::min_moves(Kind kind, int limit, int q) {
     for (int k = 1; k <= limit; ++k)
-        if (attack(k, kind))
+        if (attack(k, kind, q))
             return k;
     return 0;
 }
@@ -325,12 +356,15 @@ void Prover::extract_pv(int n, std::vector<Move>& pv) {
     std::deque<StateInfo> states;
     std::vector<Move>     done;
     Kind                  kind = SMOTHER;
+    int                   q    = lim.quietMoves;
 
-    while (n > 0 && attack(n, kind))
+    while (n > 0 && attack(n, kind, q))
     {
-        const Move m = probe(pos.key() ^ (kind == ANY ? AnySalt : 0))->move;
+        const Move m = probe(salted(pos.key(), kind, kind == ANY ? 0 : q))->move;
         if (m == Move::none())
             break;
+        if (!pos.gives_check(m))
+            --q;
         pv.push_back(m);
         done.push_back(m);
         pos.do_move(m, states.emplace_back());
@@ -351,10 +385,10 @@ void Prover::extract_pv(int n, std::vector<Move>& pv) {
             // Prefer showing the smother line; a reply only falls back to a
             // plain (strictly shorter) mate when it has no smother.
             Kind rk  = kind;
-            int  len = min_moves(kind, n - 1);
+            int  len = min_moves(kind, n - 1, q);
             if (!len && kind == SMOTHER && !lim.strict && n > 2)
             {
-                len = min_moves(ANY, n - 2);
+                len = min_moves(ANY, n - 2, 0);
                 rk  = ANY;
             }
             --ply;
@@ -389,7 +423,7 @@ Result Prover::run() {
 
     for (int n = 1; n <= lim.maxMoves; ++n)
     {
-        if (attack(n, SMOTHER))
+        if (attack(n, SMOTHER, lim.quietMoves))
         {
             res.found  = true;
             res.mateIn = n;

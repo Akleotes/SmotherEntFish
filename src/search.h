@@ -28,6 +28,7 @@
 #include <memory>
 #include <string>
 #include <string_view>
+#include <thread>
 #include <vector>
 #include <cstring>
 
@@ -312,9 +313,16 @@ class SearchManager: public ISearchManager {
     Value                bestPreviousAverageScore;
     bool                 stopOnPonderhit;
 
-    // Proven forced smothered mate for the current search (empty if none)
+    // Smothered-mate prover. In parallel mode it runs on its own thread on a
+    // private copy of the root position while the normal search thinks.
+    // smotherReady is set (release) only after smotherPV is complete.
     std::vector<Move> smotherPV;
     int               smotherMateIn = 0;
+    std::atomic_bool  smotherReady{false};
+    std::atomic_bool  smotherStop{false};
+    std::thread       smotherThread;
+    Position          smotherPos;
+    StateInfo         smotherState;
 
     const UpdateContext& updates;
 };
@@ -361,7 +369,8 @@ class Worker {
 
    private:
     bool iterative_deepening();
-    void run_smother_prover();
+    void start_smother_prover();
+    void finish_smother_prover();
 
     void do_move(Position& pos, const Move move, StateInfo& st, Stack* const ss);
     void

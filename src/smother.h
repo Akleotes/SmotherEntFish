@@ -41,6 +41,7 @@ struct Limits {
     int         maxMoves = 8;           // attacker moves (mate in N)
     Style       style    = Style::AnyPiece;
     bool        strict   = false;           // every defence must be smothered
+    int         quietMoves = 1;             // non-checking attacker moves per line
     std::uint64_t maxNodes = 5000000;   // 0 = unlimited
     TimePoint   deadline = 0;           // absolute now() value, 0 = none
 };

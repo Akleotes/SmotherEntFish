@@ -189,24 +189,29 @@ void Search::Worker::ensure_network_replicated() {
     (void) (network[numaAccessToken]);
 }
 
-// Try to prove a forced smothered mate from the root before the normal search
-// starts. Runs on the main thread only, inside a small slice of the move's
-// time (or a node budget when there is no clock), so the normal search keeps
-// almost all of its time.
-void Search::Worker::run_smother_prover() {
+// Try to prove a forced smothered mate from the root. By default this runs on
+// a separate thread, alongside the normal search, on a private copy of the
+// root position (game history is shared read-only, as for helper threads).
+// With SmotherParallel off it runs first, on the main thread. Either way it
+// gets at most SmotherTimePercent of the move's time (or SmotherNodes nodes
+// when there is no clock).
+void Search::Worker::start_smother_prover() {
 
     auto& mgr = *main_manager();
     mgr.smotherPV.clear();
     mgr.smotherMateIn = 0;
+    mgr.smotherReady  = false;
+    mgr.smotherStop   = false;
 
     if (!options["SmotherMate"] || rootMoves.empty())
         return;
 
     Smother::Limits sl;
-    sl.maxMoves = int(options["SmotherMaxMoves"]);
-    sl.style    = options["SmotherClassic"] ? Smother::Style::Classic : Smother::Style::AnyPiece;
-    sl.strict   = bool(options["SmotherStrict"]);
-    sl.maxNodes = std::uint64_t(int(options["SmotherNodes"]));
+    sl.maxMoves   = int(options["SmotherMaxMoves"]);
+    sl.style      = options["SmotherClassic"] ? Smother::Style::Classic : Smother::Style::AnyPiece;
+    sl.strict     = bool(options["SmotherStrict"]);
+    sl.quietMoves = int(options["SmotherQuietMoves"]);
+    sl.maxNodes   = std::uint64_t(int(options["SmotherNodes"]));
 
     const int pct = int(options["SmotherTimePercent"]);
     if (limits.use_time_management() || limits.movetime)
@@ -218,19 +223,41 @@ void Search::Worker::run_smother_prover() {
         sl.deadline = now() + budget;
     }
 
-    Smother::Result r = Smother::prove(rootPos, sl, threads.stop);
-    if (!r.found || r.pv.empty())
+    // Copy what the prover needs; the search reorders rootMoves meanwhile.
+    std::vector<Move> allowed;
+    for (const auto& rm : rootMoves)
+        allowed.push_back(rm.pv[0]);
+
+    auto job = [&mgr, sl, allowed = std::move(allowed)](Position& pos) {
+        Smother::Result r = Smother::prove(pos, sl, mgr.smotherStop);
+        if (!r.found || r.pv.empty()
+            || std::find(allowed.begin(), allowed.end(), r.pv[0]) == allowed.end())
+            return;
+
+        mgr.smotherPV     = r.pv;
+        mgr.smotherMateIn = r.mateIn;
+        mgr.smotherReady.store(true, std::memory_order_release);
+
+        sync_cout << "info string smother mate in " << r.mateIn << " proven, " << r.nodes
+                  << " nodes" << sync_endl;
+    };
+
+    if (!options["SmotherParallel"])
+    {
+        job(rootPos);
         return;
+    }
 
-    // Respect "searchmoves" and any other root restriction.
-    if (std::find(rootMoves.begin(), rootMoves.end(), r.pv[0]) == rootMoves.end())
-        return;
+    mgr.smotherPos.set(rootPos.fen(), rootPos.is_chess960(), &mgr.smotherState);
+    mgr.smotherState  = rootState;
+    mgr.smotherThread = std::thread([job, &mgr]() mutable { job(mgr.smotherPos); });
+}
 
-    mgr.smotherPV     = r.pv;
-    mgr.smotherMateIn = r.mateIn;
-
-    sync_cout << "info string smother mate in " << r.mateIn << " proven, " << r.nodes
-              << " nodes" << sync_endl;
+void Search::Worker::finish_smother_prover() {
+    auto& mgr       = *main_manager();
+    mgr.smotherStop = true;
+    if (mgr.smotherThread.joinable())
+        mgr.smotherThread.join();
 }
 
 void Search::Worker::start_searching() {
@@ -257,7 +284,7 @@ void Search::Worker::start_searching() {
         return;
     }
 
-    run_smother_prover();
+    start_smother_prover();
 
     // Main thread starts non-main threads, and begins own search
     threads.start_searching();
@@ -277,6 +304,7 @@ void Search::Worker::start_searching() {
 
     // Wait until all threads have finished
     threads.wait_for_search_finished();
+    finish_smother_prover();
 
     // When playing in 'nodes as time' mode, subtract the searched nodes from
     // the available ones before exiting.
@@ -312,7 +340,7 @@ void Search::Worker::start_searching() {
     // A proven smothered mate overrides the normal choice. It is a forced win,
     // so this never gives away a better result.
     const auto& spv = main_manager()->smotherPV;
-    if (!spv.empty())
+    if (main_manager()->smotherReady.load(std::memory_order_acquire) && !spv.empty())
     {
         const bool c960 = rootPos.is_chess960();
         std::string pvStr;
@@ -628,8 +656,8 @@ bool Search::Worker::iterative_deepening() {
 
         // A forced smothered mate is already proven: the move is decided, so
         // one completed iteration (for a sane PV and TT) is enough.
-        if (mainThread && !mainThread->smotherPV.empty() && !mainThread->ponder
-            && !limits.infinite)
+        if (mainThread && mainThread->smotherReady.load(std::memory_order_acquire)
+            && !mainThread->ponder && !limits.infinite)
             threads.stop = true;
 
         if (!mainThread)
@@ -2203,6 +2231,12 @@ void SearchManager::check_time(Search::Worker& worker) {
     // We should not stop pondering until told so by the GUI
     if (ponder)
         return;
+
+    // A forced smother has been proven meanwhile: the move is decided.
+    // (The proven line replaces the normal best move, so stopping before an
+    // iteration completes is safe.)
+    if (smotherReady.load(std::memory_order_acquire) && !worker.limits.infinite)
+        worker.threads.stop = true;
 
     if ((worker.limits.use_time_management() && (elapsed > tm.maximum() || stopOnPonderhit))
         || (worker.limits.movetime && elapsed >= worker.limits.movetime)

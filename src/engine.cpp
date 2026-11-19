@@ -143,7 +143,11 @@ Engine::Engine(std::optional<std::filesystem::path> path) :
 
     options.add("SmotherMaxMoves", Option(8, 1, 20));
 
-    options.add("SmotherTimePercent", Option(5, 0, 50));
+    options.add("SmotherQuietMoves", Option(1, 0, 3));
+
+    options.add("SmotherTimePercent", Option(25, 0, 100));
+
+    options.add("SmotherParallel", Option(true));
 
     options.add("SmotherNodes", Option(5000000, 0, 2000000000));
 
