@@ -346,16 +346,48 @@ void Search::Worker::start_searching() {
 
     auto bestmove = UCIEngine::move(bestThread->rootMoves[0].pv[0], rootPos.is_chess960());
 
-    // Smother steering: among moves whose exact score is within `steer`
-    // centipawns of the best, prefer the one whose expected line leaves the
-    // enemy king most boxed in. Never used when a result is already decisive.
+    // Smother steering. Among the MultiPV candidates whose exact score is
+    // within the margin of the best, prefer the move that sets the most smother
+    // traps: for every opponent reply, the prover checks whether we then have
+    // a forced smothered mate. Replies are weighted by how plausible they are
+    // for a shallow, human-like opponent. The old "boxed-in king" potential
+    // only breaks ties. When we are winning, a candidate must stay at or above
+    // SmotherSteerFloor, so steering never throws a win away.
+    //
+    // Mate phase: when we already have a forced (non-smother) mate, a
+    // candidate that still mates within SmotherMateSlack extra plies may be
+    // chosen for its traps. Each such choice uses one of SmotherMateDelays per
+    // game, so the mate is always delivered in the end.
+    const bool matePhase = rootMoves[0].score >= VALUE_MATE_IN_MAX_PLY
+                        && main_manager()->smotherDelays < int(options["SmotherMateDelays"]);
     if (steer > 0 && bestThread == this && !skill.enabled()
         && !main_manager()->smotherReady.load(std::memory_order_acquire)
-        && !is_decisive(rootMoves[0].score) && rootMoves.size() > 1)
+        && (!is_decisive(rootMoves[0].score) || matePhase) && rootMoves.size() > 1)
     {
-        const Color us     = rootPos.side_to_move();
-        auto cp = [&](Value v) { return UCIEngine::to_cp(v, rootPos); };
-        auto        potentialAfter = [&](const RootMove& rm) {
+        const Color us    = rootPos.side_to_move();
+        const bool  c960  = rootPos.is_chess960();
+        auto        cp    = [&](Value v) { return UCIEngine::to_cp(v, rootPos); };
+        const int   bestCp  = cp(rootMoves[0].score);
+        const int   floorCp = int(options["SmotherSteerFloor"]);
+        const bool  winning = bestCp >= floorCp;
+        const int   margin  = winning ? steer : steer / 4;
+
+        Smother::Limits per;
+        per.maxMoves   = int(options["SmotherTrapDepth"]);
+        per.quietMoves = std::min(1, int(options["SmotherQuietMoves"]));
+        per.style      = options["SmotherClassic"] ? Smother::Style::Classic : Smother::Style::AnyPiece;
+        per.strict     = bool(options["SmotherStrict"]);
+        per.maxNodes   = 4096;
+
+        TimePoint deadline = 0;
+        if (limits.use_time_management() || limits.movetime)
+        {
+            const TimePoint t = limits.use_time_management() ? main_manager()->tm.optimum()
+                                                              : limits.movetime;
+            deadline = now() + std::max<TimePoint>(5, t * int(options["SmotherSteerTime"]) / 100);
+        }
+
+        auto potentialAfter = [&](const RootMove& rm) {
             std::deque<StateInfo> sts;
             std::vector<Move>     done;
             for (Move m : rm.pv)
@@ -371,34 +403,80 @@ void Search::Worker::start_searching() {
             return p;
         };
 
-        usize     pick     = 0;
-        const int base     = potentialAfter(rootMoves[0]);
-        int       bestPot  = base;
-        const usize lines  = std::min(rootMoves.size(), usize(3));
-        for (usize i = 1; i < lines; ++i)
+        struct Cand {
+            usize  idx;
+            int    loss;
+            double share;
+            bool   expectedHit;
+            int    pot;
+            double utility;
+        };
+        std::vector<Cand> cands;
+        std::uint64_t     trapNodes = 0;
+        const usize lines = std::min(rootMoves.size(), usize(int(options["SmotherSteerLines"])));
+        for (usize i = 0; i < lines; ++i)
         {
             const RootMove& rm = rootMoves[i];
-            if (rm.score == -VALUE_INFINITE || rm.is_inexact() || is_decisive(rm.score)
-                || cp(rootMoves[0].score) - cp(rm.score) > steer)
+            if (rm.score == -VALUE_INFINITE || rm.is_inexact())
                 continue;
-            const int pot = potentialAfter(rm);
-            if (pot > bestPot)
+            int loss;
+            if (matePhase)
             {
-                bestPot = pot;
-                pick    = i;
+                // Plies to mate; a candidate must still mate, only a little later.
+                if (rm.score < VALUE_MATE_IN_MAX_PLY)
+                    continue;
+                loss = (rootMoves[0].score - rm.score) * 10;  // 10 per extra ply
+                if (rootMoves[0].score - rm.score > int(options["SmotherMateSlack"]))
+                    continue;
             }
+            else
+            {
+                if (is_decisive(rm.score))
+                    continue;
+                const int c = cp(rm.score);
+                loss        = bestCp - c;
+                if (i > 0 && (loss > margin || (winning && c < floorCp)))
+                    continue;
+            }
+
+            StateInfo st;
+            rootPos.do_move(rm.pv[0], st);
+            Smother::TrapResult tr = Smother::traps(rootPos, per, deadline, threads.stop);
+            rootPos.undo_move(rm.pv[0]);
+            trapNodes += tr.nodes;
+
+            const bool expected =
+              rm.pv.size() > 1
+              && std::find(tr.hitMoves.begin(), tr.hitMoves.end(), rm.pv[1]) != tr.hitMoves.end();
+            const int pot = potentialAfter(rm);
+            const double u =
+              100.0 * tr.share() + (expected ? 50.0 : 0.0) + 0.5 * pot - 0.05 * loss;
+            cands.push_back({i, loss, tr.share(), expected, pot, u});
+            if (tr.aborted)
+                break;
         }
 
-        // Switch only for a clear gain, so the choice stays stable.
-        if (pick && bestPot >= base + 3)
+        if (!cands.empty() && cands[0].idx == 0)
         {
-            const RootMove& rm = rootMoves[pick];
-            bestmove = UCIEngine::move(rm.pv[0], rootPos.is_chess960());
-            ponder   = rm.pv.size() > 1 ? UCIEngine::move(rm.pv[1], rootPos.is_chess960()) : "";
-            sync_cout << "info string smother steer " << bestmove << " ("
-                      << cp(rootMoves[0].score) - cp(rm.score)
-                      << "cp below best, potential " << base << " -> " << bestPot << ")"
-                      << sync_endl;
+            const Cand* pick = &cands[0];
+            for (const Cand& c : cands)
+                if (c.utility > pick->utility)
+                    pick = &c;
+
+            // Switch only for a clear gain, so the choice stays stable.
+            if (pick->idx && pick->utility >= cands[0].utility + 5.0)
+            {
+                const RootMove& rm = rootMoves[pick->idx];
+                if (matePhase)
+                    ++main_manager()->smotherDelays;
+                bestmove = UCIEngine::move(rm.pv[0], c960);
+                ponder   = rm.pv.size() > 1 ? UCIEngine::move(rm.pv[1], c960) : "";
+                sync_cout << "info string smother steer " << bestmove << " (" << pick->loss
+                          << "cp below best, traps " << int(100 * cands[0].share) << "% -> "
+                          << int(100 * pick->share) << "%" << (pick->expectedHit ? " expected" : "")
+                          << ", potential " << cands[0].pot << " -> " << pick->pot << ", "
+                          << trapNodes << " nodes)" << sync_endl;
+            }
         }
     }
 
@@ -488,7 +566,7 @@ bool Search::Worker::iterative_deepening() {
 
     // Smother steering also needs exact scores for a few candidate moves.
     if (int(options["SmotherSteer"]) > 0)
-        multiPV = std::max(multiPV, usize(3));
+        multiPV = std::max(multiPV, usize(int(options["SmotherSteerLines"])));
 
     multiPV = std::min(multiPV, rootMoves.size());
 
@@ -866,6 +944,8 @@ void Search::Worker::undo_null_move(Position& pos) { pos.undo_null_move(); }
 
 // Reset histories, usually before a new game
 void Search::Worker::clear() {
+    if (is_mainthread())
+        main_manager()->smotherDelays = 0;  // new game
     mainHistory.fill(-5);
     captureHistory.fill(-742);
 

@@ -419,7 +419,8 @@ void Prover::extract_pv(int n, std::vector<Move>& pv) {
 
 Result Prover::run() {
     Result res;
-    std::fill(table.begin(), table.end(), Entry{0, Move::none(), 0, 0});
+    if (!lim.keepTable)
+        std::fill(table.begin(), table.end(), Entry{0, Move::none(), 0, 0});
 
     for (int n = 1; n <= lim.maxMoves; ++n)
     {
@@ -488,8 +489,66 @@ bool is_smothered_mate(const Position& pos, Style style) {
     return pos.checkers() && MoveList<LEGAL>(pos).size() == 0 && smothered_given_mate(pos, style);
 }
 
-Result prove(Position& pos, const Limits& limits, const std::atomic<bool>& stop) {
+namespace {
+std::vector<Entry>& shared_table() {
     static std::vector<Entry> table(std::size_t(1) << TableBits);
+    return table;
+}
+}
+
+TrapResult traps(Position& pos, const Limits& perReply, TimePoint deadline,
+                 const std::atomic<bool>& stop) {
+    TrapResult tr;
+    const Color    them = pos.side_to_move();  // the defender replies now
+    const Square   ksq  = pos.square<KING>(them);
+    const Bitboard ring = Attacks::attacks_bb<KING>(ksq);
+
+    Limits lim    = perReply;
+    lim.keepTable = true;  // entries stay valid across sibling positions
+    lim.deadline  = deadline;
+
+    for (const Move r : MoveList<LEGAL>(pos))
+    {
+        // Plausibility of the reply for a shallow, human-like opponent: a
+        // reply that loses material by SEE is rarely played.
+        const double w = pos.see_ge(r, Value(0)) ? 1.0 : 0.3;
+        tr.total += w;
+        ++tr.replies;
+
+        if (stop.load(std::memory_order_relaxed) || (deadline && now() >= deadline))
+        {
+            tr.aborted = true;
+            continue;
+        }
+
+        StateInfo st;
+        pos.do_move(r, st);
+
+        // Cheap filter: a king with many open neighbours cannot be smothered
+        // within a few moves.
+        const Square   k2    = r.from_sq() == ksq ? r.to_sq() : ksq;
+        const Bitboard ring2 = r.from_sq() == ksq ? Attacks::attacks_bb<KING>(k2) : ring;
+        const int      holes = popcount(ring2 & ~pos.pieces(them));
+        if (holes <= lim.maxMoves + 1 && MoveList<LEGAL>(pos).size())
+        {
+            Prover   p(pos, lim, stop, shared_table());
+            Result   res = p.run();
+            tr.nodes += res.nodes;
+            if (res.found)
+            {
+                tr.hit += w;
+                if (!tr.shortest || res.mateIn < tr.shortest)
+                    tr.shortest = res.mateIn;
+                tr.hitMoves.push_back(r);
+            }
+        }
+        pos.undo_move(r);
+    }
+    return tr;
+}
+
+Result prove(Position& pos, const Limits& limits, const std::atomic<bool>& stop) {
+    auto& table = shared_table();
 
     if (limits.maxMoves <= 0)
         return {};

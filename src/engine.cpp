@@ -149,7 +149,19 @@ Engine::Engine(std::optional<std::filesystem::path> path) :
 
     options.add("SmotherParallel", Option(true));
 
-    options.add("SmotherSteer", Option(0, 0, 100));
+    options.add("SmotherSteer", Option(0, 0, 500));
+
+    options.add("SmotherSteerFloor", Option(150, -1000, 1000));
+
+    options.add("SmotherSteerLines", Option(4, 2, 8));
+
+    options.add("SmotherSteerTime", Option(15, 0, 100));
+
+    options.add("SmotherTrapDepth", Option(3, 1, 6));
+
+    options.add("SmotherMateDelays", Option(8, 0, 50));
+
+    options.add("SmotherMateSlack", Option(6, 0, 40));
 
     options.add("SmotherNodes", Option(5000000, 0, 2000000000));
 

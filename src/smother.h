@@ -44,6 +44,7 @@ struct Limits {
     int         quietMoves = 1;             // non-checking attacker moves per line
     std::uint64_t maxNodes = 5000000;   // 0 = unlimited
     TimePoint   deadline = 0;           // absolute now() value, 0 = none
+    bool        keepTable = false;      // reuse the proof table (no clear)
 };
 
 struct Result {
@@ -58,6 +59,23 @@ struct Result {
 // is more boxed in by its own pieces and our knights/queen are closer to
 // delivering a smother). Used only by the optional steering.
 int potential(const Position& pos, Color us);
+
+// Smother traps: pos has the DEFENDER to move (we just played our candidate).
+// For every legal reply, try to prove a forced smother for us with perReply
+// limits. hit/total is the plausibility-weighted share of replies that walk
+// into a forced smother.
+struct TrapResult {
+    double            hit      = 0;
+    double            total    = 0;
+    int               replies  = 0;
+    int               shortest = 0;  // shortest proven smother after a hit
+    std::uint64_t     nodes    = 0;
+    bool              aborted  = false;
+    std::vector<Move> hitMoves;
+    double            share() const { return total > 0 ? hit / total : 0; }
+};
+TrapResult traps(Position& pos, const Limits& perReply, TimePoint deadline,
+                 const std::atomic<bool>& stop);
 
 // Search from pos (side to move = attacker). pos is restored on return.
 // stop is polled so a GUI "stop" interrupts the proof.

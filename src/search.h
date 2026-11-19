@@ -318,6 +318,7 @@ class SearchManager: public ISearchManager {
     // smotherReady is set (release) only after smotherPV is complete.
     std::vector<Move> smotherPV;
     int               smotherMateIn = 0;
+    int               smotherDelays = 0;  // mate-phase steering choices this game
     std::atomic_bool  smotherReady{false};
     std::atomic_bool  smotherStop{false};
     std::thread       smotherThread;
