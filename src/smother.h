@@ -54,6 +54,11 @@ struct Result {
     std::vector<Move> pv;               // principal (longest-resistance) line
 };
 
+// Heuristic "smother potential" of pos for side us (higher = the enemy king
+// is more boxed in by its own pieces and our knights/queen are closer to
+// delivering a smother). Used only by the optional steering.
+int potential(const Position& pos, Color us);
+
 // Search from pos (side to move = attacker). pos is restored on return.
 // stop is polled so a GUI "stop" interrupts the proof.
 Result prove(Position& pos, const Limits& limits, const std::atomic<bool>& stop);

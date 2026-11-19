@@ -149,6 +149,8 @@ Engine::Engine(std::optional<std::filesystem::path> path) :
 
     options.add("SmotherParallel", Option(true));
 
+    options.add("SmotherSteer", Option(0, 0, 100));
+
     options.add("SmotherNodes", Option(5000000, 0, 2000000000));
 
     options.add(  //

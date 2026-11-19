@@ -442,6 +442,48 @@ Result Prover::run() {
 
 }  // namespace
 
+int potential(const Position& pos, Color us) {
+    const Color    them  = ~us;
+    const Square   ksq   = pos.square<KING>(them);
+    const Bitboard ring  = Attacks::attacks_bb<KING>(ksq);
+    const Bitboard own   = pos.pieces(them);
+    const int      boxed = popcount(ring & own);
+    const int      holes = popcount(ring & ~own);
+
+    // A king with many open squares cannot be smothered soon.
+    if (holes > 3)
+        return 0;
+
+    int score = 4 * boxed - 3 * holes;
+
+    // Knight distance (in knight moves) to a square that checks the king.
+    const Bitboard checkSqs = Attacks::attacks_bb<KNIGHT>(ksq) & ~pos.pieces(us);
+    Bitboard       knights  = pos.pieces(us, KNIGHT);
+    while (knights)
+    {
+        const Square s = pop_lsb(knights);
+        Bitboard     one = Attacks::attacks_bb<KNIGHT>(s);
+        if (one & checkSqs)
+            score += 6;
+        else
+        {
+            Bitboard two = 0;
+            while (one)
+                two |= Attacks::attacks_bb<KNIGHT>(pop_lsb(one));
+            if (two & checkSqs)
+                score += 3;
+        }
+    }
+
+    // A queen near the king supports the typical queen sacrifice.
+    Bitboard queens = pos.pieces(us, QUEEN);
+    while (queens)
+        if (sq_distance(pop_lsb(queens), ksq) <= 3)
+            score += 2;
+
+    return std::max(score, 0);
+}
+
 bool is_smothered_mate(const Position& pos, Style style) {
     return pos.checkers() && MoveList<LEGAL>(pos).size() == 0 && smothered_given_mate(pos, style);
 }

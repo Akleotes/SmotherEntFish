@@ -19,6 +19,7 @@
 #include "search.h"
 
 #include <algorithm>
+#include <deque>
 #include <array>
 #include <atomic>
 #include <cassert>
@@ -316,7 +317,9 @@ void Search::Worker::start_searching() {
     Skill   skill =
       Skill(options["Skill Level"], options["UCI_LimitStrength"] ? int(options["UCI_Elo"]) : 0);
 
-    if (!limits.depth && !skill.enabled())
+    const int steer = int(options["SmotherSteer"]);
+
+    if (!limits.depth && !skill.enabled() && steer <= 0)
         bestThread = threads.get_best_thread()->worker.get();
 
     main_manager()->bestPreviousScore        = bestThread->rootMoves[0].score;
@@ -336,6 +339,62 @@ void Search::Worker::start_searching() {
         ponder = UCIEngine::move(bestThread->rootMoves[0].pv[1], rootPos.is_chess960());
 
     auto bestmove = UCIEngine::move(bestThread->rootMoves[0].pv[0], rootPos.is_chess960());
+
+    // Smother steering: among moves whose exact score is within `steer`
+    // centipawns of the best, prefer the one whose expected line leaves the
+    // enemy king most boxed in. Never used when a result is already decisive.
+    if (steer > 0 && bestThread == this && !skill.enabled()
+        && !main_manager()->smotherReady.load(std::memory_order_acquire)
+        && !is_decisive(rootMoves[0].score) && rootMoves.size() > 1)
+    {
+        const Color us     = rootPos.side_to_move();
+        auto cp = [&](Value v) { return UCIEngine::to_cp(v, rootPos); };
+        auto        potentialAfter = [&](const RootMove& rm) {
+            std::deque<StateInfo> sts;
+            std::vector<Move>     done;
+            for (Move m : rm.pv)
+            {
+                if (done.size() >= 4 || !rootPos.pseudo_legal(m) || !rootPos.legal(m))
+                    break;
+                rootPos.do_move(m, sts.emplace_back());
+                done.push_back(m);
+            }
+            const int p = Smother::potential(rootPos, us);
+            for (auto it = done.rbegin(); it != done.rend(); ++it)
+                rootPos.undo_move(*it);
+            return p;
+        };
+
+        usize     pick     = 0;
+        const int base     = potentialAfter(rootMoves[0]);
+        int       bestPot  = base;
+        const usize lines  = std::min(rootMoves.size(), usize(3));
+        for (usize i = 1; i < lines; ++i)
+        {
+            const RootMove& rm = rootMoves[i];
+            if (rm.score == -VALUE_INFINITE || rm.is_inexact() || is_decisive(rm.score)
+                || cp(rootMoves[0].score) - cp(rm.score) > steer)
+                continue;
+            const int pot = potentialAfter(rm);
+            if (pot > bestPot)
+            {
+                bestPot = pot;
+                pick    = i;
+            }
+        }
+
+        // Switch only for a clear gain, so the choice stays stable.
+        if (pick && bestPot >= base + 3)
+        {
+            const RootMove& rm = rootMoves[pick];
+            bestmove = UCIEngine::move(rm.pv[0], rootPos.is_chess960());
+            ponder   = rm.pv.size() > 1 ? UCIEngine::move(rm.pv[1], rootPos.is_chess960()) : "";
+            sync_cout << "info string smother steer " << bestmove << " ("
+                      << cp(rootMoves[0].score) - cp(rm.score)
+                      << "cp below best, potential " << base << " -> " << bestPot << ")"
+                      << sync_endl;
+        }
+    }
 
     // A proven smothered mate overrides the normal choice. It is a forced win,
     // so this never gives away a better result.
@@ -420,6 +479,10 @@ bool Search::Worker::iterative_deepening() {
     // use behind-the-scenes to retrieve a set of possible moves.
     if (skill.enabled())
         multiPV = std::max(multiPV, usize(4));
+
+    // Smother steering also needs exact scores for a few candidate moves.
+    if (int(options["SmotherSteer"]) > 0)
+        multiPV = std::max(multiPV, usize(3));
 
     multiPV = std::min(multiPV, rootMoves.size());
 
