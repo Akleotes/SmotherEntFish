@@ -60,7 +60,10 @@ jobs:
                 | grep -o 'refs/tags/v0\.[0-9]*\.[0-9]*$' | sed 's#refs/tags/##' | sort -V | tail -1)
           echo "lc0 $tag"
           git clone -q --depth 1 --branch "$tag" --recurse-submodules https://github.com/LeelaChessZero/lc0.git lc0
-          (cd lc0 && ./build.sh >/dev/null)
+          # Portable build: runners differ in CPU (some lack AVX-512), and a
+          # binary tuned for the build machine dies at start on the others.
+          (cd lc0 && ./build.sh -Dnative_arch=false >/dev/null)
+          echo uci | lc0/build/release/lc0 2>/dev/null | grep -q uciok && echo "lc0 starts"
           mkdir -p maia
           for r in ${{ needs.plan.outputs.maia }}; do
             curl -fsSL -o maia/maia-$r.pb.gz \
