@@ -20,6 +20,11 @@ ap.add_argument("--opt", action="append", default=[])
 ap.add_argument("--tc", default="5+0.05"); ap.add_argument("--conc", type=int, default=4)
 ap.add_argument("--book", default=os.path.join(os.path.dirname(__file__), "openings.txt"))
 ap.add_argument("--seed", type=int, default=1)
+# Custom opponent (e.g. Maia on lc0): its own UCI options, and a fixed "go"
+# command instead of a clock (Maia plays like a human with "go nodes 1").
+# With --opp-opt given, the UCI_Elo limit is not applied to the opponent.
+ap.add_argument("--opp-opt", action="append", default=[])
+ap.add_argument("--opp-go", default="")
 A = ap.parse_args()
 BASE, INC = (float(x) for x in A.tc.split("+"))
 
@@ -41,9 +46,10 @@ class Eng:
             if l.startswith(tok): return l
     def ready(self): self.send("isready"); self.wait("readyok")
 
-    def go(self, fen, moves, wt, bt):
+    def go(self, fen, moves, wt, bt, fixed=""):
         self.send(f"position fen {fen} moves {' '.join(moves)}" if moves else f"position fen {fen}")
-        self.send(f"go wtime {int(wt*1000)} btime {int(bt*1000)} winc {int(INC*1000)} binc {int(INC*1000)}")
+        self.send(f"go {fixed}" if fixed else
+                  f"go wtime {int(wt*1000)} btime {int(bt*1000)} winc {int(INC*1000)} binc {int(INC*1000)}")
         t0 = time.monotonic(); infos = []
         while True:
             l = self.p.stdout.readline()
@@ -92,7 +98,10 @@ def play(job):
         stm = b.turn
         is_ours = (stm == chess.WHITE) == ours_white
         e = ours if is_ours else opp
-        mv, dt, infos = e.go(fen0, moves, clock[chess.WHITE], clock[chess.BLACK])
+        fixed = "" if is_ours else A.opp_go
+        mv, dt, infos = e.go(fen0, moves, clock[chess.WHITE], clock[chess.BLACK], fixed)
+        if fixed:
+            dt = 0  # a fixed-node opponent plays without a clock
         if is_ours:
             for i in infos:
                 if "smother steer" in i:
@@ -139,7 +148,8 @@ if __name__ == "__main__":
         fen = book[r % len(book)]
         jobs += [(2 * r, fen, True), (2 * r + 1, fen, False)]
     ours_opts = {"Threads": 1, "Hash": 16, **parse_opts(A.opt)}
-    opp_opts = {"Threads": 1, "Hash": 16, "UCI_LimitStrength": "true", "UCI_Elo": A.elo}
+    opp_opts = ({"Threads": 1, **parse_opts(A.opp_opt)} if A.opp_opt else
+                {"Threads": 1, "Hash": 16, "UCI_LimitStrength": "true", "UCI_Elo": A.elo})
     W = D = L = SM = SMC = ST = 0
     with Pool(A.conc, worker_init, (ours_opts, opp_opts)) as pool, open(A.out, "a") as f:
         for n, g in enumerate(pool.imap_unordered(play, jobs), 1):

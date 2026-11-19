@@ -27,12 +27,14 @@ jobs:
     outputs:
       matrix: ${{ steps.m.outputs.matrix }}
       exp: ${{ steps.m.outputs.exp }}
+      maia: ${{ steps.m.outputs.maia }}
     steps:
       - uses: actions/checkout@v4
       - id: m
         run: python3 notes/scripts/expand_plan.py notes/exp/plan.json >> "$GITHUB_OUTPUT"
 
   build:
+    needs: plan
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -49,11 +51,30 @@ jobs:
           cp src/nn-*.nnue opp/src/
           cd opp/src && make -j"$(nproc)" build ARCH=$ARCH
           ./stockfish bench 2>&1 | grep "Nodes searched"
+      - name: Build lc0 and fetch Maia networks
+        if: needs.plan.outputs.maia != ''
+        run: |
+          sudo apt-get install -y -q libopenblas-dev ninja-build >/dev/null
+          pip install -q meson
+          tag=$(git ls-remote --tags https://github.com/LeelaChessZero/lc0.git \
+                | grep -o 'refs/tags/v0\.[0-9]*\.[0-9]*$' | sed 's#refs/tags/##' | sort -V | tail -1)
+          echo "lc0 $tag"
+          git clone -q --depth 1 --branch "$tag" --recurse-submodules https://github.com/LeelaChessZero/lc0.git lc0
+          (cd lc0 && ./build.sh >/dev/null)
+          mkdir -p maia
+          for r in ${{ needs.plan.outputs.maia }}; do
+            curl -fsSL -o maia/maia-$r.pb.gz \
+              "https://github.com/CSSLab/maia-chess/raw/master/maia_weights/maia-$r.pb.gz" \
+            || curl -fsSL -o maia/maia-$r.pb.gz \
+              "https://github.com/CSSLab/maia-chess/releases/download/v1.0/maia-$r.pb.gz"
+          done
+          ls -la maia lc0/build/release/lc0
       - name: Collect engines
         run: |
           mkdir -p engines
           cp src/stockfish engines/ours
           cp opp/src/stockfish engines/opp
+          if [ -d maia ]; then cp lc0/build/release/lc0 engines/lc0; cp maia/*.pb.gz engines/; fi
       - uses: actions/upload-artifact@v4
         with:
           name: engines
@@ -80,13 +101,20 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install -q chess
+      - if: startsWith(matrix.opp, 'maia-')
+        run: sudo apt-get install -y -q libopenblas0 >/dev/null
       - name: Play ${{ matrix.name }} chunk ${{ matrix.chunk }}
         run: |
           mkdir -p out
           args=()
           for o in ${{ matrix.opts }}; do args+=(--opt "$o"); done
+          opp=engines/opp
+          case "${{ matrix.opp }}" in
+            maia-*) opp=engines/lc0
+                    args+=(--opp-opt "WeightsFile=engines/${{ matrix.opp }}.pb.gz" --opp-go "nodes 1") ;;
+          esac
           python -I notes/scripts/match.py "out/${{ matrix.name }}-${{ matrix.chunk }}.jsonl" \
-            engines/ours engines/opp ${{ matrix.elo }} ${{ matrix.games }} \
+            engines/ours "$opp" ${{ matrix.elo }} ${{ matrix.games }} \
             --seed ${{ matrix.seed }} --conc "$(nproc)" --tc "${{ matrix.tc }}" \
             --book notes/openings.txt "${args[@]}" | tail -1
       - uses: actions/upload-artifact@v4

@@ -9,7 +9,9 @@ plan.json:
 Each run is split into chunks of `chunk` games (even), one matrix job per
 chunk, with seed = run seed + chunk index so chunks use different openings. Jobs are ordered slowest
 first; give slow runs (high Elo, brutal) a smaller "chunk" in the plan.
-Prints `exp=...` and `matrix=...` lines for $GITHUB_OUTPUT.
+A run may set "opponent": "maia-<rating>" (1100-1900) to play Maia on lc0
+(human-like, "go nodes 1") instead of Stockfish at UCI_Elo.
+Prints `exp=...`, `maia=...` and `matrix=...` lines for $GITHUB_OUTPUT.
 """
 import json, sys
 
@@ -28,7 +30,8 @@ for run in plan["runs"]:
             break
         jobs.append({"name": run["name"], "elo": int(run["elo"]), "games": g,
                      "seed": int(run.get("seed", 1)) + i, "chunk": i,
-                     "opts": " ".join(run.get("opts", [])), "tc": run.get("tc", tc)})
+                     "opts": " ".join(run.get("opts", [])), "tc": run.get("tc", tc),
+                     "opp": run.get("opponent", "")})
         games -= g
         i += 1
 # Slowest jobs first, so the run does not wait on a long tail at the end:
@@ -53,5 +56,8 @@ def cost(j):
 jobs.sort(key=cost)
 if len(jobs) > 256:
     sys.exit("matrix too large (max 256 jobs)")
+# Maia opponents ("opponent": "maia-1500") need lc0 and those networks.
+maia = sorted({j["opp"].split("-")[1] for j in jobs if j["opp"].startswith("maia-")})
 print("exp=" + plan["exp"])
+print("maia=" + " ".join(maia))
 print("matrix=" + json.dumps(jobs))
