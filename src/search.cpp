@@ -410,29 +410,42 @@ void Search::Worker::start_searching() {
             int    pot;
             double utility;
         };
-        std::vector<Cand> cands;
+        // The search has already stopped (threads.stop is set), so the trap
+        // prover gets its own flag; the deadline bounds its time instead.
+        const std::atomic<bool> noStop{false};
+        std::vector<Cand>       cands;
         std::uint64_t     trapNodes = 0;
         const usize lines = std::min(rootMoves.size(), usize(int(options["SmotherSteerLines"])));
         for (usize i = 0; i < lines; ++i)
         {
             const RootMove& rm = rootMoves[i];
-            if (rm.score == -VALUE_INFINITE || rm.is_inexact())
+            // A timed search usually stops inside the last MultiPV iteration,
+            // leaving the lines after the first at -VALUE_INFINITE. Their
+            // exact scores from the last completed iteration are used instead.
+            Value sc = rm.score;
+            if (sc == -VALUE_INFINITE)
+            {
+                if (i == 0 || !rm.previousScoreExact || rm.previousScore == -VALUE_INFINITE)
+                    continue;
+                sc = rm.previousScore;
+            }
+            else if (rm.is_inexact())
                 continue;
             int loss;
             if (matePhase)
             {
                 // Plies to mate; a candidate must still mate, only a little later.
-                if (rm.score < VALUE_MATE_IN_MAX_PLY)
+                if (sc < VALUE_MATE_IN_MAX_PLY)
                     continue;
-                loss = (rootMoves[0].score - rm.score) * 10;  // 10 per extra ply
-                if (rootMoves[0].score - rm.score > int(options["SmotherMateSlack"]))
+                loss = (rootMoves[0].score - sc) * 10;  // 10 per extra ply
+                if (rootMoves[0].score - sc > int(options["SmotherMateSlack"]))
                     continue;
             }
             else
             {
-                if (is_decisive(rm.score))
+                if (is_decisive(sc))
                     continue;
-                const int c = cp(rm.score);
+                const int c = cp(sc);
                 loss        = bestCp - c;
                 if (i > 0 && (loss > margin || (winning && c < floorCp)))
                     continue;
@@ -440,7 +453,7 @@ void Search::Worker::start_searching() {
 
             StateInfo st;
             rootPos.do_move(rm.pv[0], st);
-            Smother::TrapResult tr = Smother::traps(rootPos, per, deadline, threads.stop);
+            Smother::TrapResult tr = Smother::traps(rootPos, per, deadline, noStop);
             rootPos.undo_move(rm.pv[0]);
             trapNodes += tr.nodes;
 
