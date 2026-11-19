@@ -102,6 +102,9 @@ class Prover {
     int                      ply          = 0;
     bool                     aborted      = false;
     bool                     ignoreLimits = false;
+    std::vector<Move>        rootExcluded;  // root moves to skip (alternative proofs)
+
+    double robustness(Move m, int n);
 };
 
 void Prover::poll() {
@@ -123,11 +126,12 @@ bool Prover::attack(int n, Kind kind, int q) {
 
     if (kind == ANY)
         q = 0;
-    const Key k = salted(pos.key(), kind, q);
-    Entry*    e = probe(k);
-    if (e->proveN && e->proveN <= n)
+    const Key  k        = salted(pos.key(), kind, q);
+    Entry*     e        = probe(k);
+    const bool altRoots = ply == 0 && !rootExcluded.empty();
+    if (!altRoots && e->proveN && e->proveN <= n)
         return true;
-    if (e->failN >= n)
+    if (!altRoots && e->failN >= n)
         return false;
 
     const Color    them  = ~pos.side_to_move();
@@ -153,6 +157,9 @@ bool Prover::attack(int n, Kind kind, int q) {
     for (const Move m : MoveList<LEGAL>(pos))
     {
         if (kind == SMOTHER && n == 1 && (holes & ~square_bb(m.to_sq())))
+            continue;
+        if (altRoots
+            && std::find(rootExcluded.begin(), rootExcluded.end(), m) != rootExcluded.end())
             continue;
         const bool check = pos.gives_check(m);
         if (!check && !allowQuiet)
@@ -219,6 +226,8 @@ bool Prover::attack(int n, Kind kind, int q) {
         }
     }
 
+    if (altRoots)  // a failure with exclusions says nothing about the position
+        return false;
     e        = probe(k);
     e->failN = int8_t(std::max<int>(e->failN, n));
     return false;
@@ -420,6 +429,34 @@ void Prover::extract_pv(int n, std::vector<Move>& pv) {
     }
 }
 
+// Share of the defender's replies to our first move m that stay inside the
+// smother (instead of escaping into a faster plain mate), weighted by how
+// natural the reply is for a practical opponent: captures that do not lose
+// material are the typical escapes, so they weigh most.
+double Prover::robustness(Move m, int n) {
+    const int q = pos.gives_check(m) ? lim.quietMoves : lim.quietMoves - 1;
+    StateInfo st;
+    pos.do_move(m, st);
+    ++ply;
+    double hit = 0, total = 0;
+    for (const Move r : MoveList<LEGAL>(pos))
+    {
+        const bool   safe = pos.see_ge(r, Value(0));
+        const double w    = pos.capture(r) && safe ? 1.0 : safe ? 0.6 : 0.2;
+        StateInfo    st2;
+        pos.do_move(r, st2);
+        ++ply;
+        const bool smothered = n > 1 && min_moves(SMOTHER, n - 1, q) > 0;
+        --ply;
+        pos.undo_move(r);
+        total += w;
+        hit += smothered ? w : 0;
+    }
+    --ply;
+    pos.undo_move(m);
+    return total > 0 ? hit / total : 1.0;
+}
+
 Result Prover::run() {
     Result res;
     if (!lim.keepTable)
@@ -429,8 +466,44 @@ Result Prover::run() {
     {
         if (attack(n, SMOTHER, lim.quietMoves))
         {
-            res.found    = true;
-            res.mateIn   = n;
+            res.found  = true;
+            res.mateIn = n;
+
+            // Among first moves that prove a smother in n, play the one the
+            // opponent is least likely to escape from. Alternatives are found
+            // by excluding the moves already proven; the search stays within
+            // the limits, and whatever was found by then is used.
+            const Key        rootKey = salted(pos.key(), SMOTHER, lim.quietMoves);
+            std::vector<Move> cands{probe(rootKey)->move};
+            if (lim.robust && n > 1)
+            {
+                while (cands.size() < 4 && !aborted)
+                {
+                    rootExcluded = cands;
+                    if (!attack(n, SMOTHER, lim.quietMoves) || aborted)
+                        break;
+                    cands.push_back(probe(rootKey)->move);
+                }
+                rootExcluded.clear();
+                aborted = false;
+
+                Move   best  = cands[0];
+                double bestR = -1;
+                for (Move m : cands)
+                {
+                    const double r = robustness(m, n);
+                    if (aborted)
+                        break;
+                    if (r > bestR)
+                        bestR = r, best = m;
+                }
+                aborted          = false;
+                Entry* e         = probe(rootKey);
+                e->move          = best;
+                e->proveN        = int8_t(n);
+                res.alternatives = int(cands.size());
+                res.robustness   = bestR;
+            }
             ignoreLimits = true;  // the proof exists; rebuilding the line is bounded
             extract_pv(n, res.pv);
             break;
@@ -534,7 +607,8 @@ traps(Position& pos, const Limits& perReply, TimePoint deadline, const std::atom
     const Bitboard ring = Attacks::attacks_bb<KING>(ksq);
 
     Limits lim    = perReply;
-    lim.keepTable = true;  // entries stay valid across sibling positions
+    lim.keepTable = true;   // entries stay valid across sibling positions
+    lim.robust    = false;  // only "is there a proof" matters here
     lim.deadline  = deadline;
 
     for (const Move r : MoveList<LEGAL>(pos))

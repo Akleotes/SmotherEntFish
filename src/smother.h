@@ -48,6 +48,7 @@ struct Limits {
     std::uint64_t maxNodes   = 5000000;  // 0 = unlimited
     TimePoint     deadline   = 0;        // absolute now() value, 0 = none
     bool          keepTable  = false;    // reuse the proof table (no clear)
+    bool          robust     = false;    // prefer the line hardest to escape (costly)
 };
 
 struct Result {
@@ -56,6 +57,8 @@ struct Result {
     int               mateIn  = 0;  // attacker moves
     std::uint64_t     nodes   = 0;
     std::vector<Move> pv;  // principal (longest-resistance) line
+    int               alternatives = 0;   // proven first moves compared
+    double            robustness   = -1;  // share of likely replies kept in the line
 };
 
 // Heuristic "smother potential" of pos for side us (higher = the enemy king

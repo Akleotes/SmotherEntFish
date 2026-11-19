@@ -187,6 +187,11 @@ Engine::Engine(std::optional<std::filesystem::path> path) :
     // Plain mates still count as sure wins, so a win is never refused.
     options.add("SmotherBrutal", Option(false));
 
+    // After a smother proof, compare up to 4 proven first moves and play the
+    // one whose likely replies stay in the smother line. Off by default: it
+    // rarely finds alternatives and can cost several times the proof's nodes.
+    options.add("SmotherRobust", Option(false));
+
     // Prover time in brutal mode, in percent of the move's optimum time
     // (capped at 60% of the maximum). Long smothers need ~1-3M prover nodes.
     options.add("SmotherBrutalTimePercent", Option(300, 0, 1000));

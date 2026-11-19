@@ -225,6 +225,7 @@ void Search::Worker::start_smother_prover() {
     sl.strict     = bool(options["SmotherStrict"]);
     sl.quietMoves = int(options["SmotherQuietMoves"]);
     sl.maxNodes   = std::uint64_t(int(options["SmotherNodes"]));
+    sl.robust     = bool(options["SmotherRobust"]);
     if (mgr.smotherBrutal)
     {
         sl.maxMoves   = std::max(sl.maxMoves, 12);
@@ -264,7 +265,11 @@ void Search::Worker::start_smother_prover() {
         mgr.smotherReady.store(true, std::memory_order_release);
 
         sync_cout << "info string smother mate in " << r.mateIn << " proven, " << r.nodes
-                  << " nodes" << sync_endl;
+                  << " nodes";
+        if (r.alternatives > 1)
+            std::cout << ", best of " << r.alternatives << " lines (robustness "
+                      << int(100 * r.robustness) << "%)";
+        std::cout << sync_endl;
     };
 
     if (!options["SmotherParallel"])
