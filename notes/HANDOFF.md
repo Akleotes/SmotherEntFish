@@ -250,3 +250,58 @@ Findings:
 - Android: `.github/workflows/android-build.yml` (push to
   `android-build/<name>`) builds static armv8 / armv8-dotprod binaries with
   NDK 27.2, checks bench 2497913 under qemu, uploads artifacts.
+
+### Session 2, morning (Nov 20 JST)
+
+Three bugs, all fixed:
+- Prover loop (commit 6a5db802). In 6 grid4 games a proven smother ended
+  in a draw: the defender escaped into a quicker plain mate, the engine
+  declined that mate for the same smother line, and the moves went round
+  in a circle until threefold. The prover now fails any attacker move on a
+  smother line that brings back a position seen before (in the game or on
+  the line). Replays: 4 of the 6 now mate at once, 2 mate within 3-9 plies.
+  Puzzle regression unchanged (24482/24482, 0 bad, 0 differences).
+- Match runner draws (same commit). `can_claim_draw()` also counts a
+  threefold the side to move *could* make next, so games ended as draws
+  that the winner would never have repeated. All but 1 of ~250 draws in
+  grids 1-4 were of that kind; the scores above are understated (mostly at
+  Elo 3000). Now only a real third occurrence or fifty moves ends a game.
+- Match runner hang (de9d6354). A Pool worker that dies loses its game and
+  Pool waits forever (one grid4 job sat until the 90-minute timeout). With
+  no finished game for `MATCH_STALL` seconds (600) the run now ends with
+  the games so far.
+
+grid5 (both fixes, 5+0.05; Maia runs are 1000 games, Elo 3000 runs 600):
+
+```
+file                     games    W    D  L  score  smothers /100g  proof games  delivered
+e1500_brutal              2000 2000    0  0  1.000        25   1.2   61 (3.05%)  41%
+e1500_default             2000 2000    0  0  1.000        22   1.1   43 (2.15%)  51%
+e2000_brutal              2000 2000    0  0  1.000        22   1.1   37 (1.85%)  59%
+maia1100_brutal           1000 1000    0  0  1.000        14   1.4   24 (2.40%)  58%
+maia1900_brutal           1000 1000    0  0  1.000        13   1.3   24 (2.40%)  54%
+e3000_brutal               600  591    9  0  0.993         3   0.5    3          3/3
+e3000_default              600  591    9  0  0.993         1   0.2    1          1/1
+e3000_off (SmotherMate=false) 600 593  7  0  0.994         1   0.2    -          -
+```
+
+- With real draw rules: 8,000 games at Elo 1500/2000 and vs Maia, all won.
+  At Elo 3000 the smother features cost nothing measurable (0.993 vs 0.994
+  with them off) and the win-rate goal (>50%) holds by a wide margin.
+- Smother rate is still ~1.1-1.4 per 100 games; brutal vs default is
+  within noise. Brutal still uses more clock (median lowest clock 0.66 s
+  vs 1.36 s at 1500; 0.21 s at 3000), with 0 time losses in 9,200 games.
+- Escapes: an escaped game ends 3-5 plies after the last proof (the
+  defender steps into a mate in 1-2). No strict proof (every defence
+  smothered) existed at the first chance in any of 57 escaped games, so
+  preferring strict proofs cannot help. But in 17 of 55 after-escape
+  positions (with the game history; 20 without) a new smother in 6-9 is
+  still forced. It needs 0.3-11M prover nodes (~3M nodes/s), while by then
+  the clock is 0.5-1.5 s at 5+0.05.
+- Mate-in-hand budget (commit 25407786, brutal only): with a forced mate
+  in hand the prover may use `SmotherMatePercent` (15) of the remaining
+  clock, without the node cap, for at most 12 moves per game. 48 local
+  games at 5+0.05: no time losses. grid6 measures it at 5+0.05 and as an
+  A/B at 15+0.15.
+- Android build of de9d6354 passed (run 44633063886, bench 2497913 under
+  qemu); it does not include the mate-in-hand budget yet.
