@@ -254,9 +254,12 @@ void Search::Worker::start_smother_prover() {
     mgr.smotherThread = std::thread([job, &mgr]() mutable { job(mgr.smotherPos); });
 }
 
-void Search::Worker::finish_smother_prover() {
-    auto& mgr       = *main_manager();
-    mgr.smotherStop = true;
+// letFinish: the search ended on its own (no GUI stop) without a clock, so
+// let the prover complete within its node budget, as in serial mode.
+void Search::Worker::finish_smother_prover(bool letFinish) {
+    auto& mgr = *main_manager();
+    if (!letFinish)
+        mgr.smotherStop = true;
     if (mgr.smotherThread.joinable())
         mgr.smotherThread.join();
 }
@@ -299,13 +302,16 @@ void Search::Worker::start_searching() {
     while (!threads.stop && (main_manager()->ponder || limits.infinite))
     {}
 
+    const bool letProverFinish =
+      !threads.stop && !limits.use_time_management() && !limits.movetime;
+
     // Stop the threads if not already stopped (also raise the stop if "ponderhit"
     // just reset threads.ponder).
     threads.stop = true;
 
     // Wait until all threads have finished
     threads.wait_for_search_finished();
-    finish_smother_prover();
+    finish_smother_prover(letProverFinish);
 
     // When playing in 'nodes as time' mode, subtract the searched nodes from
     // the available ones before exiting.

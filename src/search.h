@@ -370,7 +370,7 @@ class Worker {
    private:
     bool iterative_deepening();
     void start_smother_prover();
-    void finish_smother_prover();
+    void finish_smother_prover(bool letFinish);
 
     void do_move(Position& pos, const Move move, StateInfo& st, Stack* const ss);
     void
