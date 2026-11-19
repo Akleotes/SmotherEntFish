@@ -33,10 +33,21 @@ for run in plan["runs"]:
         i += 1
 # Slowest jobs first, so the run does not wait on a long tail at the end:
 # stronger opponents mean longer games, and brutal mode waits for the prover.
+# Rough time per game relative to Elo 1500 (games get much longer at 3000).
+ELO_COST = [(1500, 1.0), (2000, 1.5), (2500, 3.0), (3000, 6.0)]
+
+def elo_cost(e):
+    if e <= ELO_COST[0][0]:
+        return ELO_COST[0][1]
+    for (e0, c0), (e1, c1) in zip(ELO_COST, ELO_COST[1:]):
+        if e <= e1:
+            return c0 + (c1 - c0) * (e - e0) / (e1 - e0)
+    return ELO_COST[-1][1]
+
 def cost(j):
-    c = j["elo"] * j["games"]
+    c = j["games"] * elo_cost(j["elo"])
     if "SmotherBrutal=true" in j["opts"]:
-        c *= 3
+        c *= 2
     return -c
 jobs.sort(key=cost)
 if len(jobs) > 256:
