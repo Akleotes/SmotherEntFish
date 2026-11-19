@@ -199,3 +199,33 @@ Ceiling: in 200 won brutal games at 1500, a forced smother (12 moves,
 forced smother was delivered. End-game methods are capped near 5/100 games;
 gains must come from earlier (openings, middlegame plans).
 Raw games: notes/results/exp1, exp2 branches exp2-w1..w3.
+
+### Session 2, overnight (Nov 20 JST)
+
+Experiments now run on GitHub Actions (`.github/workflows/smother-exp.yml`):
+push `notes/exp/plan.json` to a branch `actions-exp/<name>`; results are
+committed back to that branch under `notes/results/<exp>/`. Plans can use
+Maia opponents (`"opponent": "maia-1500"`, lc0 built in CI, `go nodes 1`).
+
+Findings:
+- grid1 (2000 games/setting): default, brutal, middlegame shaping and their
+  combinations all give 0.6-0.9 smothers/100 games at Elo 1500/2000 and
+  0.2-0.3 at 3000; scores unchanged (0.97-1.00).
+- Traces of lost chances at Elo 1500: ~60% were never started because the
+  prover ran out of time (needs 0.1-3M nodes); the rest the opponent escaped.
+- grid2: more brutal prover time (300%/600%) did not help, because brutal
+  mode spent the budget on every move and ran its own clock down (median
+  lowest clock 0.45 s vs 1.73 s default, measured in match records).
+- Every one of 41 traced smother chances arose at >= +15 pawns or with a
+  mate on the board (only 28% of positions are >= +10). The deep prover in
+  brutal mode is now gated on SmotherBigCp (1000) -> grid3b measures it.
+- SmotherRobust (choose the hardest-to-escape proof) and larger/faster
+  prover tables were tried and rejected (measured, no net gain).
+- SmotherPonderDeep: while pondering the prover searches deep and
+  unbounded; smothers needing 2-3M nodes are found after 3 s of pondering.
+  This matters for real games against people (long thinking times); our
+  matches cannot measure it (opponents move instantly or share the CPU).
+- Maia runs hung in CI: Pool workers died when an engine failed at start-up
+  and were respawned forever; fixed (lazy engine start, watchdog, hang
+  records). A debug stack-dump timer armed before fork also deadlocked
+  workers; fixed.
