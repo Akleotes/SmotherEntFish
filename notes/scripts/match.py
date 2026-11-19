@@ -175,6 +175,7 @@ def play_game(job):
     moves, clock = [], {chess.WHITE: BASE, chess.BLACK: BASE}
     PLAYED["moves"] = moves
     steers = 0; steer_plies = []; result = None; reason = ""
+    our_clock = []; proofs = []  # our clock after each of our moves; plies with a proven smother
     while result is None:
         stm = b.turn
         is_ours = (stm == chess.WHITE) == ours_white
@@ -187,10 +188,14 @@ def play_game(job):
             for i in infos:
                 if "smother steer" in i:
                     steers += 1; steer_plies.append(len(moves))
+                if "smother mate in" in i and "proven" in i:
+                    proofs.append(len(moves))
         clock[stm] -= dt
         if clock[stm] < -0.1:
             result = "0-1" if stm == chess.WHITE else "1-0"; reason = "time"; break
         clock[stm] += INC
+        if is_ours:
+            our_clock.append(round(clock[stm], 2))
         try:
             m = chess.Move.from_uci(mv)
             if m not in b.legal_moves: raise ValueError
@@ -211,7 +216,8 @@ def play_game(job):
             "reason": reason, "ours": ours_score, "plies": len(moves),
             "smother": sm if ours_mated_them else None,
             "smothered_us": sm if (reason == "mate" and ours_score == 0.0) else None,
-            "steers": steers, "steer_plies": steer_plies, "moves": " ".join(moves)}
+            "steers": steers, "steer_plies": steer_plies, "moves": " ".join(moves),
+            "our_clock": our_clock, "proofs": proofs}
 
 
 def parse_opts(lst):

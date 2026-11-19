@@ -196,6 +196,10 @@ Engine::Engine(std::optional<std::filesystem::path> path) :
     // (capped at 60% of the maximum). Long smothers need ~1-3M prover nodes.
     options.add("SmotherBrutalTimePercent", Option(300, 0, 1000));
 
+    // Brutal mode gives the deep prover its time only from this advantage on
+    // (centipawns), or with a mate on the board.
+    options.add("SmotherBigCp", Option(1000, 0, 10000));
+
     options.add("SmotherSteer", Option(0, 0, 500));
 
     options.add("SmotherSteerFloor", Option(150, -1000, 1000));

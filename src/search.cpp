@@ -214,7 +214,15 @@ void Search::Worker::start_smother_prover() {
                           && UCIEngine::to_cp(prev, rootPos) >= int(options["SmotherWinCp"])));
 
     // Brutal mode: hunt for smothers on every move, not only when winning.
+    // The deep, slow prover runs only when we are crushing (SmotherBigCp or a
+    // mate): measured at Elo 1500, every smother chance arose at +15 pawns or
+    // more, and spending the budget on every move ran the clock down before
+    // the chances came.
     mgr.smotherBrutal = bool(options["SmotherBrutal"]);
+    mgr.smotherCrush  = mgr.smotherBrutal && prev != VALUE_INFINITE && prev != -VALUE_INFINITE
+                    && (prev >= VALUE_MATE_IN_MAX_PLY
+                        || (!is_decisive(prev)
+                            && UCIEngine::to_cp(prev, rootPos) >= int(options["SmotherBigCp"])));
 
     if (!options["SmotherMate"] || rootMoves.empty())
         return;
@@ -226,14 +234,14 @@ void Search::Worker::start_smother_prover() {
     sl.quietMoves = int(options["SmotherQuietMoves"]);
     sl.maxNodes   = std::uint64_t(int(options["SmotherNodes"]));
     sl.robust     = bool(options["SmotherRobust"]);
-    if (mgr.smotherBrutal)
+    if (mgr.smotherCrush)
     {
         sl.maxMoves   = std::max(sl.maxMoves, 12);
         sl.quietMoves = std::max(sl.quietMoves, 2);
     }
 
 
-    const int pct = mgr.smotherBrutal ? int(options["SmotherBrutalTimePercent"])
+    const int pct = mgr.smotherCrush ? int(options["SmotherBrutalTimePercent"])
                   : mgr.smotherWon    ? int(options["SmotherWinTimePercent"])
                                       : int(options["SmotherTimePercent"]);
     if (limits.use_time_management() || limits.movetime)
@@ -241,7 +249,7 @@ void Search::Worker::start_smother_prover() {
         TimePoint budget =
           (limits.use_time_management() ? mgr.tm.optimum() : limits.movetime) * pct / 100;
         if (limits.use_time_management())
-            budget = std::min(budget, mgr.tm.maximum() * (mgr.smotherBrutal ? 6 : 5) / 10);
+            budget = std::min(budget, mgr.tm.maximum() * (mgr.smotherCrush ? 6 : 5) / 10);
         else
             budget = std::min(budget, limits.movetime * 9 / 10);
         if (budget < 1)
@@ -335,7 +343,7 @@ void Search::Worker::start_searching() {
     // run to its own deadline: a slower move costs nothing there.
     const bool letProverFinish =
       (!threads.stop && !limits.use_time_management() && !limits.movetime)
-      || ((main_manager()->smotherWon || main_manager()->smotherBrutal) && !main_manager()->ponder
+      || ((main_manager()->smotherWon || main_manager()->smotherCrush) && !main_manager()->ponder
           && !limits.infinite);
 
     // Stop the threads if not already stopped (also raise the stop if "ponderhit"

@@ -320,6 +320,7 @@ class SearchManager: public ISearchManager {
     int               smotherMateIn = 0;
     bool              smotherWon    = false;  // won mode for this move
     bool              smotherBrutal = false;  // SmotherBrutal for this move
+    bool              smotherCrush  = false;  // brutal and crushing: deep prover
     int               smotherSeeks  = 0;      // moves played in seek mode this game
     int               smotherDelays = 0;  // mate-phase steering choices this game
     std::atomic_bool  smotherReady{false};
