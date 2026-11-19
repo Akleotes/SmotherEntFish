@@ -254,6 +254,24 @@ void Search::Worker::start_smother_prover() {
             budget = std::min(budget, mgr.tm.maximum() * (mgr.smotherCrush ? 6 : 5) / 10);
         else
             budget = std::min(budget, limits.movetime * 9 / 10);
+
+        // Brutal mode with a forced mate already in hand: the result is
+        // settled, so the prover may spend SmotherMatePercent of the clock
+        // left, beyond the per-move maximum and without the node cap.
+        // Measured: after an opponent escapes a proven smother into a quicker
+        // plain mate, a new smother (6-9 moves) is often there but needs
+        // 0.3-11M nodes, more than a blitz move allows. At most 12 such moves
+        // per game: a tablebase win scores like a forced mate and can take
+        // many moves to convert, so the clock is never drained.
+        if (mgr.smotherCrush && is_win(prev) && limits.use_time_management()
+            && mgr.smotherHand < 12)
+        {
+            ++mgr.smotherHand;
+            const TimePoint left = limits.time[rootPos.side_to_move()]
+                                 - 2 * TimePoint(int(options["Move Overhead"]));
+            budget      = std::max(budget, left * int(options["SmotherMatePercent"]) / 100);
+            sl.maxNodes = 0;
+        }
         if (budget < 1)
             return;
         sl.deadline = now() + budget;
@@ -1052,6 +1070,8 @@ void Search::Worker::undo_null_move(Position& pos) { pos.undo_null_move(); }
 void Search::Worker::clear() {
     if (is_mainthread())
         main_manager()->smotherDelays = 0;  // new game
+    if (is_mainthread())
+        main_manager()->smotherHand = 0;
     if (is_mainthread())
         main_manager()->smotherSeeks = 0;
     mainHistory.fill(-5);

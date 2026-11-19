@@ -200,6 +200,10 @@ Engine::Engine(std::optional<std::filesystem::path> path) :
     // (centipawns), or with a mate on the board.
     options.add("SmotherBigCp", Option(1000, 0, 10000));
 
+    // Brutal mode with a forced mate in hand: the prover may use this share
+    // of the remaining clock per move (the result is no longer in doubt).
+    options.add("SmotherMatePercent", Option(15, 0, 50));
+
     // While pondering, let the parallel prover search deep and unbounded on
     // the opponent's time.
     options.add("SmotherPonderDeep", Option(true));
