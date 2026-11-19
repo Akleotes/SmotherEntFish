@@ -104,6 +104,9 @@ jobs:
       - if: startsWith(matrix.opp, 'maia-')
         run: sudo apt-get install -y -q libopenblas0 >/dev/null
       - name: Play ${{ matrix.name }} chunk ${{ matrix.chunk }}
+        env:
+          OPENBLAS_NUM_THREADS: "1"  # one BLAS thread per lc0 process
+          MATCH_DEBUG: "600"         # stack dumps every 10 min if a job gets stuck
         run: |
           mkdir -p out
           args=()
@@ -118,6 +121,7 @@ jobs:
             --seed ${{ matrix.seed }} --conc "$(nproc)" --tc "${{ matrix.tc }}" \
             --book notes/openings.txt "${args[@]}" | tail -1
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: res-${{ matrix.name }}-${{ matrix.chunk }}
           path: out/
@@ -147,9 +151,11 @@ jobs:
             cat "$f" >> "notes/results/$exp/$name.jsonl"
           done
           # Debugging output: unscored hung games and opponent stderr logs.
-          if ls res/*.hangs res/*.log >/dev/null 2>&1; then
+          shopt -s nullglob
+          dbg=(res/*.hangs res/*.log)
+          if [ ${#dbg[@]} -gt 0 ]; then
             mkdir -p "notes/results/$exp/debug"
-            cp res/*.hangs res/*.log "notes/results/$exp/debug/" 2>/dev/null || true
+            for f in "${dbg[@]}"; do [ -s "$f" ] && cp "$f" "notes/results/$exp/debug/"; done
           fi
           { echo '```'; python -I notes/scripts/summary.py notes/results/$exp/*.jsonl; echo '```'; } \
             | tee notes/results/$exp/SUMMARY.md >> "$GITHUB_STEP_SUMMARY"

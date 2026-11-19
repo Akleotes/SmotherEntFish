@@ -9,7 +9,7 @@ whose move takes longer than its remaining time (+ 100 ms grace) loses.
 Smothered mate = checkmate where every square next to the mated king is
 held by its own pieces or off the board; "classic" if the checker is a knight.
 """
-import argparse, json, os, random, subprocess, sys, threading, time
+import argparse, faulthandler, json, os, random, subprocess, sys, threading, time
 from multiprocessing import Pool
 import chess
 
@@ -105,25 +105,61 @@ def smother_kind(b):
 
 
 ENGS = {}
+CFG = {}
+
+
+def debug_dumps():
+    # MATCH_DEBUG=<seconds>: print every thread's stack to stderr at that
+    # interval, so a stuck job shows where it is in the CI log.
+    sec = int(os.environ.get("MATCH_DEBUG", "0") or 0)
+    if sec > 0:
+        faulthandler.dump_traceback_later(sec, repeat=True)
+
+
 def worker_init(opts_ours, opts_opp):
+    # Engines start lazily in play(): a failure there is reported as a result
+    # instead of killing the worker (a Pool would respawn it forever).
+    CFG["ours"], CFG["opp"] = opts_ours, opts_opp
+    debug_dumps()
+
+
+def ensure_engines():
     log = f"{A.out}.opp-{os.getpid()}.log" if A.opp_opt else None
-    ENGS["ours"] = Eng(A.ours, opts_ours)
-    ENGS["opp"] = Eng(A.opp, opts_opp, log)
+    for name, path in (("ours", A.ours), ("opp", A.opp)):
+        e = ENGS.get(name)
+        if e is not None and e.p.poll() is None:
+            continue
+        for attempt in range(3):
+            try:
+                ENGS[name] = Eng(path, CFG[name], log if name == "opp" else None)
+                break
+            except Exception:
+                if attempt == 2:
+                    raise
+                time.sleep(1 + attempt)
+
+
+def drop_engines():
+    for e in list(ENGS.values()):
+        try:
+            e.p.kill()
+        except Exception:
+            pass
+    ENGS.clear()
 
 
 def play(job):
-    # A hung or crashed engine is restarted and the game is reported as a hang
-    # (with the position), not scored.
+    # Any engine failure (hang, crash, start-up error) is reported as a hang
+    # record with the position, not scored; engines restart for the next game.
+    PLAYED["moves"] = []
     try:
+        ensure_engines()
         return play_game(job)
-    except Hang as h:
-        for e in ENGS.values():
-            try:
-                e.restart()
-            except Exception:
-                pass
+    except Exception as ex:
+        drop_engines()
         gi, fen0, ours_white = job
-        return {"game": gi, "fen": fen0, "ours_white": ours_white, "hang": str(h),
+        return {"game": gi, "fen": fen0, "ours_white": ours_white,
+                "hang": f"{type(ex).__name__}: {ex}",
                 "moves": " ".join(PLAYED.get("moves", []))}
 
 
@@ -195,6 +231,7 @@ if __name__ == "__main__":
     ours_opts = {"Threads": 1, "Hash": 16, **parse_opts(A.opt)}
     opp_opts = ({"Threads": 1, **parse_opts(A.opp_opt)} if A.opp_opt else
                 {"Threads": 1, "Hash": 16, "UCI_LimitStrength": "true", "UCI_Elo": A.elo})
+    debug_dumps()
     W = D = L = SM = SMC = ST = 0
     with Pool(A.conc, worker_init, (ours_opts, opp_opts)) as pool, open(A.out, "a") as f:
         H = 0
