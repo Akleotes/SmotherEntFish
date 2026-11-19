@@ -167,3 +167,24 @@ in these sessions (GitHub access is scoped to this repo). Instead:
   plays paired games, 5+0.05, 4 concurrent, real clocks, and records
   smothers and steer lines per game.
 - `notes/scripts/summary.py res/*.jsonl` prints the table.
+
+### First-pass grid (steering fix applied, 5+0.05, 200 games each, vs stock SF19 UCI_Elo N)
+
+```
+file                         games    W    D    L  score  +-95% smoth class  /100g  /100W steer/g time
+e1500_s0.jsonl                 200  200    0    0  1.000  0.000     5     1    2.5    2.5    0.00    0
+e1500_s150.jsonl               200  199    1    0  0.998  0.005     5     1    2.5    2.5    0.62    0
+e2000_s0.jsonl                 200  199    1    0  0.998  0.005     1     0    0.5    0.5    0.00    0
+e2000_s150.jsonl               200  196    4    0  0.990  0.010     0     0    0.0    0.0    0.69    0
+e2500_s0.jsonl                 200  198    2    0  0.995  0.007     1     0    0.5    0.5    0.00    0
+e2500_s150.jsonl               200  195    5    0  0.988  0.011     0     0    0.0    0.0    0.52    0
+e3000_s0.jsonl                 200  187   13    0  0.968  0.017     0     0    0.0    0.0    0.00    0
+e3000_s150.jsonl               200  163   36    1  0.905  0.028     0     0    0.0    0.0    0.64    0
+```
+
+"smoth" uses the engine's AnyPiece definition, "class" = knight mate.
+Findings: steering as designed does not raise the smother rate at any Elo
+(1500: 5 vs 5; 2000/2500: 1 vs 0), it fires ~0.6 times per game, and it costs
+strength at 3000 (0.968 -> 0.905). The 50% bar vs 3000 is far from binding
+(90-97%), so there is a lot of strength to spend on smothers.
+Raw games are in notes/results/*.jsonl.
