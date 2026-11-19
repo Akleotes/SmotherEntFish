@@ -153,3 +153,17 @@ Bench is unchanged (2497913). In the few moves inspected, the trap share was
 scoring during step 2. The puzzle harness has not been re-run since the fix.
 Cloning/building fastchess was blocked by the session's permission check;
 steps 2-3 still need it.
+
+### Match tooling without fastchess
+
+Cloning outside GitHub repos (fastchess, books, official Stockfish) is refused
+in these sessions (GitHub access is scoped to this repo). Instead:
+- Opponent: `git archive edb0d9db src scripts` (stock Stockfish 19, in this
+  repo), add the net, build. Bench 2497913.
+- `pip install chess` in a venv (PyPI works).
+- `notes/scripts/make_book.py ENGINE 300 openings.txt` makes balanced 8-ply
+  openings (`notes/openings.txt` is the set used).
+- `notes/scripts/match.py OUT.jsonl OURS OPP ELO GAMES --opt SmotherSteer=150`
+  plays paired games, 5+0.05, 4 concurrent, real clocks, and records
+  smothers and steer lines per game.
+- `notes/scripts/summary.py res/*.jsonl` prints the table.
