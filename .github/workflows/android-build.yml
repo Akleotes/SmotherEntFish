@@ -1,0 +1,60 @@
+# Static Android (arm64) binaries for DroidFish and other Android GUIs.
+# Triggered by a push to a branch named android-build/<anything>. The binaries
+# are built like upstream's Android CI (NDK, static, profile-guided under
+# qemu), checked with the bench signature, and uploaded as an artifact.
+# Do not rename them to "stockfish": DroidFish treats that name specially.
+name: Android build
+
+on:
+  push:
+    branches: ["android-build/**"]
+
+permissions:
+  contents: read
+
+jobs:
+  android:
+    name: "Android ${{ matrix.arch }}"
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [armv8-dotprod, armv8]
+    defaults:
+      run:
+        working-directory: src
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 50
+      - name: Install qemu and NDK
+        run: |
+          sudo apt-get update -q && sudo apt-get install -y -q qemu-user >/dev/null
+          NDKV="27.2.12479018"
+          SDK=/usr/local/lib/android/sdk
+          echo "y" | $SDK/cmdline-tools/latest/bin/sdkmanager "ndk;$NDKV" >/dev/null
+          echo "NDK_BIN=$SDK/ndk/$NDKV/toolchains/llvm/prebuilt/linux-x86_64/bin" >> $GITHUB_ENV
+      - name: Download the network
+        run: make net
+      - name: Build (profile-guided under qemu)
+        run: |
+          export PATH=$NDK_BIN:$PATH
+          export LDFLAGS="-static -Wno-unused-command-line-argument"
+          make -j4 profile-build ARCH=${{ matrix.arch }} COMP=ndk RUN_PREFIX=qemu-aarch64
+          make strip ARCH=${{ matrix.arch }} COMP=ndk
+      - name: Check bench signature under qemu
+        run: |
+          nodes=$(qemu-aarch64 ./stockfish bench 2>&1 | grep "Nodes searched" | awk '{print $4}')
+          echo "bench $nodes"
+          test "$nodes" = "2497913"
+          file stockfish
+      - name: Collect
+        run: |
+          mkdir -p ../android
+          mv stockfish ../android/smotherfish-${{ matrix.arch }}
+          git -C .. log -1 --format='%H %s' > ../android/smotherfish-${{ matrix.arch }}.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: smotherfish-android-${{ matrix.arch }}
+          path: android/
+          retention-days: 30
