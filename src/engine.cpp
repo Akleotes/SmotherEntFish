@@ -180,6 +180,11 @@ Engine::Engine(std::optional<std::filesystem::path> path) :
 
     options.add("SmotherSeekRule50", Option(60, 0, 99));
 
+    // Brutal mode: seek smothers on every move (not only when winning), with
+    // a deeper prover (12 moves, 2 quiet) that always gets the won-mode time.
+    // Plain mates still count as sure wins, so a win is never refused.
+    options.add("SmotherBrutal", Option(false));
+
     options.add("SmotherSteer", Option(0, 0, 500));
 
     options.add("SmotherSteerFloor", Option(150, -1000, 1000));

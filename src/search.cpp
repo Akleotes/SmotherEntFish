@@ -213,6 +213,9 @@ void Search::Worker::start_smother_prover() {
                       || (!is_decisive(prev)
                           && UCIEngine::to_cp(prev, rootPos) >= int(options["SmotherWinCp"])));
 
+    // Brutal mode: hunt for smothers on every move, not only when winning.
+    mgr.smotherBrutal = bool(options["SmotherBrutal"]);
+
     if (!options["SmotherMate"] || rootMoves.empty())
         return;
 
@@ -222,9 +225,14 @@ void Search::Worker::start_smother_prover() {
     sl.strict     = bool(options["SmotherStrict"]);
     sl.quietMoves = int(options["SmotherQuietMoves"]);
     sl.maxNodes   = std::uint64_t(int(options["SmotherNodes"]));
+    if (mgr.smotherBrutal)
+    {
+        sl.maxMoves   = std::max(sl.maxMoves, 12);
+        sl.quietMoves = std::max(sl.quietMoves, 2);
+    }
 
 
-    const int pct = mgr.smotherWon ? int(options["SmotherWinTimePercent"])
+    const int pct = mgr.smotherWon || mgr.smotherBrutal ? int(options["SmotherWinTimePercent"])
                                    : int(options["SmotherTimePercent"]);
     if (limits.use_time_management() || limits.movetime)
     {
@@ -321,7 +329,8 @@ void Search::Worker::start_searching() {
     // run to its own deadline: a slower move costs nothing there.
     const bool letProverFinish =
       (!threads.stop && !limits.use_time_management() && !limits.movetime)
-      || (main_manager()->smotherWon && !main_manager()->ponder && !limits.infinite);
+      || ((main_manager()->smotherWon || main_manager()->smotherBrutal) && !main_manager()->ponder
+          && !limits.infinite);
 
     // Stop the threads if not already stopped (also raise the stop if "ponderhit"
     // just reset threads.ponder).
@@ -576,7 +585,9 @@ bool Search::Worker::iterative_deepening() {
         // pieces to box their king in, and per-game budget left.
         auto& mgr   = *threads.main_manager();
         seekClassic = bool(options["SmotherClassic"]);
-        seekSmother = mgr.smotherWon && int(options["SmotherSeek"]) > mgr.smotherSeeks
+        const int budget = mgr.smotherBrutal ? std::max(int(options["SmotherSeek"]), 200)
+                                             : int(options["SmotherSeek"]);
+        seekSmother = (mgr.smotherWon || mgr.smotherBrutal) && budget > mgr.smotherSeeks
                    && rootPos.rule50_count() < int(options["SmotherSeekRule50"])
                    && popcount(rootPos.pieces(~us)) >= 4;
         if (seekSmother && mainThread)
