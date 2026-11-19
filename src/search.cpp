@@ -42,6 +42,7 @@
 #include "nnue/network.h"
 #include "nnue/nnue_accumulator.h"
 #include "position.h"
+#include "smother.h"
 #include "syzygy/tbprobe.h"
 #include "thread.h"
 #include "timeman.h"
@@ -188,6 +189,50 @@ void Search::Worker::ensure_network_replicated() {
     (void) (network[numaAccessToken]);
 }
 
+// Try to prove a forced smothered mate from the root before the normal search
+// starts. Runs on the main thread only, inside a small slice of the move's
+// time (or a node budget when there is no clock), so the normal search keeps
+// almost all of its time.
+void Search::Worker::run_smother_prover() {
+
+    auto& mgr = *main_manager();
+    mgr.smotherPV.clear();
+    mgr.smotherMateIn = 0;
+
+    if (!options["SmotherMate"] || rootMoves.empty())
+        return;
+
+    Smother::Limits sl;
+    sl.maxMoves = int(options["SmotherMaxMoves"]);
+    sl.style    = options["SmotherClassic"] ? Smother::Style::Classic : Smother::Style::AnyPiece;
+    sl.strict   = bool(options["SmotherStrict"]);
+    sl.maxNodes = std::uint64_t(int(options["SmotherNodes"]));
+
+    const int pct = int(options["SmotherTimePercent"]);
+    if (limits.use_time_management() || limits.movetime)
+    {
+        TimePoint budget = (limits.use_time_management() ? mgr.tm.optimum() : limits.movetime)
+                         * pct / 100;
+        if (budget < 1)
+            return;
+        sl.deadline = now() + budget;
+    }
+
+    Smother::Result r = Smother::prove(rootPos, sl, threads.stop);
+    if (!r.found || r.pv.empty())
+        return;
+
+    // Respect "searchmoves" and any other root restriction.
+    if (std::find(rootMoves.begin(), rootMoves.end(), r.pv[0]) == rootMoves.end())
+        return;
+
+    mgr.smotherPV     = r.pv;
+    mgr.smotherMateIn = r.mateIn;
+
+    sync_cout << "info string smother mate in " << r.mateIn << " proven, " << r.nodes
+              << " nodes" << sync_endl;
+}
+
 void Search::Worker::start_searching() {
 
     accumulatorStack.reset();
@@ -211,6 +256,8 @@ void Search::Worker::start_searching() {
         main_manager()->updates.onBestmove(UCIEngine::move(Move::none()), "");
         return;
     }
+
+    run_smother_prover();
 
     // Main thread starts non-main threads, and begins own search
     threads.start_searching();
@@ -261,6 +308,34 @@ void Search::Worker::start_searching() {
         ponder = UCIEngine::move(bestThread->rootMoves[0].pv[1], rootPos.is_chess960());
 
     auto bestmove = UCIEngine::move(bestThread->rootMoves[0].pv[0], rootPos.is_chess960());
+
+    // A proven smothered mate overrides the normal choice. It is a forced win,
+    // so this never gives away a better result.
+    const auto& spv = main_manager()->smotherPV;
+    if (!spv.empty())
+    {
+        const bool c960 = rootPos.is_chess960();
+        std::string pvStr;
+        for (Move m : spv)
+            pvStr += (pvStr.empty() ? "" : " ") + UCIEngine::move(m, c960);
+
+        InfoFull info;
+        info.depth    = int(spv.size());
+        info.selDepth = int(spv.size());
+        info.multiPV  = 1;
+        info.score    = {mate_in(int(spv.size())), rootPos};
+        info.wdl      = "1000 0 0";
+        info.timeMs   = usize(main_manager()->tm.elapsed_time()) + 1;
+        info.nodes    = threads.nodes_searched();
+        info.nps      = info.nodes * 1000 / info.timeMs;
+        info.tbHits   = threads.tb_hits();
+        info.pv       = pvStr;
+        info.hashfull = tt.hashfull();
+        main_manager()->updates.onUpdateFull(info);
+
+        bestmove = UCIEngine::move(spv[0], c960);
+        ponder   = spv.size() > 1 ? UCIEngine::move(spv[1], c960) : "";
+    }
     main_manager()->updates.onBestmove(bestmove, ponder);
 }
 
@@ -549,6 +624,12 @@ bool Search::Worker::iterative_deepening() {
         // Have we found a "mate in x" after a completed iteration?
         if (limits.mate && !threads.stop && is_mate_or_mated(rootMoves[0].score)
             && VALUE_MATE - std::abs(rootMoves[0].score) <= 2 * limits.mate)
+            threads.stop = true;
+
+        // A forced smothered mate is already proven: the move is decided, so
+        // one completed iteration (for a sane PV and TT) is enough.
+        if (mainThread && !mainThread->smotherPV.empty() && !mainThread->ponder
+            && !limits.infinite)
             threads.stop = true;
 
         if (!mainThread)

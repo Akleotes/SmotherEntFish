@@ -132,6 +132,21 @@ Engine::Engine(std::optional<std::filesystem::path> path) :
 
     options.add("SyzygyProbeLimit", Option(7, 0, 7));
 
+    // Smothered-mate prover (see smother.h). It only plays a line when it has
+    // proved a smothered mate against every defence; otherwise the normal
+    // search decides the move.
+    options.add("SmotherMate", Option(true));
+
+    options.add("SmotherClassic", Option(false));
+
+    options.add("SmotherStrict", Option(false));
+
+    options.add("SmotherMaxMoves", Option(8, 1, 20));
+
+    options.add("SmotherTimePercent", Option(5, 0, 50));
+
+    options.add("SmotherNodes", Option(5000000, 0, 2000000000));
+
     options.add(  //
       "EvalFile", Option(EvalFileDefaultName, [this](const Option& o) {
           load_network(path_from_utf8(std::string(o)));

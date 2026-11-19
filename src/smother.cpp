@@ -1,0 +1,425 @@
+/*
+  Smothered-mate prover for Stockfish.
+  Licensed under the GNU GPL v3 (same as Stockfish).
+*/
+
+#include "smother.h"
+
+#include <algorithm>
+#include <cstdlib>
+#include <deque>
+#include <vector>
+
+#include "attacks.h"
+#include "bitboard.h"
+#include "movegen.h"
+#include "position.h"
+
+namespace Stockfish::Smother {
+
+namespace {
+
+int sq_distance(Square a, Square b) {
+    return std::max(std::abs(int(file_of(a)) - int(file_of(b))),
+                    std::abs(int(rank_of(a)) - int(rank_of(b))));
+}
+
+// Assumes the side to move is already known to be checkmated.
+bool smothered_given_mate(const Position& pos, Style style) {
+    const Color    us    = pos.side_to_move();
+    const Bitboard ring  = Attacks::attacks_bb<KING>(pos.square<KING>(us));
+    const Bitboard holes = ring & ~pos.pieces(us);
+
+    return style == Style::Classic ? !holes : !(holes & ~pos.checkers());
+}
+
+// Proof table. Attack and defence nodes share it: their keys differ because
+// the side to move differs. proveN = proven with at most proveN attacker
+// moves left; failN = disproven with failN attacker moves left.
+struct Entry {
+    Key    key;
+    Move   move;
+    int8_t proveN;
+    int8_t failN;
+};
+
+constexpr std::size_t TableBits = 18;  // 256K entries, 4 MB
+constexpr std::size_t TableMask = (std::size_t(1) << TableBits) - 1;
+
+// Goal of a sub-search. Any = plain forced mate, used to check that a
+// defender who leaves the smother line gets mated strictly sooner.
+enum Kind {
+    SMOTHER,
+    ANY
+};
+
+constexpr Key AnySalt = 0x9E3779B97F4A7C15ULL;
+
+struct ScoredMove {
+    Move m;
+    int  score;
+};
+
+class Prover {
+   public:
+    Prover(Position& p, const Limits& l, const std::atomic<bool>& s, std::vector<Entry>& t) :
+        pos(p),
+        lim(l),
+        stop(s),
+        table(t) {}
+
+    Result run();
+
+   private:
+    bool attack(int n, Kind kind);
+    bool defend(int n, Kind kind, const MoveList<LEGAL>& replies);
+    int  min_moves(Kind kind, int limit);
+    void extract_pv(int n, std::vector<Move>& pv);
+    void poll();
+
+    Entry* probe(Key k) {
+        Entry* e = &table[k & TableMask];
+        if (e->key != k)
+        {
+            e->key    = k;
+            e->move   = Move::none();
+            e->proveN = 0;
+            e->failN  = 0;
+        }
+        return e;
+    }
+
+    Position&                pos;
+    const Limits&            lim;
+    const std::atomic<bool>& stop;
+    std::vector<Entry>&      table;
+    std::uint64_t            nodes        = 0;
+    int                      ply          = 0;
+    bool                     aborted      = false;
+    bool                     ignoreLimits = false;
+};
+
+void Prover::poll() {
+    if (ignoreLimits || (nodes & 2047))
+        return;
+    if (stop.load(std::memory_order_relaxed) || (lim.maxNodes && nodes >= lim.maxNodes)
+        || (lim.deadline && now() >= lim.deadline))
+        aborted = true;
+}
+
+// Attacker to move: is there a check after which every defence still ends in
+// a smothered mate within n attacker moves (this one included)?
+bool Prover::attack(int n, Kind kind) {
+    ++nodes;
+    poll();
+    if (aborted)
+        return false;
+
+    const Key k = pos.key() ^ (kind == ANY ? AnySalt : 0);
+    Entry*    e = probe(k);
+    if (e->proveN && e->proveN <= n)
+        return true;
+    if (e->failN >= n)
+        return false;
+
+    const Color    them  = ~pos.side_to_move();
+    const Square   ksq   = pos.square<KING>(them);
+    const Bitboard holes = Attacks::attacks_bb<KING>(ksq) & ~pos.pieces(them);
+
+    // Last attacker move: the defender cannot fill any square, so the king's
+    // current neighbourhood must already be closed, except possibly the one
+    // square the mating piece lands on.
+    if (kind == SMOTHER && n == 1
+        && (lim.style == Style::Classic ? bool(holes) : more_than_one(holes)))
+    {
+        e->failN = 1;
+        return false;
+    }
+
+    ScoredMove moves[MAX_MOVES];
+    int        cnt = 0;
+    for (const Move m : MoveList<LEGAL>(pos))
+    {
+        if (kind == SMOTHER && n == 1 && (holes & ~square_bb(m.to_sq())))
+            continue;
+        if (!pos.gives_check(m))
+            continue;
+
+        PieceType pt =
+          m.type_of() == PROMOTION ? m.promotion_type() : type_of(pos.moved_piece(m));
+        int score = pt == KNIGHT ? 600 : pt == QUEEN ? 500 : pt == ROOK ? 300 : pt == BISHOP ? 200 : 100;
+        score += pos.capture(m) ? 50 : 0;
+        score -= 10 * sq_distance(m.to_sq(), ksq);
+        if (m == e->move)
+            score += 100000;
+        moves[cnt++] = {m, score};
+    }
+    std::sort(moves, moves + cnt,
+              [](const ScoredMove& a, const ScoredMove& b) { return a.score > b.score; });
+
+    for (int i = 0; i < cnt; ++i)
+    {
+        const Move m = moves[i].m;
+        StateInfo  st;
+        pos.do_move(m, st);
+        ++ply;
+
+        bool ok;
+        {
+            MoveList<LEGAL> replies(pos);
+            if (replies.size() == 0)  // in check with no moves: mate
+                ok = kind == ANY || smothered_given_mate(pos, lim.style);
+            else
+                ok = n > 1 && !pos.is_draw(ply) && defend(n - 1, kind, replies);
+        }
+
+        --ply;
+        pos.undo_move(m);
+
+        if (aborted)
+            return false;
+        if (ok)
+        {
+            e        = probe(k);  // may have been reused by a transposition
+            e->move  = m;
+            e->proveN = int8_t(n);
+            return true;
+        }
+    }
+
+    e = probe(k);
+    e->failN = int8_t(std::max<int>(e->failN, n));
+    return false;
+}
+
+// Defender to move (in check): does every reply still lose to a smothered
+// mate within n attacker moves?
+bool Prover::defend(int n, Kind kind, const MoveList<LEGAL>& replies) {
+    ++nodes;
+
+    const Key k = pos.key() ^ (kind == ANY ? AnySalt : 0);
+    Entry*    e = probe(k);
+    if (e->proveN && e->proveN <= n)
+        return true;
+    if (e->failN >= n)
+        return false;
+
+    // Try the most likely refutations first: the known refutation, captures
+    // of the checker, then king moves, then interpositions.
+    const Square ksq = pos.square<KING>(pos.side_to_move());
+    ScoredMove   moves[MAX_MOVES];
+    int          cnt = 0;
+    for (const Move r : replies)
+    {
+        int score = r == e->move ? 100000 : 0;
+        score += pos.capture(r) ? 1000 : 0;
+        score += r.from_sq() == ksq ? 500 : 0;
+        moves[cnt++] = {r, score};
+    }
+    std::sort(moves, moves + cnt,
+              [](const ScoredMove& a, const ScoredMove& b) { return a.score > b.score; });
+
+    auto fail = [&](Move r) {
+        Entry* f = probe(k);
+        f->move  = r;
+        f->failN = int8_t(std::max<int>(f->failN, n));
+        return false;
+    };
+
+    if (kind == ANY || lim.strict)
+    {
+        // Every reply must lose to the same kind of mate within n moves.
+        for (int i = 0; i < cnt; ++i)
+        {
+            const Move r = moves[i].m;
+            StateInfo  st;
+            pos.do_move(r, st);
+            ++ply;
+            const bool ok = !pos.is_draw(ply) && attack(n, kind);
+            --ply;
+            pos.undo_move(r);
+
+            if (aborted)
+                return false;
+            if (!ok)
+                return fail(r);
+        }
+    }
+    else
+    {
+        // Default rule. Let S be the longest smother any reply runs into.
+        // Every reply must either be smothered, or be mated by any means in
+        // fewer than S moves. Then a defender who resists longest is always
+        // smothered, and at least one smother line really exists.
+        int sLen[MAX_MOVES];
+        int S = 0;
+
+        for (int i = 0; i < cnt; ++i)
+        {
+            const Move r = moves[i].m;
+            StateInfo  st;
+            pos.do_move(r, st);
+            ++ply;
+
+            int  len  = 0;
+            bool dead = pos.is_draw(ply);
+            if (!dead)
+            {
+                for (int j = 1; j <= n && !len && !aborted; ++j)
+                    if (attack(j, SMOTHER))
+                        len = j;
+                // No smother: it must at least be a quicker plain mate.
+                if (!len && !aborted && !(n > 1 && attack(n - 1, ANY)))
+                    dead = true;
+            }
+
+            --ply;
+            pos.undo_move(r);
+
+            if (aborted)
+                return false;
+            if (dead)
+                return fail(r);
+            sLen[i] = len;
+            S       = std::max(S, len);
+        }
+
+        if (!S)
+            return fail(moves[0].m);
+
+        for (int i = 0; i < cnt; ++i)
+        {
+            if (sLen[i])
+                continue;
+            const Move r = moves[i].m;
+            StateInfo  st;
+            pos.do_move(r, st);
+            ++ply;
+            const bool ok = S > 1 && attack(S - 1, ANY);
+            --ply;
+            pos.undo_move(r);
+
+            if (aborted)
+                return false;
+            if (!ok)
+                return fail(r);
+        }
+    }
+
+    e         = probe(k);
+    e->proveN = int8_t(n);
+    return true;
+}
+
+// Smallest k <= limit such that attack(k, kind) holds, or 0.
+int Prover::min_moves(Kind kind, int limit) {
+    for (int k = 1; k <= limit; ++k)
+        if (attack(k, kind))
+            return k;
+    return 0;
+}
+
+// Follow the proof: the attacker plays the proven move, the defender picks
+// the reply that holds out longest.
+void Prover::extract_pv(int n, std::vector<Move>& pv) {
+    std::deque<StateInfo> states;
+    std::vector<Move>     done;
+    Kind                  kind = SMOTHER;
+
+    while (n > 0 && attack(n, kind))
+    {
+        const Move m = probe(pos.key() ^ (kind == ANY ? AnySalt : 0))->move;
+        if (m == Move::none())
+            break;
+        pv.push_back(m);
+        done.push_back(m);
+        pos.do_move(m, states.emplace_back());
+        ++ply;
+
+        MoveList<LEGAL> replies(pos);
+        if (replies.size() == 0)
+            break;
+
+        Move best = Move::none();
+        int  bestN = 0;
+        Kind bestKind = SMOTHER;
+        for (const Move r : replies)
+        {
+            StateInfo st;
+            pos.do_move(r, st);
+            ++ply;
+            // Prefer showing the smother line; a reply only falls back to a
+            // plain (strictly shorter) mate when it has no smother.
+            Kind rk  = kind;
+            int  len = min_moves(kind, n - 1);
+            if (!len && kind == SMOTHER && !lim.strict && n > 2)
+            {
+                len = min_moves(ANY, n - 2);
+                rk  = ANY;
+            }
+            --ply;
+            pos.undo_move(r);
+            if (len > bestN || (len == bestN && rk == SMOTHER))
+            {
+                bestN    = len;
+                best     = r;
+                bestKind = rk;
+            }
+        }
+        if (best == Move::none())
+            break;
+        pv.push_back(best);
+        done.push_back(best);
+        pos.do_move(best, states.emplace_back());
+        ++ply;
+        n    = bestN;
+        kind = bestKind;
+    }
+
+    for (auto it = done.rbegin(); it != done.rend(); ++it)
+    {
+        pos.undo_move(*it);
+        --ply;
+    }
+}
+
+Result Prover::run() {
+    Result res;
+    std::fill(table.begin(), table.end(), Entry{0, Move::none(), 0, 0});
+
+    for (int n = 1; n <= lim.maxMoves; ++n)
+    {
+        if (attack(n, SMOTHER))
+        {
+            res.found  = true;
+            res.mateIn = n;
+            ignoreLimits = true;  // the proof exists; rebuilding the line is bounded
+            extract_pv(n, res.pv);
+            break;
+        }
+        if (aborted)
+            break;
+    }
+
+    res.aborted = aborted;
+    res.nodes   = nodes;
+    return res;
+}
+
+}  // namespace
+
+bool is_smothered_mate(const Position& pos, Style style) {
+    return pos.checkers() && MoveList<LEGAL>(pos).size() == 0 && smothered_given_mate(pos, style);
+}
+
+Result prove(Position& pos, const Limits& limits, const std::atomic<bool>& stop) {
+    static std::vector<Entry> table(std::size_t(1) << TableBits);
+
+    if (limits.maxMoves <= 0)
+        return {};
+
+    Prover p(pos, limits, stop, table);
+    return p.run();
+}
+
+}  // namespace Stockfish::Smother

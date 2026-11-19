@@ -312,6 +312,10 @@ class SearchManager: public ISearchManager {
     Value                bestPreviousAverageScore;
     bool                 stopOnPonderhit;
 
+    // Proven forced smothered mate for the current search (empty if none)
+    std::vector<Move> smotherPV;
+    int               smotherMateIn = 0;
+
     const UpdateContext& updates;
 };
 
@@ -357,6 +361,7 @@ class Worker {
 
    private:
     bool iterative_deepening();
+    void run_smother_prover();
 
     void do_move(Position& pos, const Move move, StateInfo& st, Stack* const ss);
     void
