@@ -208,8 +208,10 @@ void Search::Worker::start_smother_prover() {
     // is not in doubt, so the prover gets a larger share of the move's time,
     // and the move waits for it (see start_searching()).
     const Value prev = mgr.bestPreviousScore;
+    // A TB-range win counts too: in seek mode a plain forced mate is scored
+    // as one, and the mating phase is exactly where smothers are found.
     mgr.smotherWon   = prev != VALUE_INFINITE && prev != -VALUE_INFINITE
-                  && (prev >= VALUE_MATE_IN_MAX_PLY
+                  && (is_win(prev)
                       || (!is_decisive(prev)
                           && UCIEngine::to_cp(prev, rootPos) >= int(options["SmotherWinCp"])));
 
@@ -220,7 +222,7 @@ void Search::Worker::start_smother_prover() {
     // the chances came.
     mgr.smotherBrutal = bool(options["SmotherBrutal"]);
     mgr.smotherCrush  = mgr.smotherBrutal && prev != VALUE_INFINITE && prev != -VALUE_INFINITE
-                    && (prev >= VALUE_MATE_IN_MAX_PLY
+                    && (is_win(prev)
                         || (!is_decisive(prev)
                             && UCIEngine::to_cp(prev, rootPos) >= int(options["SmotherBigCp"])));
 
