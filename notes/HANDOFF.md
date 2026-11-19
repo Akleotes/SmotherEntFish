@@ -235,3 +235,18 @@ Findings:
   claimed=24482 verified=24482 bad=0. The 24 unclaimed are smothers only in
   the puzzle's main line (another defence avoids them and is not mated
   faster), so not forced under the prover's rule.
+- grid3b (deep prover only when crushing): no gain at 1500/2000/15+0.15
+  (0.6-0.8 smothers/100) and no cost at 3000 (0.981 vs 0.973). In-game
+  proof records: ~1.5% of games at 1500 reach a proven smother and only
+  ~50% of those end in one, because the prover's rule lets the defender
+  escape into a faster plain mate and weak opponents do.
+- Maia grid (human-like, 1000 games each): smothers per 100 games, default
+  vs brutal: Maia 1100 2.0 vs 1.4, Maia 1500 0.6 vs 0.8, Maia 1900 1.8 vs
+  1.8. Scores 0.994-0.999. Same picture as against Stockfish at UCI_Elo.
+- Bug fixed: in seek mode a plain forced mate is a TB-range score, which the
+  won/crushing gates did not accept, so the prover lost its budget right in
+  the mating phase (a smother in 7 needing 38k nodes was missed after an
+  escape). grid4 measures the fix.
+- Android: `.github/workflows/android-build.yml` (push to
+  `android-build/<name>`) builds static armv8 / armv8-dotprod binaries with
+  NDK 27.2, checks bench 2497913 under qemu, uploads artifacts.
