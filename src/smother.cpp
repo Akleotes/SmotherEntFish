@@ -158,9 +158,12 @@ bool Prover::attack(int n, Kind kind, int q) {
         if (!check && !allowQuiet)
             continue;
 
-        PieceType pt =
-          m.type_of() == PROMOTION ? m.promotion_type() : type_of(pos.moved_piece(m));
-        int score = pt == KNIGHT ? 600 : pt == QUEEN ? 500 : pt == ROOK ? 300 : pt == BISHOP ? 200 : 100;
+        PieceType pt = m.type_of() == PROMOTION ? m.promotion_type() : type_of(pos.moved_piece(m));
+        int       score = pt == KNIGHT ? 600
+                        : pt == QUEEN  ? 500
+                        : pt == ROOK   ? 300
+                        : pt == BISHOP ? 200
+                                       : 100;
         score += pos.capture(m) ? 50 : 0;
         score -= 10 * sq_distance(m.to_sq(), ksq);
         if (!check)
@@ -209,14 +212,14 @@ bool Prover::attack(int n, Kind kind, int q) {
             return false;
         if (ok)
         {
-            e        = probe(k);  // may have been reused by a transposition
-            e->move  = m;
+            e         = probe(k);  // may have been reused by a transposition
+            e->move   = m;
             e->proveN = int8_t(n);
             return true;
         }
     }
 
-    e = probe(k);
+    e        = probe(k);
     e->failN = int8_t(std::max<int>(e->failN, n));
     return false;
 }
@@ -374,8 +377,8 @@ void Prover::extract_pv(int n, std::vector<Move>& pv) {
         if (replies.size() == 0)
             break;
 
-        Move best = Move::none();
-        int  bestN = 0;
+        Move best     = Move::none();
+        int  bestN    = 0;
         Kind bestKind = SMOTHER;
         for (const Move r : replies)
         {
@@ -426,8 +429,8 @@ Result Prover::run() {
     {
         if (attack(n, SMOTHER, lim.quietMoves))
         {
-            res.found  = true;
-            res.mateIn = n;
+            res.found    = true;
+            res.mateIn   = n;
             ignoreLimits = true;  // the proof exists; rebuilding the line is bounded
             extract_pv(n, res.pv);
             break;
@@ -462,7 +465,7 @@ int potential(const Position& pos, Color us) {
     Bitboard       knights  = pos.pieces(us, KNIGHT);
     while (knights)
     {
-        const Square s = pop_lsb(knights);
+        const Square s   = pop_lsb(knights);
         Bitboard     one = Attacks::attacks_bb<KNIGHT>(s);
         if (one & checkSqs)
             score += 6;
@@ -496,9 +499,9 @@ std::vector<Entry>& shared_table() {
 }
 }
 
-TrapResult traps(Position& pos, const Limits& perReply, TimePoint deadline,
-                 const std::atomic<bool>& stop) {
-    TrapResult tr;
+TrapResult
+traps(Position& pos, const Limits& perReply, TimePoint deadline, const std::atomic<bool>& stop) {
+    TrapResult     tr;
     const Color    them = pos.side_to_move();  // the defender replies now
     const Square   ksq  = pos.square<KING>(them);
     const Bitboard ring = Attacks::attacks_bb<KING>(ksq);
@@ -531,8 +534,8 @@ TrapResult traps(Position& pos, const Limits& perReply, TimePoint deadline,
         const int      holes = popcount(ring2 & ~pos.pieces(them));
         if (holes <= lim.maxMoves + 1 && MoveList<LEGAL>(pos).size())
         {
-            Prover   p(pos, lim, stop, shared_table());
-            Result   res = p.run();
+            Prover p(pos, lim, stop, shared_table());
+            Result res = p.run();
             tr.nodes += res.nodes;
             if (res.found)
             {

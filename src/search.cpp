@@ -217,8 +217,8 @@ void Search::Worker::start_smother_prover() {
     const int pct = int(options["SmotherTimePercent"]);
     if (limits.use_time_management() || limits.movetime)
     {
-        TimePoint budget = (limits.use_time_management() ? mgr.tm.optimum() : limits.movetime)
-                         * pct / 100;
+        TimePoint budget =
+          (limits.use_time_management() ? mgr.tm.optimum() : limits.movetime) * pct / 100;
         if (budget < 1)
             return;
         sl.deadline = now() + budget;
@@ -302,8 +302,7 @@ void Search::Worker::start_searching() {
     while (!threads.stop && (main_manager()->ponder || limits.infinite))
     {}
 
-    const bool letProverFinish =
-      !threads.stop && !limits.use_time_management() && !limits.movetime;
+    const bool letProverFinish = !threads.stop && !limits.use_time_management() && !limits.movetime;
 
     // Stop the threads if not already stopped (also raise the stop if "ponderhit"
     // just reset threads.ponder).
@@ -364,9 +363,9 @@ void Search::Worker::start_searching() {
         && !main_manager()->smotherReady.load(std::memory_order_acquire)
         && (!is_decisive(rootMoves[0].score) || matePhase) && rootMoves.size() > 1)
     {
-        const Color us    = rootPos.side_to_move();
-        const bool  c960  = rootPos.is_chess960();
-        auto        cp    = [&](Value v) { return UCIEngine::to_cp(v, rootPos); };
+        const Color us      = rootPos.side_to_move();
+        const bool  c960    = rootPos.is_chess960();
+        auto        cp      = [&](Value v) { return UCIEngine::to_cp(v, rootPos); };
         const int   bestCp  = cp(rootMoves[0].score);
         const int   floorCp = int(options["SmotherSteerFloor"]);
         const bool  winning = bestCp >= floorCp;
@@ -375,15 +374,15 @@ void Search::Worker::start_searching() {
         Smother::Limits per;
         per.maxMoves   = int(options["SmotherTrapDepth"]);
         per.quietMoves = std::min(1, int(options["SmotherQuietMoves"]));
-        per.style      = options["SmotherClassic"] ? Smother::Style::Classic : Smother::Style::AnyPiece;
-        per.strict     = bool(options["SmotherStrict"]);
-        per.maxNodes   = 4096;
+        per.style  = options["SmotherClassic"] ? Smother::Style::Classic : Smother::Style::AnyPiece;
+        per.strict = bool(options["SmotherStrict"]);
+        per.maxNodes = 4096;
 
         TimePoint deadline = 0;
         if (limits.use_time_management() || limits.movetime)
         {
-            const TimePoint t = limits.use_time_management() ? main_manager()->tm.optimum()
-                                                              : limits.movetime;
+            const TimePoint t =
+              limits.use_time_management() ? main_manager()->tm.optimum() : limits.movetime;
             deadline = now() + std::max<TimePoint>(5, t * int(options["SmotherSteerTime"]) / 100);
         }
 
@@ -448,9 +447,8 @@ void Search::Worker::start_searching() {
             const bool expected =
               rm.pv.size() > 1
               && std::find(tr.hitMoves.begin(), tr.hitMoves.end(), rm.pv[1]) != tr.hitMoves.end();
-            const int pot = potentialAfter(rm);
-            const double u =
-              100.0 * tr.share() + (expected ? 50.0 : 0.0) + 0.5 * pot - 0.05 * loss;
+            const int    pot = potentialAfter(rm);
+            const double u = 100.0 * tr.share() + (expected ? 50.0 : 0.0) + 0.5 * pot - 0.05 * loss;
             cands.push_back({i, loss, tr.share(), expected, pot, u});
             if (tr.aborted)
                 break;
@@ -485,7 +483,7 @@ void Search::Worker::start_searching() {
     const auto& spv = main_manager()->smotherPV;
     if (main_manager()->smotherReady.load(std::memory_order_acquire) && !spv.empty())
     {
-        const bool c960 = rootPos.is_chess960();
+        const bool  c960 = rootPos.is_chess960();
         std::string pvStr;
         for (Move m : spv)
             pvStr += (pvStr.empty() ? "" : " ") + UCIEngine::move(m, c960);

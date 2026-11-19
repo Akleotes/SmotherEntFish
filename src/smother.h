@@ -38,21 +38,21 @@ enum class Style {
 bool is_smothered_mate(const Position& pos, Style style);
 
 struct Limits {
-    int         maxMoves = 8;           // attacker moves (mate in N)
-    Style       style    = Style::AnyPiece;
-    bool        strict   = false;           // every defence must be smothered
-    int         quietMoves = 1;             // non-checking attacker moves per line
-    std::uint64_t maxNodes = 5000000;   // 0 = unlimited
-    TimePoint   deadline = 0;           // absolute now() value, 0 = none
-    bool        keepTable = false;      // reuse the proof table (no clear)
+    int           maxMoves   = 8;  // attacker moves (mate in N)
+    Style         style      = Style::AnyPiece;
+    bool          strict     = false;    // every defence must be smothered
+    int           quietMoves = 1;        // non-checking attacker moves per line
+    std::uint64_t maxNodes   = 5000000;  // 0 = unlimited
+    TimePoint     deadline   = 0;        // absolute now() value, 0 = none
+    bool          keepTable  = false;    // reuse the proof table (no clear)
 };
 
 struct Result {
     bool              found   = false;
     bool              aborted = false;
-    int               mateIn  = 0;      // attacker moves
+    int               mateIn  = 0;  // attacker moves
     std::uint64_t     nodes   = 0;
-    std::vector<Move> pv;               // principal (longest-resistance) line
+    std::vector<Move> pv;  // principal (longest-resistance) line
 };
 
 // Heuristic "smother potential" of pos for side us (higher = the enemy king
@@ -74,8 +74,8 @@ struct TrapResult {
     std::vector<Move> hitMoves;
     double            share() const { return total > 0 ? hit / total : 0; }
 };
-TrapResult traps(Position& pos, const Limits& perReply, TimePoint deadline,
-                 const std::atomic<bool>& stop);
+TrapResult
+traps(Position& pos, const Limits& perReply, TimePoint deadline, const std::atomic<bool>& stop);
 
 // Search from pos (side to move = attacker). pos is restored on return.
 // stop is polled so a GUI "stop" interrupts the proof.
