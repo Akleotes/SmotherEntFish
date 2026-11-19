@@ -10,7 +10,7 @@ Smothered mate = checkmate where every square next to the mated king is
 held by its own pieces or off the board; "classic" if the checker is a knight.
 """
 import argparse, faulthandler, json, os, random, subprocess, sys, threading, time
-from multiprocessing import Pool
+from multiprocessing import Pool, TimeoutError
 import chess
 
 ap = argparse.ArgumentParser()
@@ -246,7 +246,22 @@ if __name__ == "__main__":
     W = D = L = SM = SMC = ST = 0
     with Pool(A.conc, worker_init, (ours_opts, opp_opts)) as pool, open(A.out, "a") as f:
         H = 0
-        for n, g in enumerate(pool.imap_unordered(play, jobs), 1):
+        # A worker that dies loses its game and Pool then waits forever (one
+        # grid4 job sat 90 minutes like that). No result for STALL seconds,
+        # far longer than any game, ends the run with the games so far.
+        it = pool.imap_unordered(play, jobs)
+        stall = float(os.environ.get("MATCH_STALL", 600))
+        def results():
+            while True:
+                try:
+                    yield it.next(timeout=stall)
+                except StopIteration:
+                    return
+                except TimeoutError:
+                    print(f"STALL: no game finished in {stall:.0f} s; stopping", flush=True)
+                    pool.terminate()
+                    return
+        for n, g in enumerate(results(), 1):
             if "hang" in g:  # not scored; kept separately for debugging
                 H += 1
                 with open(A.out + ".hangs", "a") as hf:
