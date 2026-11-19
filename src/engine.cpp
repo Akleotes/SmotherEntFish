@@ -200,6 +200,10 @@ Engine::Engine(std::optional<std::filesystem::path> path) :
     // (centipawns), or with a mate on the board.
     options.add("SmotherBigCp", Option(1000, 0, 10000));
 
+    // While pondering, let the parallel prover search deep and unbounded on
+    // the opponent's time.
+    options.add("SmotherPonderDeep", Option(true));
+
     options.add("SmotherSteer", Option(0, 0, 500));
 
     options.add("SmotherSteerFloor", Option(150, -1000, 1000));

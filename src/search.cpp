@@ -257,6 +257,18 @@ void Search::Worker::start_smother_prover() {
         sl.deadline = now() + budget;
     }
 
+    // Pondering: the opponent's thinking time is free, so the parallel prover
+    // searches deep and without time or node limits until the search ends
+    // ("stop", or the end of the move after "ponderhit"). Any proof it finds
+    // is a forced win, so this only adds smothers.
+    if (mgr.ponder && options["SmotherParallel"] && options["SmotherPonderDeep"])
+    {
+        sl.maxMoves   = std::max(sl.maxMoves, 12);
+        sl.quietMoves = std::max(sl.quietMoves, 2);
+        sl.deadline   = 0;
+        sl.maxNodes   = 0;
+    }
+
     // Copy what the prover needs; the search reorders rootMoves meanwhile.
     std::vector<Move> allowed;
     for (const auto& rm : rootMoves)
