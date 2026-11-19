@@ -7,7 +7,8 @@ plan.json:
              "opts": ["SmotherShape=32", "SmotherShapeAlways=true"]}]}
 
 Each run is split into chunks of `chunk` games (even), one matrix job per
-chunk, with seed = run seed + chunk index so chunks use different openings.
+chunk, with seed = run seed + chunk index so chunks use different openings. Jobs are ordered slowest
+first; give slow runs (high Elo, brutal) a smaller "chunk" in the plan.
 Prints `exp=...` and `matrix=...` lines for $GITHUB_OUTPUT.
 """
 import json, sys
@@ -30,6 +31,14 @@ for run in plan["runs"]:
                      "opts": " ".join(run.get("opts", [])), "tc": run.get("tc", tc)})
         games -= g
         i += 1
+# Slowest jobs first, so the run does not wait on a long tail at the end:
+# stronger opponents mean longer games, and brutal mode waits for the prover.
+def cost(j):
+    c = j["elo"] * j["games"]
+    if "SmotherBrutal=true" in j["opts"]:
+        c *= 3
+    return -c
+jobs.sort(key=cost)
 if len(jobs) > 256:
     sys.exit("matrix too large (max 256 jobs)")
 print("exp=" + plan["exp"])
