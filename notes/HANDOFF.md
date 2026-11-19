@@ -305,3 +305,33 @@ e3000_off (SmotherMate=false) 600 593  7  0  0.994         1   0.2    -         
   A/B at 15+0.15.
 - Android build of de9d6354 passed (run 44633063886, bench 2497913 under
   qemu); it does not include the mate-in-hand budget yet.
+
+grid6 (mate-in-hand budget; same openings as grid5):
+
+```
+file                          games    W  D  L  score  smothers /100g  proof games  delivered
+e1500_brutal_hand  (5+0.05)    2000 1999  1  0  1.000        22   1.1   57           39%
+e1500_brutal_tc15_hand          1000 1000  0  0  1.000        14   1.4   43           33%
+e1500_brutal_tc15_nohand        1000 1000  0  0  1.000        11   1.1   42           26%
+e3000_brutal_hand              600  590  9  1  0.991         3   0.5    4           3/4
+```
+
+- 5+0.05: no gain (22 vs 25 in grid5): by the time a forced mate is in
+  hand the clock is too low for 15% of it to buy a 1M+ node proof.
+- 15+0.15 A/B: 14 vs 11 smothers, not significant, in the expected
+  direction. Kept: no cost seen (no time losses, clocks unchanged), and
+  real games are slower than these matches.
+- The one Elo 3000 loss is an ordinary blitz loss: at ply 36 (3.2 s on the
+  clock) the engine played Rxf6, -6.6 at depth 20; stock Stockfish 19 plays
+  the same move 8/8 times at that clock. Elo 3000 scores, grid5/6: 0.991
+  brutal+hand, 0.993 brutal, 0.993 default, 0.994 smother features off.
+
+Where this leaves the smother rate: ~1.1-1.4 per 100 games against weak
+and human-like opponents in 5-15 s games, with no strength cost. The
+limits measured: a proven smother appears in ~2-3% of games; the defender
+escapes ~50-60% of them into a quicker plain mate; strict proofs do not
+exist in those positions; re-proofs after an escape need more time than
+blitz gives. Most remaining levers are earlier in the game (openings,
+middlegame plans that keep the enemy king boxed in), as noted before.
+Ponder-time proving (SmotherPonderDeep) and the mate-in-hand budget only
+show in slower games, which these matches do not cover.
