@@ -45,7 +45,8 @@ def elo_cost(e):
     return ELO_COST[-1][1]
 
 def cost(j):
-    c = j["games"] * elo_cost(j["elo"])
+    base = float(j["tc"].split("+")[0]) / 5.0  # relative to 5+0.05
+    c = j["games"] * elo_cost(j["elo"]) * base
     if "SmotherBrutal=true" in j["opts"]:
         c *= 2
     return -c
