@@ -232,14 +232,15 @@ void Search::Worker::start_smother_prover() {
     }
 
 
-    const int pct = mgr.smotherWon || mgr.smotherBrutal ? int(options["SmotherWinTimePercent"])
-                                   : int(options["SmotherTimePercent"]);
+    const int pct = mgr.smotherBrutal ? int(options["SmotherBrutalTimePercent"])
+                  : mgr.smotherWon    ? int(options["SmotherWinTimePercent"])
+                                      : int(options["SmotherTimePercent"]);
     if (limits.use_time_management() || limits.movetime)
     {
         TimePoint budget =
           (limits.use_time_management() ? mgr.tm.optimum() : limits.movetime) * pct / 100;
         if (limits.use_time_management())
-            budget = std::min(budget, mgr.tm.maximum() / 2);
+            budget = std::min(budget, mgr.tm.maximum() * (mgr.smotherBrutal ? 6 : 5) / 10);
         else
             budget = std::min(budget, limits.movetime * 9 / 10);
         if (budget < 1)
