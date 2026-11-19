@@ -237,7 +237,8 @@ if __name__ == "__main__":
     ours_opts = {"Threads": 1, "Hash": 16, **parse_opts(A.opt)}
     opp_opts = ({"Threads": 1, **parse_opts(A.opp_opt)} if A.opp_opt else
                 {"Threads": 1, "Hash": 16, "UCI_LimitStrength": "true", "UCI_Elo": A.elo})
-    debug_dumps()
+    # (No debug_dumps() here: a faulthandler timer armed in the parent is
+    # inherited by forked workers and deadlocks them when they re-arm it.)
     W = D = L = SM = SMC = ST = 0
     with Pool(A.conc, worker_init, (ours_opts, opp_opts)) as pool, open(A.out, "a") as f:
         H = 0
