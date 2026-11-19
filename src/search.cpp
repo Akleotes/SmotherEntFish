@@ -214,11 +214,25 @@ void Search::Worker::start_smother_prover() {
     sl.quietMoves = int(options["SmotherQuietMoves"]);
     sl.maxNodes   = std::uint64_t(int(options["SmotherNodes"]));
 
-    const int pct = int(options["SmotherTimePercent"]);
+    // "Won mode": the last search said we are clearly winning. The result
+    // is not in doubt, so the prover gets a larger share of the move's time,
+    // and the move waits for it (see start_searching()).
+    const Value prev = mgr.bestPreviousScore;
+    mgr.smotherWon   = prev != VALUE_INFINITE && prev != -VALUE_INFINITE
+                  && (prev >= VALUE_MATE_IN_MAX_PLY
+                      || (!is_decisive(prev)
+                          && UCIEngine::to_cp(prev, rootPos) >= int(options["SmotherWinCp"])));
+
+    const int pct = mgr.smotherWon ? int(options["SmotherWinTimePercent"])
+                                   : int(options["SmotherTimePercent"]);
     if (limits.use_time_management() || limits.movetime)
     {
         TimePoint budget =
           (limits.use_time_management() ? mgr.tm.optimum() : limits.movetime) * pct / 100;
+        if (limits.use_time_management())
+            budget = std::min(budget, mgr.tm.maximum() / 2);
+        else
+            budget = std::min(budget, limits.movetime * 9 / 10);
         if (budget < 1)
             return;
         sl.deadline = now() + budget;
@@ -302,7 +316,11 @@ void Search::Worker::start_searching() {
     while (!threads.stop && (main_manager()->ponder || limits.infinite))
     {}
 
-    const bool letProverFinish = !threads.stop && !limits.use_time_management() && !limits.movetime;
+    // Without a clock, let the prover use its node budget. In won mode, let it
+    // run to its own deadline: a slower move costs nothing there.
+    const bool letProverFinish =
+      (!threads.stop && !limits.use_time_management() && !limits.movetime)
+      || (main_manager()->smotherWon && !main_manager()->ponder && !limits.infinite);
 
     // Stop the threads if not already stopped (also raise the stop if "ponderhit"
     // just reset threads.ponder).
@@ -359,7 +377,9 @@ void Search::Worker::start_searching() {
     // game, so the mate is always delivered in the end.
     const bool matePhase = rootMoves[0].score >= VALUE_MATE_IN_MAX_PLY
                         && main_manager()->smotherDelays < int(options["SmotherMateDelays"]);
+    const bool won = main_manager()->smotherWon;
     if (steer > 0 && bestThread == this && !skill.enabled()
+        && (won || !options["SmotherSteerWonOnly"])
         && !main_manager()->smotherReady.load(std::memory_order_acquire)
         && (!is_decisive(rootMoves[0].score) || matePhase) && rootMoves.size() > 1)
     {
@@ -367,23 +387,30 @@ void Search::Worker::start_searching() {
         const bool  c960    = rootPos.is_chess960();
         auto        cp      = [&](Value v) { return UCIEngine::to_cp(v, rootPos); };
         const int   bestCp  = cp(rootMoves[0].score);
-        const int   floorCp = int(options["SmotherSteerFloor"]);
-        const bool  winning = bestCp >= floorCp;
-        const int   margin  = winning ? steer : steer / 4;
+        // In won mode a candidate may give up up to SmotherWinMargin, as long
+        // as it keeps at least SmotherWinCp, and the trap prover looks deeper.
+        const int  floorCp = won ? std::max(int(options["SmotherSteerFloor"]),
+                                            int(options["SmotherWinCp"]))
+                                 : int(options["SmotherSteerFloor"]);
+        const bool winning = bestCp >= floorCp;
+        const int  margin  = won ? std::max(steer, int(options["SmotherWinMargin"]))
+                           : winning ? steer
+                                     : steer / 4;
 
         Smother::Limits per;
-        per.maxMoves   = int(options["SmotherTrapDepth"]);
+        per.maxMoves   = won ? int(options["SmotherWinTrapDepth"]) : int(options["SmotherTrapDepth"]);
         per.quietMoves = std::min(1, int(options["SmotherQuietMoves"]));
         per.style  = options["SmotherClassic"] ? Smother::Style::Classic : Smother::Style::AnyPiece;
         per.strict = bool(options["SmotherStrict"]);
-        per.maxNodes = 4096;
+        per.maxNodes = won ? std::uint64_t(int(options["SmotherWinTrapNodes"])) : 4096;
 
         TimePoint deadline = 0;
         if (limits.use_time_management() || limits.movetime)
         {
             const TimePoint t =
               limits.use_time_management() ? main_manager()->tm.optimum() : limits.movetime;
-            deadline = now() + std::max<TimePoint>(5, t * int(options["SmotherSteerTime"]) / 100);
+            const int pct = won ? int(options["SmotherWinSteerTime"]) : int(options["SmotherSteerTime"]);
+            deadline      = now() + std::max<TimePoint>(5, t * pct / 100);
         }
 
         auto potentialAfter = [&](const RootMove& rm) {
@@ -415,7 +442,9 @@ void Search::Worker::start_searching() {
         const std::atomic<bool> noStop{false};
         std::vector<Cand>       cands;
         std::uint64_t     trapNodes = 0;
-        const usize lines = std::min(rootMoves.size(), usize(int(options["SmotherSteerLines"])));
+        const usize lines = std::min(
+          rootMoves.size(),
+          usize(int(options[won ? "SmotherWinLines" : "SmotherSteerLines"])));
         for (usize i = 0; i < lines; ++i)
         {
             const RootMove& rm = rootMoves[i];
@@ -576,8 +605,16 @@ bool Search::Worker::iterative_deepening() {
         multiPV = std::max(multiPV, usize(4));
 
     // Smother steering also needs exact scores for a few candidate moves.
+    // With SmotherSteerWonOnly, only in won mode, so play at full strength
+    // while the game is still open.
     if (int(options["SmotherSteer"]) > 0)
-        multiPV = std::max(multiPV, usize(int(options["SmotherSteerLines"])));
+    {
+        const bool won = threads.main_manager()->smotherWon;
+        if (won)
+            multiPV = std::max(multiPV, usize(int(options["SmotherWinLines"])));
+        else if (!options["SmotherSteerWonOnly"])
+            multiPV = std::max(multiPV, usize(int(options["SmotherSteerLines"])));
+    }
 
     multiPV = std::min(multiPV, rootMoves.size());
 

@@ -149,6 +149,25 @@ Engine::Engine(std::optional<std::filesystem::path> path) :
 
     options.add("SmotherParallel", Option(true));
 
+    // Won mode: once the last search scored at least SmotherWinCp (or a
+    // mate), the prover gets SmotherWinTimePercent of the move's time.
+    options.add("SmotherWinCp", Option(300, 0, 10000));
+
+    options.add("SmotherWinTimePercent", Option(100, 0, 400));
+
+    // Steering in won mode (see search.cpp).
+    options.add("SmotherSteerWonOnly", Option(false));
+
+    options.add("SmotherWinMargin", Option(400, 0, 5000));
+
+    options.add("SmotherWinLines", Option(6, 2, 12));
+
+    options.add("SmotherWinTrapDepth", Option(5, 1, 8));
+
+    options.add("SmotherWinTrapNodes", Option(20000, 1000, 10000000));
+
+    options.add("SmotherWinSteerTime", Option(50, 0, 200));
+
     options.add("SmotherSteer", Option(0, 0, 500));
 
     options.add("SmotherSteerFloor", Option(150, -1000, 1000));
