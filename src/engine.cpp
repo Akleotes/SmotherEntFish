@@ -224,6 +224,10 @@ Engine::Engine(std::optional<std::filesystem::path> path) :
     // Also count "all but one" smothers: one square next to the mated king
     // may be empty, covered by the attacker (see Smother::Style::Partial).
     options.add("SmotherPartial", Option(false));
+    // Hybrid: "all but one" smothers also count once this many construction
+    // moves have been played in the game (0 = never; 80 = after the default
+    // construction budget is used up). SmotherPartial counts them always.
+    options.add("SmotherPartialAfter", Option(0, 0, 200));
     // Blocker survivability in the build score, a bit mask: 1 pinned
     // blocker bonus, 2 defended blocker bonus, 4 penalty if our knight wins
     // it (SEE), 8 penalty if a pawn blocker can step forward. 0 = off.

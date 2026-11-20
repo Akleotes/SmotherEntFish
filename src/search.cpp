@@ -240,13 +240,25 @@ void Search::Worker::start_smother_prover() {
                         || (!is_decisive(prev)
                             && UCIEngine::to_cp(prev, rootPos) >= int(options["SmotherBigCp"])));
 
+    // "All but one" smothers count always (SmotherPartial), or, the hybrid,
+    // once SmotherPartialAfter construction moves have been played this game:
+    // full smothers stay the goal while there is budget to build one, and the
+    // near one is taken afterwards instead of an ordinary mate. Construction
+    // never starts against an opponent who defends well, so neither does this.
+    {
+        const int after = int(options["SmotherPartialAfter"]);
+        mgr.smotherPartialNow =
+          bool(options["SmotherPartial"])
+          || (after > 0 && mgr.smotherBrutal && mgr.smotherBuilds >= after);
+    }
+
     if (!options["SmotherMate"] || rootMoves.empty())
         return;
 
     Smother::Limits sl;
     sl.maxMoves   = int(options["SmotherMaxMoves"]);
     sl.style      = options["SmotherClassic"] ? Smother::Style::Classic
-                  : options["SmotherPartial"] ? Smother::Style::Partial
+                  : mgr.smotherPartialNow     ? Smother::Style::Partial
                                               : Smother::Style::AnyPiece;
     sl.strict     = bool(options["SmotherStrict"]);
     sl.quietMoves = int(options["SmotherQuietMoves"]);
@@ -515,9 +527,9 @@ void Search::Worker::start_searching() {
         Smother::Limits per;
         per.maxMoves = won ? int(options["SmotherWinTrapDepth"]) : int(options["SmotherTrapDepth"]);
         per.quietMoves = std::min(1, int(options["SmotherQuietMoves"]));
-        per.style      = options["SmotherClassic"] ? Smother::Style::Classic
-                       : options["SmotherPartial"] ? Smother::Style::Partial
-                                                   : Smother::Style::AnyPiece;
+        per.style      = options["SmotherClassic"]          ? Smother::Style::Classic
+                       : main_manager()->smotherPartialNow ? Smother::Style::Partial
+                                                            : Smother::Style::AnyPiece;
         per.strict     = bool(options["SmotherStrict"]);
         per.maxNodes   = won ? std::uint64_t(int(options["SmotherWinTrapNodes"])) : 4096;
 
@@ -697,7 +709,7 @@ bool Search::Worker::iterative_deepening() {
         // per-game counters while the main thread updates them.
         auto& mgr      = *threads.main_manager();
         seekClassic    = bool(options["SmotherClassic"]);
-        smotherPartial = bool(options["SmotherPartial"]);
+        smotherPartial = mgr.smotherPartialNow;
         seekSmother    = mgr.smotherSeekNow;
         buildSmother   = mgr.smotherBuildNow;
         if (buildSmother)

@@ -322,6 +322,7 @@ class SearchManager {
     bool              smotherBuilding = false;  // construction mode on the last move
     bool              smotherSeekNow  = false;  // this move: seek mode (set before helpers start)
     bool              smotherBuildNow = false;  // this move: construction mode (likewise)
+    bool              smotherPartialNow = false;  // this move: "all but one" smothers count
     std::atomic_bool  smotherReady{false};
     std::atomic_bool  smotherStop{false};
     bool              smotherUnbounded = false;  // prover started without limits (pondering)
