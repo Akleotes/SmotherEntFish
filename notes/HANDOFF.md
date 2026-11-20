@@ -424,3 +424,29 @@ grid12 re-tests 0 / 2 / 10 with 2000 new games (Elo 1500) and 1000 vs
 Maia 1100. grid11 tests the Elo 3000 trigger (800/600/400 vs off), Elo
 2500 and 15+0.15. Also: `SmotherBuildSurviveCap` (default 12) for a cap
 ablation if a survivability setting wins.
+
+grid11 (construction defaults; 600 games each):
+
+```
+setting                               smothers /100g  W/D/L      score
+Elo 3000, trigger 800 (default)              8   1.3  593/6/1    0.993
+Elo 3000, trigger 600, floor 450             2   0.3  590/9/1    0.991
+Elo 3000, trigger 400, floor 300             3   0.5  547/52/1   0.955
+Elo 3000, smother features off               0   0.0  593/7/0    0.994
+Elo 2500, defaults                          25   4.2  600/0/0    1.000
+Elo 1500, defaults, 15+0.15                 74  12.3  600/0/0    1.000
+```
+
+- A lower trigger is worse on both counts; 800 stays.
+- The one loss at trigger 800 (game 35): at ply 63, +7.7 by stock depth 18,
+  the engine played Rb1 (mate follows) instead of g6, with 1.3 s left.
+  Replayed with the game's clocks, 5/5 times every mode (construction,
+  brutal without construction, smother off) plays g6: timing noise, not
+  construction mode. Construction at Elo 3000 so far: 1 loss in ~1,500
+  games; smother off: 0 in 600.
+- 15+0.15 gives the same rate as 5+0.05 (12.3 vs 10.6-12.7).
+- Engine renamed "Smotherfish 1 (Stockfish 19)" (43e8a3eb); README and
+  docs/SMOTHERFISH.md written (d7b39b31).
+- Merging into master: master is upstream Stockfish dev (98 commits past
+  Stockfish 19, new net architecture SFNNv18); a trial merge conflicts in
+  src/Makefile, src/misc.cpp, src/search.cpp. Not merged.
