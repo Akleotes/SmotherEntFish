@@ -10,7 +10,9 @@ Each run is split into chunks of `chunk` games (even), one matrix job per
 chunk, with seed = run seed + chunk index so chunks use different openings. Jobs are ordered slowest
 first; give slow runs (high Elo, brutal) a smaller "chunk" in the plan.
 A run may set "opponent": "maia-<rating>" (1100-1900) to play Maia on lc0
-(human-like, "go nodes 1") instead of Stockfish at UCI_Elo.
+(human-like, "go nodes 1") instead of Stockfish at UCI_Elo, or "opponent":
+"ref" to play the engine built from the plan's "ref" (a git ref) at full
+strength, with the run's "opp_opts".
 Prints `exp=...`, `maia=...` and `matrix=...` lines for $GITHUB_OUTPUT.
 """
 import json, sys
@@ -31,7 +33,8 @@ for run in plan["runs"]:
         jobs.append({"name": run["name"], "elo": int(run["elo"]), "games": g,
                      "seed": int(run.get("seed", 1)) + i, "chunk": i,
                      "opts": " ".join(run.get("opts", [])), "tc": run.get("tc", tc),
-                     "opp": run.get("opponent", "")})
+                     "opp": run.get("opponent", ""),
+                     "oppopts": " ".join(run.get("opp_opts", []))})
         games -= g
         i += 1
 # Slowest jobs first, so the run does not wait on a long tail at the end:
@@ -60,4 +63,7 @@ if len(jobs) > 256:
 maia = sorted({j["opp"].split("-")[1] for j in jobs if j["opp"].startswith("maia-")})
 print("exp=" + plan["exp"])
 print("maia=" + " ".join(maia))
+# "ref": a git ref built as an extra engine; runs with "opponent": "ref"
+# play it at full strength (head-to-head), with "opp_opts" as its options.
+print("ref=" + plan.get("ref", ""))
 print("matrix=" + json.dumps(jobs))
