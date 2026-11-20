@@ -594,7 +594,7 @@ int shape(const Position& pos, Color us) {
     return std::max(score, 0);
 }
 
-int build_score(const Position& pos, Color us) {
+int build_score(const Position& pos, Color us, int survive) {
     const Color    them  = ~us;
     const Square   ksq   = pos.square<KING>(them);
     const Bitboard ring  = Attacks::attacks_bb<KING>(ksq);
@@ -621,6 +621,41 @@ int build_score(const Position& pos, Color us) {
     Bitboard queens = pos.pieces(us, QUEEN);
     while (queens)
         score += 3 * std::max(0, 4 - sq_distance(pop_lsb(queens), ksq));
+
+    // Blocker survivability (survive 1: bonuses, 2: bonuses and penalties).
+    // Only cheap, already-known facts: pins, defenders, a static exchange
+    // for our knight, an open pawn push. Capped so that positions with many
+    // blockers do not dominate.
+    if (survive > 0)
+    {
+        const Bitboard pinned = pos.blockers_for_king(them) & pos.pieces(them);
+        int            s      = 0;
+        Bitboard       bl     = ring & pos.pieces(them);
+        while (bl)
+        {
+            const Square   b    = pop_lsb(bl);
+            const Bitboard atk  = pos.attackers_to(b);
+            if (pinned & b)
+                s += 4;  // cannot leave its square
+            if (atk & pos.pieces(them) & ~pos.pieces(KING))
+                s += 2;  // defended: a capture there costs us
+            if (survive >= 2)
+            {
+                // Our knight can take it without losing material.
+                Bitboard nk = atk & pos.pieces(us, KNIGHT);
+                if (nk && pos.see_ge(Move(lsb(nk), b), 0))
+                    s -= 4;
+                // A pawn that can step forward reopens the square.
+                if (type_of(pos.piece_on(b)) == PAWN)
+                {
+                    const Square to = b + pawn_push(them);
+                    if (is_ok(to) && pos.empty(to))
+                        s -= 3;
+                }
+            }
+        }
+        score += std::clamp(s, -12, 12);
+    }
 
     return score;
 }
