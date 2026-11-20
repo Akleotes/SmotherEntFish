@@ -329,7 +329,11 @@ if __name__ == "__main__":
     ours_opts = {"Threads": 1, "Hash": 16, **parse_opts(A.opt)}
     if A.ponder:
         ours_opts["Ponder"] = "true"
-        A.conc = max(1, A.conc // 2)  # our engine thinks on the opponent's time too
+        # While pondering, our engine runs two threads (search and smother
+        # prover) on the opponent's time, on top of the opponent's own: one
+        # game per 4 cores. With two, ponder1 had the opponent lose 59 of
+        # 600 games on time from CPU contention, which skewed the result.
+        A.conc = max(1, A.conc // 4)
     opp_opts = ({"Threads": 1, **parse_opts(A.opp_opt)} if A.opp_opt else
                 {"Threads": 1, "Hash": 16, "UCI_LimitStrength": "true", "UCI_Elo": A.elo})
     # (No debug_dumps() here: a faulthandler timer armed in the parent is
