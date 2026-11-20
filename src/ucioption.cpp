@@ -24,6 +24,7 @@
 #include <cerrno>
 #include <cstdlib>
 #include <iostream>
+#include <set>
 #include <sstream>
 #include <utility>
 
@@ -159,12 +160,16 @@ Option& Option::operator=(const std::string& v) {
 
     if (type == "combo")
     {
-        OptionsMap         comboMap;  // To have case insensitive compare
-        std::string        token;
-        std::istringstream ss(defaultValue);
+        // The allowed values are the words of the default string other than
+        // "var" (UCI: "default A var A var B"). A set, not an OptionsMap: an
+        // OptionsMap aborts on the repeated words this format always has.
+        std::set<std::string, CaseInsensitiveLess> values;
+        std::string                                token;
+        std::istringstream                         ss(defaultValue);
         while (ss >> token)
-            comboMap.add(token, Option());
-        if (!comboMap.count(v) || v == "var")
+            if (token != "var")
+                values.insert(token);
+        if (!values.count(v))
             return *this;
     }
 

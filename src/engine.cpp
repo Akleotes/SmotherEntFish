@@ -228,6 +228,12 @@ Engine::Engine(std::optional<std::filesystem::path> path) :
     // moves have been played in the game (0 = never; 80 = after the default
     // construction budget is used up). SmotherPartial counts them always.
     options.add("SmotherPartialAfter", Option(0, 0, 200));
+    // One switch for the smother goal in brutal mode, for GUIs (DroidFish):
+    // Full   = only true smothers count (default; the options above decide),
+    // Hybrid = true smothers first, "all but one" ones after 40 construction
+    //          moves (as SmotherPartialAfter 40; an explicit value there wins),
+    // Near   = "all but one" smothers always count (as SmotherPartial).
+    options.add("SmotherGoal", Option("Full var Full var Hybrid var Near", "Full"));
     // Blocker survivability in the build score, a bit mask: 1 pinned
     // blocker bonus, 2 defended blocker bonus, 4 penalty if our knight wins
     // it (SEE), 8 penalty if a pawn blocker can step forward. 0 = off.

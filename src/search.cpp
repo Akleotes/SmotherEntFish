@@ -246,9 +246,13 @@ void Search::Worker::start_smother_prover() {
     // near one is taken afterwards instead of an ordinary mate. Construction
     // never starts against an opponent who defends well, so neither does this.
     {
-        const int after = int(options["SmotherPartialAfter"]);
+        const bool goalNear   = options["SmotherGoal"] == "Near";
+        const bool goalHybrid = options["SmotherGoal"] == "Hybrid";
+        int        after      = int(options["SmotherPartialAfter"]);
+        if (after == 0 && goalHybrid)
+            after = 40;
         mgr.smotherPartialNow =
-          bool(options["SmotherPartial"])
+          bool(options["SmotherPartial"]) || goalNear
           || (after > 0 && mgr.smotherBrutal && mgr.smotherBuilds >= after);
     }
 
