@@ -246,6 +246,8 @@ Engine::Engine(std::optional<std::filesystem::path> path) :
     // escaped, we captured ~7 enemy units after the game was decided and the
     // opponent ended with 3 pieces, against 4 and 6 in delivered smothers.
     options.add("SmotherBuildKeep", Option(3, 0, 50));
+    // Extra points for each enemy piece within two squares of its king.
+    options.add("SmotherBuildKeepNear", Option(3, 0, 50));
     options.add("SmotherBuildMaterialDiv", Option(8, 1, 64));
 
     // While pondering, let the parallel prover search deep and unbounded on

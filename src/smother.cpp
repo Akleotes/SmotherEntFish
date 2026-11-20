@@ -656,7 +656,7 @@ static int build_score_v2(const Position& pos, Color us) {
     return score;
 }
 
-int build_score(const Position& pos, Color us, int survive, int cap, int version, int keep) {
+int build_score(const Position& pos, Color us, int survive, int cap, int version, int keep, int keepNear) {
     if (version == 2)
         return build_score_v2(pos, us);
 
@@ -677,7 +677,7 @@ int build_score(const Position& pos, Color us, int survive, int cap, int version
     Bitboard theirs = pos.pieces(them) & ~pos.pieces(KING);
     score += keep * popcount(theirs);  // SmotherBuildKeep (3)
     while (theirs)
-        score += sq_distance(pop_lsb(theirs), ksq) <= 2 ? 3 : 0;
+        score += sq_distance(pop_lsb(theirs), ksq) <= 2 ? keepNear : 0;  // SmotherBuildKeepNear (3)
 
     // The finishers: knights and the queen near the king.
     Bitboard knights = pos.pieces(us, KNIGHT);
