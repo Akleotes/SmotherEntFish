@@ -55,6 +55,11 @@ with any UCI chess GUI, such as DroidFish on Android. It identifies itself as
   material, keeps the enemy pieces next to their king, drives the king into a
   corner and brings the queen and knights close. It never lets its advantage
   drop below 6 pawns, and mates normally when the budget runs out.
+- **Smother goal** (`SmotherGoal`): Full (only true smothers, the default),
+  Near (also "all but one" smothers, where one square next to the king is
+  empty but covered), or Hybrid (true ones first, near ones later in the
+  game). Near ends about 40-56 of every 100 games against Elo 1500-2500
+  opponents with a full or near smother.
 - **Default mode** (brutal off) plays Stockfish's moves except when a smother
   is proven.
 
@@ -73,7 +78,10 @@ networks. Smothered mates per 100 games:
 | Maia 1900 | - | 4.7 | 0.998 |
 | Stockfish, Elo 3000 | 0.2 | 2.0 | 0.997 |
 
-No game was lost in any of these runs. Version 1.1 moved to the newer
+With `SmotherGoal` set to Near, games ending in a full or near smother rise to
+about 56 per 100 at Elo 1500, 44 at Elo 2000 and 40 at Elo 2500.
+No game was lost in any of these runs, and a full-strength strength test
+(SPRT, 6400 games) found no cost: +2 Elo against the default engine. Version 1.1 moved to the newer
 Stockfish base: in direct games against version 1 it scored 0.517 (about
 +12 Elo) over 4000 games, with the same smother rate. Brutal mode makes decided games longer
 (a median of about 120 half-moves instead of about 53), because it delays the

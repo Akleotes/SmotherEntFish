@@ -82,6 +82,7 @@ All options are standard UCI options. Defaults are what was measured best.
 | `SmotherMate` | true | Run the smother prover at all. |
 | `SmotherBrutal` | false | Brutal mode (see above). The main switch for smother hunting. |
 | `SmotherBuild` | true | Construction mode; only active with `SmotherBrutal`. |
+| `SmotherGoal` | Full | What counts as a smother in brutal mode: **Full** (only true smothers), **Hybrid** (true smothers first, "all but one" ones after 40 construction moves), **Near** ("all but one" ones always). See "Full, hybrid or near" below. |
 | `SmotherClassic` | false | Count only knight smothers. By default any piece may deliver the mate. |
 | `SmotherStrict` | false | Require a smother against every defence (no faster-mate escapes). Finds far fewer proofs. |
 
@@ -119,6 +120,15 @@ All options are standard UCI options. Defaults are what was measured best.
 | `SmotherBuildWeight` | 8 | Centipawns per construction-score point. |
 | `SmotherBuildSurvive` | 0 | Experimental blocker terms, a bit mask: 1 pinned blocker, 2 defended blocker, 4 blocker our knight wins, 8 pawn blocker that can step away. |
 | `SmotherBuildSurviveCap` | 12 | Cap on those terms, in score points. |
+| `SmotherBuildVersion` | 1 | 2 = construction-score weights fitted to game data (`notes/fit/`); better at predicting, not better in games. |
+| `SmotherPartial` | false | "All but one" smothers always count (the same as `SmotherGoal` Near). |
+| `SmotherPartialAfter` | 0 | "All but one" smothers count after this many construction moves (0 = never; `SmotherGoal` Hybrid uses 40). |
+
+### Other
+
+| Option | Default | Meaning |
+| ------ | ------- | ------- |
+| `Analysis Elo` | 0 | For "go infinite" analysis (DroidFish's analysis mode): above 0, limits analysis depth to what the `UCI_Elo` limiter uses at that rating. 0 = full strength. |
 
 ### Older experiments (off by default)
 
@@ -131,6 +141,24 @@ smother rate and cost strength against strong opponents.
 `SmotherShape`, `SmotherShapeCap`, `SmotherShapeAlways`: a small evaluation
 bonus for smother-friendly positions; no measurable effect. Construction mode
 replaced both.
+
+## Full, hybrid or near
+
+A true (full) smother needs every square next to the mated king filled by
+its own pieces. An "all but one" smother leaves one square empty, but covered
+by the attacker. Counting those as well changes how often a game ends with
+the king buried in its own pieces, and what share of those are true ones.
+Smothers per 100 games, brutal mode, 5+0.05:
+
+| `SmotherGoal` | Elo 1500: true | Elo 1500: true + near | Elo 2000: true + near | Elo 2500: true + near |
+| ------------- | -------------- | --------------------- | --------------------- | --------------------- |
+| Full (default) | 12.1 | 13.8 | about 8-9 | about 4-6 |
+| Hybrid (40) | 7.3-7.6 | 37-38 | - | - |
+| Near | 1.6 | 56.4 | 44.1 | 40.0 |
+
+Near gives the most smothers of either kind; Full gives the most true ones;
+Hybrid is in between. None of them loses games (no losses in these runs). The
+strength cost of Hybrid at full strength is being measured (SPRT).
 
 ## Measurements
 
@@ -172,6 +200,18 @@ Starting construction earlier against strong opponents does not help: at
 Elo 3000, a trigger of 4 or 6 pawns instead of 8 gave fewer smothers and more
 draws (score 0.955 at 4 pawns). 15+0.15 games give the same rate as 5+0.05.
 
+Pondering: with the engine pondering and the opponent thinking at least 1 s
+per move, deep proving while pondering (`SmotherPonderDeep`) gave 12.2 vs
+10.8 true smothers per 100 games at Elo 1500 and 9.0 vs 6.8 against Maia
+1100. It also exposed a bug, now fixed: after "ponderhit" the engine could
+wait up to about a second for a found proof's line to be rebuilt, which lost
+three games on time.
+
+Full-strength strength test (SPRT, 6400 games at 10+0.1, the method Fishtest
+uses): every hunting feature on against the default engine scored 0.503
+(+2 Elo, 95% 0 to +4). Hunting for smothers costs no strength against an
+equal opponent.
+
 Why ordinary play finds so few smothers: a forced smother exists in only 2-3%
 of games, and opponents escape about half of them by walking into a faster
 ordinary mate. Construction mode raises the number of positions where a
@@ -187,3 +227,9 @@ smother can be forced at all.
 - Experiments: write `notes/exp/plan.json` and push it to a branch
   `actions-exp/<name>`; the workflow plays the games and commits the results
   and a summary table back to that branch. See `notes/HANDOFF.md`.
+- Strength tests (SPRT): push `notes/exp/sprt.json` to an `actions-exp/<name>`
+  branch; `sprt.yml` runs waves of games until the result is clear.
+- CircleCI (free plan, a monthly credit pool): `.circleci/config.yml` runs
+  the same plan files on 30 machines at once, on branches named
+  `circle-exp/<name>`, for quick one-off tests. Its pipeline must be a native
+  CircleCI pipeline, not one created from a GitHub Actions workflow.
