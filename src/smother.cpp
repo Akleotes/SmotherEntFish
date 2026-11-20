@@ -622,7 +622,8 @@ int build_score(const Position& pos, Color us, int survive) {
     while (queens)
         score += 3 * std::max(0, 4 - sq_distance(pop_lsb(queens), ksq));
 
-    // Blocker survivability (survive 1: bonuses, 2: bonuses and penalties).
+    // Blocker survivability, a bit mask (SmotherBuildSurvive): 1 pinned
+    // bonus, 2 defended bonus, 4 knight-wins-it penalty, 8 pawn-push penalty.
     // Only cheap, already-known facts: pins, defenders, a static exchange
     // for our knight, an open pawn push. Capped so that positions with many
     // blockers do not dominate.
@@ -635,23 +636,23 @@ int build_score(const Position& pos, Color us, int survive) {
         {
             const Square   b    = pop_lsb(bl);
             const Bitboard atk  = pos.attackers_to(b);
-            if (pinned & b)
+            if ((survive & 1) && (pinned & b))
                 s += 4;  // cannot leave its square
-            if (atk & pos.pieces(them) & ~pos.pieces(KING))
+            if ((survive & 2) && (atk & pos.pieces(them) & ~pos.pieces(KING)))
                 s += 2;  // defended: a capture there costs us
-            if (survive >= 2)
+            if (survive & 4)
             {
-                // Our knight can take it without losing material.
+                // Our knight can take it without losing material (SEE).
                 Bitboard nk = atk & pos.pieces(us, KNIGHT);
                 if (nk && pos.see_ge(Move(lsb(nk), b), 0))
                     s -= 4;
+            }
+            if ((survive & 8) && type_of(pos.piece_on(b)) == PAWN)
+            {
                 // A pawn that can step forward reopens the square.
-                if (type_of(pos.piece_on(b)) == PAWN)
-                {
-                    const Square to = b + pawn_push(them);
-                    if (is_ok(to) && pos.empty(to))
-                        s -= 3;
-                }
+                const Square to = b + pawn_push(them);
+                if (is_ok(to) && pos.empty(to))
+                    s -= 3;
             }
         }
         score += std::clamp(s, -12, 12);

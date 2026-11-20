@@ -214,9 +214,10 @@ Engine::Engine(std::optional<std::filesystem::path> path) :
     options.add("SmotherBuildFloor", Option(600, 0, 10000));
     options.add("SmotherBuildMoves", Option(20, 0, 200));
     options.add("SmotherBuildWeight", Option(8, 0, 100));
-    // Blocker survivability in the build score: 0 off, 1 bonuses (pinned,
-    // defended), 2 also penalties (our knight wins it, pawn can step away).
-    options.add("SmotherBuildSurvive", Option(0, 0, 2));
+    // Blocker survivability in the build score, a bit mask: 1 pinned
+    // blocker bonus, 2 defended blocker bonus, 4 penalty if our knight wins
+    // it (SEE), 8 penalty if a pawn blocker can step forward. 0 = off.
+    options.add("SmotherBuildSurvive", Option(0, 0, 15));
 
     // While pondering, let the parallel prover search deep and unbounded on
     // the opponent's time.
