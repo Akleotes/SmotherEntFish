@@ -142,14 +142,14 @@ one node per move). Raw games are on the `actions-exp/<name>` branches under
 
 Smothered mates per 100 games:
 
-| Setting | Elo 1500 | Elo 2000 | Elo 3000 | Maia 1100 | Maia 1900 |
-| ------- | -------- | -------- | -------- | --------- | --------- |
-| Default mode | 1.1 | - | 0.2 | - | - |
-| Brutal, no construction | 1.2-1.5 | 1.1 | 0.5 | 1.4 | 1.3 |
-| Brutal, construction (20 moves) | 5.0 | - | 1.0 | 4.5 | - |
-| Brutal, construction (40 moves) | 6.2-8.7 | - | - | - | - |
-| **Brutal, construction (80 moves, default)** | **10.6-12.7** | **7.8** | **2.0** | **7.3-8.0** | **4.7** |
-| Brutal, construction (200 moves) | 11.8 | - | - | - | - |
+| Setting | Elo 1500 | Elo 2000 | Elo 2500 | Elo 3000 | Maia 1100 | Maia 1900 |
+| ------- | -------- | -------- | -------- | -------- | --------- | --------- |
+| Default mode | 1.1 | - | - | 0.2 | - | - |
+| Brutal, no construction | 1.2-1.5 | 1.1 | - | 0.5 | 1.4 | 1.3 |
+| Brutal, construction (20 moves) | 5.0 | - | - | 1.0 | 4.5 | - |
+| Brutal, construction (40 moves) | 6.2-8.7 | - | - | - | - | - |
+| **Brutal, construction (80 moves, default)** | **10.6-12.7** | **7.8** | **4.2** | **1.3-2.0** | **7.3-8.0** | **4.7** |
+| Brutal, construction (200 moves) | 11.8 | - | - | - | - | - |
 
 Strength: no losses in any of these runs. At Elo 3000 (600 games) the score
 was 0.993 with brutal mode, 0.993 default, 0.994 with the smother features
@@ -159,6 +159,10 @@ What did not help (kept as options, off): steering towards traps, a small
 shaping bonus, picking the hardest-to-escape proof (`SmotherRobust`),
 preferring strict proofs (none existed where it mattered), and a stronger
 construction weight (16 halved the rate).
+
+Starting construction earlier against strong opponents does not help: at
+Elo 3000, a trigger of 4 or 6 pawns instead of 8 gave fewer smothers and more
+draws (score 0.955 at 4 pawns). 15+0.15 games give the same rate as 5+0.05.
 
 Why ordinary play finds so few smothers: a forced smother exists in only 2-3%
 of games, and opponents escape about half of them by walking into a faster

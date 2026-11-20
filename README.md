@@ -1,16 +1,47 @@
-# Smotherfish
+<div align="center">
 
-Smotherfish is a fork of [Stockfish 19][website-link] that tries to end games
-with a smothered mate: a mate where the enemy king cannot move because its own
-pieces block every escape square.
+  <img src="docs/logo.svg" alt="Smotherfish" width="128">
 
-It keeps Stockfish's full playing strength. It only steers towards smothered
-mates when the game is already decided, so against a strong opponent it plays
-like ordinary Stockfish.
+  <h3>Smotherfish</h3>
 
-The engine reports itself as "Smotherfish 1 (Stockfish 19)". The full guide,
-with every option and every measurement, is in
-[docs/SMOTHERFISH.md](docs/SMOTHERFISH.md).
+  A Stockfish-strength UCI chess engine that plays for the smothered mate.
+  <br>
+  <strong>[Read the Smotherfish guide][guide-link]</strong>
+  <br>
+  <br>
+  [Report bug][smf-issue-link]
+  &middot;
+  [Android builds][android-link]
+  &middot;
+  [Development log][handoff-link]
+  &middot;
+  [Upstream Stockfish][upstream-link]
+
+  [![License][smf-license-badge]][smf-license-link]
+  [![Based on][based-badge]][upstream-link]
+  [![Protocol][uci-badge]][uci-link]
+  <br>
+  [![Last commit][commit-badge]][smf-commits-link]
+  [![Android][android-badge]][android-link]
+
+</div>
+
+## Overview
+
+Smotherfish is a free UCI chess engine derived from [Stockfish 19][upstream-link].
+It plays with Stockfish's full strength and adds one goal of its own: ending the
+game with a smothered mate, where the enemy king is unable to move because its
+own pieces occupy every square around it.
+
+The engine proves forced smothered mates and prefers them to faster ordinary
+mates. In brutal mode it also builds them: once a game is decided, it spends
+moves boxing the enemy king in with its own pieces before delivering the mate.
+Against an opponent who defends well the game is never decided, and
+Smotherfish plays as ordinary Stockfish.
+
+Like Stockfish, Smotherfish does not include a graphical user interface. Use it
+with any UCI chess GUI, such as DroidFish on Android. It identifies itself as
+"Smotherfish 1 (Stockfish 19)".
 
 ## What it does
 
@@ -36,6 +67,7 @@ networks. Smothered mates per 100 games:
 | -------- | ------------ | ----------- | -------------- |
 | Stockfish, Elo 1500 | 1.1 | 12.7 | 1.000 |
 | Stockfish, Elo 2000 | - | 7.8 | 0.999 |
+| Stockfish, Elo 2500 | - | 4.2 | 1.000 |
 | Maia 1100 | - | 7.3 | 0.999 |
 | Maia 1900 | - | 4.7 | 0.998 |
 | Stockfish, Elo 3000 | 0.2 | 2.0 | 0.997 |
@@ -83,7 +115,7 @@ change the normal search.
 ## License and credits
 
 Smotherfish is free software under the
-[GNU General Public License version 3][license-link], like Stockfish. All
+[GNU General Public License version 3][smf-license-link], like Stockfish. All
 credit for the engine itself goes to the Stockfish developers (see
 [AUTHORS](AUTHORS)). If you distribute Smotherfish, you must include the
 license and the full source code, including the changes in this fork.
@@ -218,3 +250,16 @@ project][lc0-data-link], which is made available under the [Open Database Licens
 [license-badge]:      https://img.shields.io/github/license/official-stockfish/Stockfish?style=for-the-badge&label=license&color=success
 [release-badge]:      https://img.shields.io/github/v/release/official-stockfish/Stockfish?style=for-the-badge&label=official%20release
 [website-badge]:      https://img.shields.io/website?style=for-the-badge&down_color=red&down_message=Offline&label=website&up_color=success&up_message=Online&url=https%3A%2F%2Fstockfishchess.org
+
+[guide-link]:    docs/SMOTHERFISH.md
+[handoff-link]:  notes/HANDOFF.md
+[upstream-link]: https://github.com/official-stockfish/Stockfish
+[android-link]:  https://github.com/Demonic1594/Smotherfish/actions/workflows/android-build.yml
+[based-badge]:   https://img.shields.io/badge/based%20on-Stockfish%2019-blue?style=for-the-badge
+[uci-badge]:     https://img.shields.io/badge/protocol-UCI-informational?style=for-the-badge
+[commit-badge]:  https://img.shields.io/github/last-commit/Demonic1594/Smotherfish/smotherfish?style=for-the-badge
+[android-badge]: https://img.shields.io/badge/android-arm64%20builds-success?style=for-the-badge
+[smf-issue-link]:    https://github.com/Demonic1594/Smotherfish/issues/new
+[smf-license-link]:  Copying.txt
+[smf-commits-link]:  https://github.com/Demonic1594/Smotherfish/commits/smotherfish
+[smf-license-badge]: https://img.shields.io/badge/license-GPL--3.0-success?style=for-the-badge
