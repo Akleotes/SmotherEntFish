@@ -53,6 +53,9 @@ class TimeManagement {
 
     void clear();
     void advance_nodes_time(i64 nodes);
+    // Raise the time for this move to at least opt / max (never lowers it;
+    // no effect without a clock).
+    void raise(TimePoint opt, TimePoint max);
 
    private:
     static constexpr TimePoint NoBound = std::numeric_limits<TimePoint>::max() / 2;

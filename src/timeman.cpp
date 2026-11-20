@@ -31,6 +31,13 @@ namespace Stockfish {
 TimePoint TimeManagement::optimum() const { return optimumTime; }
 TimePoint TimeManagement::maximum() const { return maximumTime; }
 
+void TimeManagement::raise(TimePoint opt, TimePoint max) {
+    if (useNodesTime || optimumTime == NoBound)
+        return;
+    optimumTime = std::max(optimumTime, opt);
+    maximumTime = std::max({maximumTime, max, optimumTime});
+}
+
 void TimeManagement::clear() {
     availableNodes    = -1;  // When in 'nodes as time' mode
     previousMovesToGo = 0;

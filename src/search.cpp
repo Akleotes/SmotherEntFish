@@ -441,6 +441,20 @@ void Search::Worker::start_searching() {
         return;
     }
 
+    // Construction is where smothers are built, yet by then the clock is
+    // usually low (measured at 5+0.05 vs Elo 1500: median 0.2 s at our move
+    // 30, ~47 ms per move after it). SmotherBuildTime N: while building, use
+    // at least 1/N of the clock left per move (maximum 1/(N/2), and never
+    // more than a tenth of the clock).
+    if (int n = int(options["SmotherBuildTime"]);
+        n > 0 && main_manager()->smotherBuilding && limits.use_time_management())
+    {
+        const TimePoint left = limits.time[rootPos.side_to_move()]
+                             - 2 * TimePoint(int(options["Move Overhead"]));
+        if (left > 0)
+            main_manager()->tm.raise(left / n, std::min(left / 10, 2 * left / n));
+    }
+
     start_smother_prover();
     decide_smother_modes();
 

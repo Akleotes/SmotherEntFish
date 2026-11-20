@@ -252,6 +252,8 @@ Engine::Engine(std::optional<std::filesystem::path> path) :
     // Blocker reserve guard: build-score points lost per unit of reserve
     // (enemy pieces minus open king-ring squares) below StarveAt. 0 = off.
     options.add("SmotherBuildStarve", Option(0, 0, 50));
+    // While building, use at least 1/N of the clock left per move (0 = off).
+    options.add("SmotherBuildTime", Option(0, 0, 200));
     options.add("SmotherBuildStarveAt", Option(4, 0, 15));
 
     // While pondering, let the parallel prover search deep and unbounded on
