@@ -668,3 +668,20 @@ New option SmotherBuildTime N (off): each construction move uses at least
 180+2 (Hybrid/Near/Full, Elo 1500/2000/2500) and two clock-economy
 variants at 5+0.05. Also new: SmotherBuildStarve/StarveAt (blocker-reserve
 guard, off), measured by grid20.
+
+ponder3 (current code, Hybrid default, pondering on, 5+0.05, 400 games each):
+
+```
+                 deep prover while pondering   true/100   total (true+near)/100
+Elo 1500         off                            6.5        49.8
+Elo 1500         on (default)                   7.2        50.5
+Maia 1100        off                            5.8        38.5
+Maia 1100        on (default)                   7.2        41.0
+```
+
+No time losses (the stop fix holds). Deep pondering is ahead in every
+comparison so far (ponder2 and ponder3) but each is within noise; it stays
+on. With pondering the clock lasts longer (median 0.56 s at our move 30 vs
+0.24 s without) and Hybrid's total rate at Elo 1500 is ~50 per 100 games,
+against ~37 without pondering in grid18 (other openings): more compute in
+the late game, more smothers, in line with the clock finding above.
