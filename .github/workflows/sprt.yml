@@ -1,0 +1,183 @@
+# SPRT strength test on GitHub Actions, in waves.
+#
+# Push notes/exp/sprt.json to a branch named actions-exp/<anything>:
+#   {"name": "brutal_vs_default", "tc": "10+0.1",
+#    "elo0": -5, "elo1": 0, "alpha": 0.05, "beta": 0.05,
+#    "new_opts": ["SmotherBrutal=true"], "base_opts": [],
+#    "base_ref": "",          # git ref to build as the base; "" = this commit
+#    "runners": 16, "games": 400, "max_waves": 6}
+# Each wave runs `runners` jobs of `games` games (fastchess, 8moves_v3 book,
+# colours swapped per opening). The collect job merges the game-pair counts
+# of all waves so far, computes the log-likelihood ratio
+# (notes/scripts/sprt_stats.py), commits notes/results/sprt/<name>/, and
+# starts the next wave until the test passes (H1), fails (H0), or reaches
+# max_waves. A wave started by workflow_dispatch reuses the branch's plan.
+name: SPRT
+
+on:
+  push:
+    branches: ["actions-exp/**"]
+    paths: ["notes/exp/sprt.json"]
+  workflow_dispatch:
+    inputs:
+      wave:
+        description: "Wave number (1 = first)"
+        required: false
+        default: "1"
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: sprt-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  ARCH: x86-64-avx2
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.p.outputs.matrix }}
+      name: ${{ steps.p.outputs.name }}
+      base_ref: ${{ steps.p.outputs.base_ref }}
+      wave: ${{ steps.p.outputs.wave }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: p
+        run: |
+          python3 - <<'EOF' >> "$GITHUB_OUTPUT"
+          import json
+          p = json.load(open("notes/exp/sprt.json"))
+          wave = int("${{ github.event.inputs.wave }}" or 1)
+          jobs = [{"chunk": i, "seed": wave * 1000 + i} for i in range(int(p.get("runners", 16)))]
+          print("name=" + p["name"])
+          print("base_ref=" + p.get("base_ref", ""))
+          print(f"wave={wave}")
+          print("matrix=" + json.dumps(jobs))
+          EOF
+
+  build:
+    needs: plan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build the new engine (this commit)
+        run: |
+          cd src
+          make -j"$(nproc)" net
+          make -j"$(nproc)" build ARCH=$ARCH
+          ./stockfish bench 2>&1 | grep "Nodes searched"
+      - name: Build the base engine
+        if: needs.plan.outputs.base_ref != ''
+        run: |
+          git fetch origin "${{ needs.plan.outputs.base_ref }}"
+          mkdir -p base && git archive FETCH_HEAD src scripts | tar -x -C base
+          cd base/src
+          make -j"$(nproc)" net
+          make -j"$(nproc)" build ARCH=$ARCH
+          ./stockfish bench 2>&1 | grep "Nodes searched"
+      - name: Build fastchess, fetch the book
+        run: |
+          git clone -q --depth 1 https://github.com/Disservin/fastchess.git fc
+          make -C fc -j"$(nproc)" >/dev/null
+          curl -fsSL -o book.zip https://github.com/official-stockfish/books/raw/master/8moves_v3.pgn.zip
+          unzip -q book.zip
+      - name: Collect
+        run: |
+          mkdir -p engines
+          cp src/stockfish engines/new
+          if [ -d base ]; then cp base/src/stockfish engines/base; else cp src/stockfish engines/base; fi
+          cp fc/fastchess engines/
+          cp 8moves_v3.pgn engines/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sprt-engines
+          path: engines/
+          retention-days: 2
+
+  match:
+    needs: [plan, build]
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      max-parallel: 18
+      matrix:
+        include: ${{ fromJson(needs.plan.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: sprt-engines
+          path: engines
+      - run: chmod +x engines/new engines/base engines/fastchess
+      - name: Play
+        run: |
+          eval "$(python3 - <<'EOF'
+          import json, shlex
+          p = json.load(open("notes/exp/sprt.json"))
+          new = " ".join(shlex.quote("option." + o) for o in p.get("new_opts", []))
+          base = " ".join(shlex.quote("option." + o) for o in p.get("base_opts", []))
+          print(f"TC={shlex.quote(p.get('tc', '10+0.1'))}")
+          print(f"ROUNDS={int(p.get('games', 400)) // 2}")
+          print(f"NEW_OPTS=({new})")
+          print(f"BASE_OPTS=({base})")
+          EOF
+          )"
+          engines/fastchess \
+            -engine cmd=engines/new name=new "${NEW_OPTS[@]}" \
+            -engine cmd=engines/base name=base "${BASE_OPTS[@]}" \
+            -each tc="$TC" option.Threads=1 option.Hash=16 \
+            -openings file=engines/8moves_v3.pgn format=pgn order=random \
+            -srand ${{ matrix.seed }} -rounds "$ROUNDS" -games 2 -repeat \
+            -concurrency "$(nproc)" -recover > fc.log 2>&1 || true
+          tail -5 fc.log
+          line=$(grep "Ptnml(0-2)" fc.log | tail -1)
+          mkdir -p out
+          python3 -c "import json,re,sys; m=re.search(r'\[([0-9, ]+)\]', sys.argv[1]); print(json.dumps({'ptnml':[int(x) for x in m.group(1).split(',')]}))" \
+            "$line" > out/w${{ needs.plan.outputs.wave }}-c${{ matrix.chunk }}.json
+          cat out/*.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sprt-res-${{ matrix.chunk }}
+          path: out/
+          retention-days: 7
+
+  collect:
+    needs: [plan, match]
+    if: always() && needs.plan.result == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: sprt-res-*
+          path: res
+          merge-multiple: true
+      - name: Merge waves and compute the SPRT
+        id: s
+        run: |
+          d=notes/results/sprt/${{ needs.plan.outputs.name }}
+          mkdir -p "$d"
+          cp res/*.json "$d/"
+          read -r e0 e1 a b mw <<< "$(python3 -c "import json; p=json.load(open('notes/exp/sprt.json')); print(p.get('elo0',-5), p.get('elo1',0), p.get('alpha',0.05), p.get('beta',0.05), p.get('max_waves',6))")"
+          python3 notes/scripts/sprt_stats.py $e0 $e1 $a $b "$d"/w*-c*.json | tee "$d/SPRT.json"
+          verdict=$(python3 -c "import json; print(json.load(open('$d/SPRT.json'))['verdict'])")
+          { echo "## SPRT ${{ needs.plan.outputs.name }}, after wave ${{ needs.plan.outputs.wave }}"; echo '```'; cat "$d/SPRT.json"; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          next=""
+          if [ "$verdict" = "continue" ] && [ "${{ needs.plan.outputs.wave }}" -lt "$mw" ]; then next=$(( ${{ needs.plan.outputs.wave }} + 1 )); fi
+          echo "next=$next" >> "$GITHUB_OUTPUT"
+      - name: Commit results
+        run: |
+          git config user.name "sprt bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add notes/results/sprt
+          git commit -m "sprt: ${{ needs.plan.outputs.name }} wave ${{ needs.plan.outputs.wave }} [skip ci]" && git push || echo "nothing to commit"
+      - name: Start the next wave
+        if: steps.s.outputs.next != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run sprt.yml --ref "${{ github.ref_name }}" -f wave=${{ steps.s.outputs.next }}
