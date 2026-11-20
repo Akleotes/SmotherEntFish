@@ -158,15 +158,20 @@ Smothers per 100 games, brutal mode, 5+0.05:
 
 | `SmotherGoal` | Elo 1500: true | Elo 1500: true + near | Elo 2000: true + near | Elo 2500: true + near |
 | ------------- | -------------- | --------------------- | --------------------- | --------------------- |
-| Full | 12.1 | 13.8 | about 8-9 | about 4-6 |
-| Hybrid (default) | 7.3-7.6 | 37-38 | - | - |
-| Near | 3.3 | 56.4 | 43.3 (true 2.1) | 40.0 |
+| Full | 14.6 | 16.4 | about 8-9 | about 5-7 |
+| Hybrid (default) | 8.4 | 53.1 (60.8 with pondering) | 43.8 | 38.3 |
+| Near | 3.8 | 65.6 | 54.3 (true 2.5) | 45.7 |
+
+(With `SmotherBuildKeep` 8, grid22 and grid23; Elo 2000 and 2500 for Full are
+from earlier runs with keep 3. With keep 3 the Hybrid total at Elo 1500 was
+35-38 and the Near total 56.)
 
 When near smothers count, a true smother up to three moves longer is
 preferred; that raised true smothers in Near mode from 1.6 to 3.3 per 100
 games at Elo 1500 (0.4 to 2.1 at Elo 2000) with the same total. Near gives
 the most smothers of either kind; Full gives the most true ones; Hybrid is
-in between. None of them loses games. Strength at full strength (SPRT, 6400
+in between. Losses are rare (1 in 7,500 games of grid23, an ordinary blitz loss
+at Elo 2000). Strength at full strength (SPRT, 6400
 games at 10+0.1): Hybrid against brutal mode without it scored 0.502
 (+1.4 Elo, 95% -0.5 to +3.3), so no strength cost.
 

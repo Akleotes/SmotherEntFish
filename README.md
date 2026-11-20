@@ -79,9 +79,20 @@ networks. Smothered mates per 100 games:
 | Maia 1900 | - | 4.7 | 0.998 |
 | Stockfish, Elo 3000 | 0.2 | 2.0 | 0.997 |
 
-With `SmotherGoal` set to Near, games ending in a full or near smother rise to
-about 56 per 100 at Elo 1500, 44 at Elo 2000 and 40 at Elo 2500.
-No game was lost in any of these runs, and a full-strength strength test
+Keeping the opponent's pieces on the board while building a smother
+(`SmotherBuildKeep`, 8 since November 2026) raised these further. Games ending
+in a full or near ("all but one") smother, brutal mode, 1000 games per row:
+
+| Opponent | Hybrid goal (default) | Near goal |
+| -------- | --------------------- | --------- |
+| Stockfish, Elo 1500 | 53 (61 with pondering) | 66 |
+| Stockfish, Elo 2000 | 44 | 54 |
+| Stockfish, Elo 2500 | 38 | 46 |
+| Maia 1100 | 44 | 49 |
+| Stockfish, Elo 3000 | 13 | - |
+
+Losses are rare (none at Elo 1500 or 2500, 1 in 1000 games at Elo 2000: an
+ordinary blitz loss before any smother hunting started), and a full-strength strength test
 (SPRT, 6400 games) found no cost: +2 Elo against the default engine. Version 1.1 moved to the newer
 Stockfish base: in direct games against version 1 it scored 0.517 (about
 +12 Elo) over 4000 games, with the same smother rate. Brutal mode makes decided games longer
