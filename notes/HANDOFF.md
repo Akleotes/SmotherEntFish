@@ -470,3 +470,19 @@ Branch `smotherfish-next`: Smotherfish merged with upstream master (98
 commits past Stockfish 19); bench 1442480 = upstream, puzzle regression
 identical. grid13 compares it head-to-head with `smotherfish` (new plan
 field "ref" builds a git ref as the opponent).
+
+grid13 (branch smotherfish-next = Smotherfish + upstream master 5d03b6e5,
+98 commits past Stockfish 19; head-to-head against branch smotherfish):
+
+```
+run                                   games  W/D/L         score  Elo
+next vs smotherfish, default mode      4000  309/3521/170  0.517  ~+12 (+8..+15)
+next vs smotherfish, both brutal       2000  159/1751/90   0.517  ~+12
+next, brutal vs Elo 1500               1000  10.1 smothers/100, 999/1/0
+next, brutal vs Elo 3000                600  1.5 smothers/100, 0.994, 0 losses
+```
+
+Promoted: merged into this branch as Smotherfish 1.1. The engine name now
+gives the upstream base, "Smotherfish 1.1 (Stockfish dev-20261115-5d03b6e5)",
+not the build date and hash. Bench 1442480 (= upstream 5d03b6e5); the
+Android workflow checks that number.

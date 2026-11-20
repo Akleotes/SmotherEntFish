@@ -1,6 +1,7 @@
 # Smotherfish guide
 
-Smotherfish 1 is Stockfish 19 with one extra goal: end the game with a
+Smotherfish 1.1 is Stockfish (development version of 15 November 2026,
+upstream commit 5d03b6e5) with one extra goal: end the game with a
 smothered mate. This guide explains how it works, lists every option, and
 summarises what was measured. The day-by-day development log is in
 `notes/HANDOFF.md`.
@@ -155,6 +156,13 @@ Strength: no losses in any of these runs. At Elo 3000 (600 games) the score
 was 0.993 with brutal mode, 0.993 default, 0.994 with the smother features
 switched off; with construction 0.995-0.997 (300 games).
 
+Version 1.1 (newer Stockfish base, 98 upstream commits after Stockfish 19)
+against version 1, both at full strength: 0.517 in normal mode (4000
+games) and 0.517 in brutal mode (2000 games), about +12 Elo. Its smother
+rate is unchanged (10.1 per 100 at Elo 1500; 1.5 at Elo 3000, score 0.994).
+The measurements above were made with version 1; the opponent in them is
+always Stockfish 19.
+
 What did not help (kept as options, off): steering towards traps, a small
 shaping bonus, picking the hardest-to-escape proof (`SmotherRobust`),
 preferring strict proofs (none existed where it mattered), and a stronger
@@ -171,7 +179,8 @@ smother can be forced at all.
 
 ## Testing your own changes
 
-- `./stockfish bench` must still report 2497913 nodes.
+- `./stockfish bench` must still report 1442480 nodes (the bench of the
+  upstream base commit).
 - `notes/scripts/puzzles.py ENGINE smothered.csv N SEED` re-runs the prover
   regression test (the CSV is the Lichess puzzle database filtered on the
   `smotheredMate` theme).

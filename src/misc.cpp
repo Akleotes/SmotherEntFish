@@ -55,7 +55,8 @@ namespace {
 
 // Version number or dev.
 constexpr std::string_view version = "dev";
-constexpr std::string_view smotherfishVersion = "1";
+constexpr std::string_view smotherfishVersion = "1.1";
+constexpr std::string_view upstreamBase       = "20261115-5d03b6e5";  // upstream master merged
 
 // Our fancy logging facility. The trick here is to replace cin.rdbuf() and
 // cout.rdbuf() with two Tie objects that tie cin and cout to a file stream. We
@@ -140,40 +141,12 @@ class Logger {
 // For releases (non-dev builds) we only include the version number:
 //      Stockfish version
 std::string engine_version_info() {
+    // Smotherfish names the upstream Stockfish commit it is based on (the
+    // "dev" date and hash of upstream master at the last merge), not the
+    // date and hash of this build.
     std::stringstream ss;
-    // Smotherfish: a Stockfish 19 fork that hunts smothered mates.
-    ss << "Smotherfish " << smotherfishVersion << " (Stockfish " << version << std::setfill('0');
-
-    if constexpr (version == "dev")
-    {
-        ss << "-";
-#ifdef GIT_DATE
-        ss << stringify(GIT_DATE);
-#else
-        constexpr std::string_view months("Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec");
-
-        std::string       month, day, year;
-        std::stringstream date(__DATE__);  // From compiler, format is "Sep 21 2008"
-
-        date >> month >> day >> year;
-        ss << year << std::setw(2) << std::setfill('0') << (1 + months.find(month) / 4)
-           << std::setw(2) << std::setfill('0') << day;
-#endif
-
-#ifdef GIT_DIFFINDEX
-        ss << "-m";
-#endif
-
-        ss << "-";
-
-#ifdef GIT_SHA
-        ss << stringify(GIT_SHA);
-#else
-        ss << "nogit";
-#endif
-    }
-
-    ss << ")";
+    ss << "Smotherfish " << smotherfishVersion << " (Stockfish " << version << "-"
+       << upstreamBase << ")";
     return ss.str();
 }
 

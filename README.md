@@ -28,7 +28,8 @@
 
 ## Overview
 
-Smotherfish is a free UCI chess engine derived from [Stockfish 19][upstream-link].
+Smotherfish is a free UCI chess engine derived from [Stockfish][upstream-link]
+(the development version of 15 November 2026, after Stockfish 19).
 It plays with Stockfish's full strength and adds one goal of its own: ending the
 game with a smothered mate, where the enemy king is unable to move because its
 own pieces occupy every square around it.
@@ -41,7 +42,7 @@ Smotherfish plays as ordinary Stockfish.
 
 Like Stockfish, Smotherfish does not include a graphical user interface. Use it
 with any UCI chess GUI, such as DroidFish on Android. It identifies itself as
-"Smotherfish 1 (Stockfish 19)".
+"Smotherfish 1.1 (Stockfish dev-20261115-5d03b6e5)".
 
 ## What it does
 
@@ -72,7 +73,9 @@ networks. Smothered mates per 100 games:
 | Maia 1900 | - | 4.7 | 0.998 |
 | Stockfish, Elo 3000 | 0.2 | 2.0 | 0.997 |
 
-No game was lost in any of these runs. Brutal mode makes decided games longer
+No game was lost in any of these runs. Version 1.1 moved to the newer
+Stockfish base: in direct games against version 1 it scored 0.517 (about
++12 Elo) over 4000 games, with the same smother rate. Brutal mode makes decided games longer
 (a median of about 120 half-moves instead of about 53), because it delays the
 mate to build the smother.
 
@@ -95,8 +98,9 @@ cd src
 make -j profile-build
 ```
 
-`./stockfish bench` must report 2497913 nodes; the smother features do not
-change the normal search.
+`./stockfish bench` must report 1442480 nodes, the same as the upstream
+Stockfish commit it is based on; the smother features do not change the
+normal search.
 
 ## Project files
 
@@ -258,7 +262,7 @@ project][lc0-data-link], which is made available under the [Open Database Licens
 [handoff-link]:  notes/HANDOFF.md
 [upstream-link]: https://github.com/official-stockfish/Stockfish
 [android-link]:  https://github.com/Demonic1594/Smotherfish/actions/workflows/android-build.yml
-[based-badge]:   https://img.shields.io/badge/based%20on-Stockfish%2019-blue?style=for-the-badge
+[based-badge]:   https://img.shields.io/badge/based%20on-Stockfish%20dev%202026--11--15-blue?style=for-the-badge
 [uci-badge]:     https://img.shields.io/badge/protocol-UCI-informational?style=for-the-badge
 [commit-badge]:  https://img.shields.io/github/last-commit/Demonic1594/Smotherfish/smotherfish?style=for-the-badge
 [android-badge]: https://img.shields.io/badge/android-arm64%20builds-success?style=for-the-badge
