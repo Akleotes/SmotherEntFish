@@ -335,3 +335,12 @@ blitz gives. Most remaining levers are earlier in the game (openings,
 middlegame plans that keep the enemy king boxed in), as noted before.
 Ponder-time proving (SmotherPonderDeep) and the mate-in-hand budget only
 show in slower games, which these matches do not cover.
+
+Android, final code (commit 70d42651; later commits are notes only): run
+44642135912 passed (bench 2497913 under qemu). Artifacts
+`smotherfish-android-armv8-dotprod` (most phones since ~2019) and
+`smotherfish-android-armv8`, kept until 2026-12-20:
+https://github.com/Demonic1594/Smotherfish/actions/runs/44642135912
+In DroidFish: copy the binary to the phone and pick it as an engine; do not
+rename it to "stockfish". Brutal mode: set `SmotherBrutal` to true in the
+engine options.
