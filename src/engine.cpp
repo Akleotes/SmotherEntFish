@@ -204,6 +204,17 @@ Engine::Engine(std::optional<std::filesystem::path> path) :
     // of the remaining clock per move (the result is no longer in doubt).
     options.add("SmotherMatePercent", Option(15, 0, 50));
 
+    // Brutal construction mode: once the game is decided (SmotherBuildCp,
+    // centipawns, or a forced mate), build a smother instead of mating
+    // quickly, for at most SmotherBuildMoves moves per game. Positions at or
+    // above SmotherBuildFloor are scored by the enemy king's box, at
+    // SmotherBuildWeight centipawns per point; extra material counts 1/8.
+    options.add("SmotherBuild", Option(false));
+    options.add("SmotherBuildCp", Option(800, 0, 10000));
+    options.add("SmotherBuildFloor", Option(600, 0, 10000));
+    options.add("SmotherBuildMoves", Option(20, 0, 200));
+    options.add("SmotherBuildWeight", Option(8, 0, 100));
+
     // While pondering, let the parallel prover search deep and unbounded on
     // the opponent's time.
     options.add("SmotherPonderDeep", Option(true));

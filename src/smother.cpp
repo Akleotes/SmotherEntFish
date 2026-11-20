@@ -594,6 +594,37 @@ int shape(const Position& pos, Color us) {
     return std::max(score, 0);
 }
 
+int build_score(const Position& pos, Color us) {
+    const Color    them  = ~us;
+    const Square   ksq   = pos.square<KING>(them);
+    const Bitboard ring  = Attacks::attacks_bb<KING>(ksq);
+    const int      boxed = popcount(ring & pos.pieces(them));
+    const int      holes = popcount(ring & ~pos.pieces(them));
+
+    const int  f      = file_of(ksq), r = rank_of(ksq);
+    const bool corner = (f == 0 || f == 7) && (r == 0 || r == 7);
+    const bool edge   = f == 0 || f == 7 || r == 0 || r == 7;
+
+    int score = 12 * boxed - 10 * holes + (corner ? 25 : edge ? 10 : 0);
+
+    // Every enemy piece is a possible blocker: keep them, especially near
+    // their king.
+    Bitboard theirs = pos.pieces(them) & ~pos.pieces(KING);
+    score += 3 * popcount(theirs);
+    while (theirs)
+        score += sq_distance(pop_lsb(theirs), ksq) <= 2 ? 3 : 0;
+
+    // The finishers: knights and the queen near the king.
+    Bitboard knights = pos.pieces(us, KNIGHT);
+    while (knights)
+        score += 4 * std::max(0, 4 - sq_distance(pop_lsb(knights), ksq));
+    Bitboard queens = pos.pieces(us, QUEEN);
+    while (queens)
+        score += 3 * std::max(0, 4 - sq_distance(pop_lsb(queens), ksq));
+
+    return score;
+}
+
 bool smothered_if_mate(const Position& pos, Style style) {
     return smothered_given_mate(pos, style);
 }

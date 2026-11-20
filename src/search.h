@@ -324,6 +324,8 @@ class SearchManager: public ISearchManager {
     int               smotherSeeks  = 0;      // moves played in seek mode this game
     int               smotherDelays = 0;  // mate-phase steering choices this game
     int               smotherHand   = 0;  // moves with the mate-in-hand prover budget
+    int               smotherBuilds = 0;  // moves played in construction mode this game
+    bool              smotherBuilding = false;  // construction mode on the last move
     std::atomic_bool  smotherReady{false};
     std::atomic_bool  smotherStop{false};
     std::thread       smotherThread;
@@ -411,6 +413,11 @@ class Worker {
     int   shapeCap    = 0;
     bool  seekSmother = false;  // won mode: only smothered mates score as mate
     bool  seekClassic = false;
+    // Construction mode (SmotherBuild): above buildFloor the evaluation stops
+    // rewarding more material and rewards a boxed-in enemy king instead.
+    bool  buildSmother = false;
+    Value buildFloor   = VALUE_ZERO;
+    int   buildUnit    = 0;  // internal units per Smother::build_score() point
     Value mated_value(const Position& pos, int ply) const;
     Color shapeUs     = WHITE;
 

@@ -641,6 +641,38 @@ bool Search::Worker::iterative_deepening() {
                    && popcount(rootPos.pieces(~us)) >= 4;
         if (seekSmother && mainThread)
             ++mgr.smotherSeeks;
+
+        // Construction mode (brutal): once the game is decided (SmotherBuildCp,
+        // or a forced mate), stop playing for more material or the quickest
+        // mate and build a smother: positions at or above SmotherBuildFloor
+        // are scored mainly by how boxed in the enemy king is, and a plain
+        // mate counts no more than the floor (see evaluate(), mated_value()).
+        // Against an opponent who plays well the game is never decided, so
+        // this never switches on. Budget: SmotherBuildMoves per game, and off
+        // before the 50-move rule; then the engine mates normally.
+        const Value prev = mgr.bestPreviousScore;
+        const bool  known = prev != VALUE_INFINITE && prev != -VALUE_INFINITE;
+        const int   cp    = known && !is_decisive(prev) ? UCIEngine::to_cp(prev, rootPos) : 0;
+        const bool  enter = known && (is_win(prev) || cp >= int(options["SmotherBuildCp"]));
+        const bool  stay  = mgr.smotherBuilding && known
+                        && (is_win(prev) || cp >= int(options["SmotherBuildFloor"]));
+        buildSmother = mgr.smotherBrutal && options["SmotherBuild"] && (enter || stay)
+                    && mgr.smotherBuilds < int(options["SmotherBuildMoves"])
+                    && rootPos.rule50_count() < int(options["SmotherSeekRule50"])
+                    && popcount(rootPos.pieces(~us)) >= 4;
+        if (buildSmother)
+        {
+            const int perK = std::max(1, UCIEngine::to_cp(Value(1000), rootPos));  // cp per 1000
+            buildFloor = Value(int(options["SmotherBuildFloor"]) * 1000 / perK);
+            buildUnit  = std::max(1, int(options["SmotherBuildWeight"]) * 1000 / perK);
+            shapeWeight = 0;
+        }
+        if (mainThread)
+        {
+            mgr.smotherBuilding = buildSmother;
+            if (buildSmother)
+                ++mgr.smotherBuilds;
+        }
     }
     double timeReduction = 1, totBestMoveChanges = 0;
     int    delta, iterIdx                        = 0;
@@ -1072,6 +1104,8 @@ void Search::Worker::clear() {
         main_manager()->smotherDelays = 0;  // new game
     if (is_mainthread())
         main_manager()->smotherHand = 0;
+    if (is_mainthread())
+        main_manager()->smotherBuilds = 0, main_manager()->smotherBuilding = false;
     if (is_mainthread())
         main_manager()->smotherSeeks = 0;
     mainHistory.fill(-5);
@@ -2289,6 +2323,12 @@ TimePoint Search::Worker::elapsed() const {
 // win, above any evaluation, but below every real (smothered) mate. So the
 // search prefers any smothered mate it can see and otherwise still mates.
 Value Search::Worker::mated_value(const Position& pos, int ply) const {
+    // Construction mode: a plain mate is worth no more than the floor, so the
+    // engine keeps building while it can; a smothered mate stays a real mate.
+    if (buildSmother && pos.side_to_move() != shapeUs
+        && !Smother::smothered_if_mate(pos, seekClassic ? Smother::Style::Classic
+                                                        : Smother::Style::AnyPiece))
+        return -buildFloor;
     if (seekSmother && pos.side_to_move() != shapeUs
         && !Smother::smothered_if_mate(pos, seekClassic ? Smother::Style::Classic
                                                         : Smother::Style::AnyPiece))
@@ -2309,6 +2349,20 @@ Value Search::Worker::evaluate(const Position& pos) {
                                shapeCap);
         v += pos.side_to_move() == shapeUs ? b : -b;
         v = std::clamp(v, VALUE_TB_LOSS_IN_MAX_PLY + 1, VALUE_TB_WIN_IN_MAX_PLY - 1);
+    }
+
+    // Construction mode: above the floor, extra advantage counts only 1/8,
+    // and Smother::build_score() (corner-smother readiness) counts buildUnit
+    // per point. Below the floor, normal.
+    if (buildSmother)
+    {
+        Value u = pos.side_to_move() == shapeUs ? v : -v;
+        if (u >= buildFloor)
+        {
+            u = buildFloor + (u - buildFloor) / 8 + Smother::build_score(pos, shapeUs) * buildUnit;
+            u = std::min(u, VALUE_TB_WIN_IN_MAX_PLY - 1);
+            v = pos.side_to_move() == shapeUs ? u : -u;
+        }
     }
     return v;
 }
