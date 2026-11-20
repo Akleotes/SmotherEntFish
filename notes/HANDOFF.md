@@ -344,3 +344,40 @@ https://github.com/Demonic1594/Smotherfish/actions/runs/44642135912
 In DroidFish: copy the binary to the phone and pick it as an engine; do not
 rename it to "stockfish". Brutal mode: set `SmotherBrutal` to true in the
 engine options.
+
+### Session 3 (Nov 20 JST, morning): construction mode
+
+- grid7, `SmotherRobust` (greedy-weighted choice among alternative
+  proofs) in brutal, same openings as grid5: 53 smothers from 117 proof
+  games vs 74 from 146 without it. Rejected for good (it costs proofs).
+- Escape study (306 proof games): opponents leave the smother line mostly
+  at their first reply (74 of 134 escapes), usually with only 2-3 legal
+  moves; in 29 escapes they grabbed a piece instead of the needed king move
+  or block. Baiting with a sacrifice does not convert better (24-30%).
+- Delivered smothers (227): 77% with the king in a corner, all on an edge,
+  blocked mostly by its own pawns, rooks and bishops.
+- Construction mode (commits 8a938b32, 4784aa00; `SmotherBuild`, off by
+  default): once decided (`SmotherBuildCp` 800 or a forced mate), above
+  `SmotherBuildFloor` (600) extra material counts 1/8 and
+  `Smother::build_score()` (corner, own blockers, enemy pieces kept, our
+  queen/knights close) counts `SmotherBuildWeight` (8) cp per point; a
+  plain mate counts as the floor. `SmotherBuildMoves` per game (20).
+
+grid8 (600 games each, 5+0.05 unless noted, Elo 1500 unless noted):
+
+```
+setting                     smothers /100g  proof games  score
+brutal, no construction            9   1.5      16       1.000
+build (20 moves)                  30   5.0      49       1.000
+build, 40 moves                   52   8.7      85       0.999
+build, 15+0.15                    33   5.5      62       1.000
+build, weight 16                  15   2.5      30       1.000
+build vs Maia 1100                27   4.5      42       1.000
+build vs Elo 3000 (300 games)      3   1.0       3       0.997 (0 losses)
+```
+
+First method that moves the rate several-fold. grid9 measures budgets
+40/80/200 and Elo 2000 / Maia 1900 / Elo 3000 at 80.
+Idea queued (from an outside review): score blocker survivability in
+build_score() (pinned/protected blockers vs ones that can capture our
+knight or step away).
