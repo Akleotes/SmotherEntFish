@@ -240,6 +240,13 @@ Engine::Engine(std::optional<std::filesystem::path> path) :
     options.add("SmotherBuildSurvive", Option(0, 0, 15));
     // Cap on the survivability total, in build-score points (+-).
     options.add("SmotherBuildSurviveCap", Option(12, 0, 48));
+    // Construction: build-score points per enemy piece kept on the board
+    // (blockers for a smother), and the divisor for extra material above the
+    // floor (8 = it counts 1/8). Measured: in games where a proven smother
+    // escaped, we captured ~7 enemy units after the game was decided and the
+    // opponent ended with 3 pieces, against 4 and 6 in delivered smothers.
+    options.add("SmotherBuildKeep", Option(3, 0, 50));
+    options.add("SmotherBuildMaterialDiv", Option(8, 1, 64));
 
     // While pondering, let the parallel prover search deep and unbounded on
     // the opponent's time.

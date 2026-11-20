@@ -656,7 +656,7 @@ static int build_score_v2(const Position& pos, Color us) {
     return score;
 }
 
-int build_score(const Position& pos, Color us, int survive, int cap, int version) {
+int build_score(const Position& pos, Color us, int survive, int cap, int version, int keep) {
     if (version == 2)
         return build_score_v2(pos, us);
 
@@ -675,7 +675,7 @@ int build_score(const Position& pos, Color us, int survive, int cap, int version
     // Every enemy piece is a possible blocker: keep them, especially near
     // their king.
     Bitboard theirs = pos.pieces(them) & ~pos.pieces(KING);
-    score += 3 * popcount(theirs);
+    score += keep * popcount(theirs);  // SmotherBuildKeep (3)
     while (theirs)
         score += sq_distance(pop_lsb(theirs), ksq) <= 2 ? 3 : 0;
 

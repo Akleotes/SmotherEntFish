@@ -412,6 +412,8 @@ class Worker {
     Value buildFloor     = VALUE_ZERO;
     int   buildSurvive   = 0;      // SmotherBuildSurvive
     int   buildCap       = 12;     // SmotherBuildSurviveCap
+    int   buildKeep      = 3;      // SmotherBuildKeep
+    int   buildMatDiv    = 8;      // SmotherBuildMaterialDiv
     int   buildVersion   = 1;      // SmotherBuildVersion
     bool  smotherPartial = false;  // SmotherPartial: "all but one" counts
     // Smother definition used for the search's own mate scoring.
