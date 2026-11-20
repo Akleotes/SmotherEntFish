@@ -729,3 +729,40 @@ stays off. Time forfeits by us: 1 in ~17,000 games of grid19/20 (S10, ply
 95, 0.19 s left, far ahead; the opponent flags at a similar rate, so it
 looks like runner jitter at a near-empty clock). grid22 (queued after
 grid21): SmotherBuildKeep 3/8/12/16 with Full, and keep 8 with Hybrid.
+
+grid21 (time controls and clock economy; brutal; Elo 1500 unless noted):
+
+```
+arm                       tc       games  full  near  total  proof games  delivered (full)
+Full control              5+0.05    2000   9.7   2.0   11.8     14.6          67%
+Full T1 (no waiting when
+  merely winning, brutal
+  prover 100%, build t 20) 5+0.05   2000  10.4   1.8   12.2     14.7          71%
+Full T3 (100%, build t 10) 5+0.05   2000  10.4   1.7   12.1       -             -
+Full                      30+0.3     400  11.2   2.0   13.2     22.8          49%
+Hybrid                    5+0.05    1000   9.0  28.3   37.3       -             -
+Hybrid                    30+0.3     399   8.3  30.3   38.6       -             -
+Hybrid                    180+2       96  14.6  32.3   46.9       -             -
+Near                      30+0.3     399   4.5  59.4   63.9       -             -
+Hybrid Elo 2000           30+0.3     400   7.2  26.0   33.2       -             -
+Hybrid Elo 2500           30+0.3     200   5.5  24.5   30.0       -             -
+```
+
+- The clock hypothesis is mostly wrong. Six times the time (30+0.3)
+  barely changes the rates. With more time the prover finds a forced
+  smother in more games (14.6 -> 22.8 per 100), but fewer of them are
+  delivered (67% -> 49%): the extra chances are the ones the defender
+  escapes. Escapes, not prover time, are the bottleneck. 180+2 (96 games)
+  hints higher (14.6 full, 46.9 total) but is too small to tell.
+- Clock economy (T1/T3): +0.7 full per 100, noise. Options stay off.
+- Near reaches 63.9 total per 100 at 30+0.3 (56.4 at 5+0.05 in grid18);
+  Hybrid at Elo 2000/2500 already meets the 40-50 / 15-20 targets for
+  total (33 and 30 at 30+0.3, Hybrid counts near only after 40 build
+  moves; Near would be higher).
+- Bug found and fixed (e9a88a7a): one time forfeit in the Near arm at
+  30+0.3 (ply 45, 2.73 s left, a proof found on that move). Waiting for a
+  finishing prover had no time bound because rebuilding a proof's line
+  ignores its limits. Now capped at its deadline plus a tenth of its
+  budget. In crushing positions the engine also uses ~20% of the clock
+  left per move (deep prover, mate-in-hand), which leaves little margin
+  on a loaded machine.
