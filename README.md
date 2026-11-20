@@ -1,35 +1,94 @@
-<div align="center">
+# Smotherfish
 
-  [![Stockfish][stockfish128-logo]][website-link]
+Smotherfish is a fork of [Stockfish 19][website-link] that tries to end games
+with a smothered mate: a mate where the enemy king cannot move because its own
+pieces block every escape square.
 
-  <h3>Stockfish</h3>
+It keeps Stockfish's full playing strength. It only steers towards smothered
+mates when the game is already decided, so against a strong opponent it plays
+like ordinary Stockfish.
 
-  A free and strong UCI chess engine.
-  <br>
-  <strong>[Explore Stockfish docs »][wiki-link]</strong>
-  <br>
-  <br>
-  [Report bug][issue-link]
-  ·
-  [Open a discussion][discussions-link]
-  ·
-  [Discord][discord-link]
-  ·
-  [Blog][website-blog-link]
+The engine reports itself as "Smotherfish 1 (Stockfish 19)". The full guide,
+with every option and every measurement, is in
+[docs/SMOTHERFISH.md](docs/SMOTHERFISH.md).
 
-  [![Build][build-badge]][build-link]
-  [![License][license-badge]][license-link]
-  <br>
-  [![Release][release-badge]][release-link]
-  [![Commits][commits-badge]][commits-link]
-  <br>
-  [![Website][website-badge]][website-link]
-  [![Fishtest][fishtest-badge]][fishtest-link]
-  [![Discord][discord-badge]][discord-link]
+## What it does
 
-</div>
+- **Proves smothered mates.** A dedicated search looks for forced sequences
+  (checks, sacrifices and a few quiet moves) that end in a smothered mate.
+  When it finds one, the engine plays it, even over a faster ordinary mate.
+- **Brutal mode** (`SmotherBrutal`, off by default). Hunts for smothers on
+  every move. Once the game is decided (at least 8 pawns up, or a forced
+  mate), it spends up to 80 moves building one: it stops caring about extra
+  material, keeps the enemy pieces next to their king, drives the king into a
+  corner and brings the queen and knights close. It never lets its advantage
+  drop below 6 pawns, and mates normally when the budget runs out.
+- **Default mode** (brutal off) plays Stockfish's moves except when a smother
+  is proven.
 
-## Overview
+## Measured results
+
+Games at 5 seconds plus 0.05 seconds per move, 600 to 2000 games per row,
+against Stockfish 19 limited by `UCI_Elo` and against the human-like Maia
+networks. Smothered mates per 100 games:
+
+| Opponent | Default mode | Brutal mode | Score (brutal) |
+| -------- | ------------ | ----------- | -------------- |
+| Stockfish, Elo 1500 | 1.1 | 12.7 | 1.000 |
+| Stockfish, Elo 2000 | - | 7.8 | 0.999 |
+| Maia 1100 | - | 7.3 | 0.999 |
+| Maia 1900 | - | 4.7 | 0.998 |
+| Stockfish, Elo 3000 | 0.2 | 2.0 | 0.997 |
+
+No game was lost in any of these runs. Brutal mode makes decided games longer
+(a median of about 120 half-moves instead of about 53), because it delays the
+mate to build the smother.
+
+## Using it
+
+Set the option `SmotherBrutal` to `true` in your chess GUI to get the
+smother-hunting behaviour. Everything else works like Stockfish.
+
+**Android (DroidFish and similar apps).** Static arm64 binaries are built by
+the `Android build` workflow (push to a branch named `android-build/<name>`).
+Download `smotherfish-android-armv8-dotprod` (most phones since about 2019)
+or `smotherfish-android-armv8` from the workflow run's artifacts, copy it to
+the phone and add it as an engine. Do not rename it to `stockfish`, which
+DroidFish treats specially.
+
+**Building from source** works exactly as for Stockfish:
+
+```
+cd src
+make -j profile-build
+```
+
+`./stockfish bench` must report 2497913 nodes; the smother features do not
+change the normal search.
+
+## Project files
+
+- `src/smother.h`, `src/smother.cpp`: the smothered-mate prover and the
+  construction score.
+- `src/search.cpp`: how the prover, brutal mode and construction mode are
+  wired into the search (search for "Smother").
+- `docs/SMOTHERFISH.md`: how it works, all options, all measurements.
+- `notes/HANDOFF.md`: the full development log, experiment by experiment.
+- `notes/RESEARCH.md`: related engines and research.
+- `notes/scripts/`: the match runner, opening book generator, prover
+  regression test (Lichess smothered-mate puzzles) and summary tools.
+- `.github/workflows/smother-exp.yml`, `android-build.yml`: experiments on
+  GitHub Actions and the Android builds.
+
+## License and credits
+
+Smotherfish is free software under the
+[GNU General Public License version 3][license-link], like Stockfish. All
+credit for the engine itself goes to the Stockfish developers (see
+[AUTHORS](AUTHORS)). If you distribute Smotherfish, you must include the
+license and the full source code, including the changes in this fork.
+
+## About Stockfish (upstream)
 
 [Stockfish][website-link] is a **free and strong UCI chess engine** derived from
 Glaurung 2.1 that analyzes chess positions and computes the optimal moves.
@@ -42,7 +101,7 @@ Stockfish with it.
 
 See also the Stockfish [documentation][wiki-usage-link] for further usage help.
 
-## Files
+### Files
 
 This distribution of Stockfish consists of the following files:
 
@@ -59,17 +118,17 @@ This distribution of Stockfish consists of the following files:
   * a file with the .nnue extension, storing the neural network for the NNUE
     evaluation. Binary distributions will have this file embedded.
 
-## Contributing
+### Contributing
 
 __See [Contributing Guide](CONTRIBUTING.md).__
 
-### Donating hardware
+#### Donating hardware
 
 Improving Stockfish requires a massive amount of testing. You can donate your
 hardware resources by installing the [Fishtest Worker][worker-link] and viewing
 the current tests on [Fishtest][fishtest-link].
 
-### Improving the code
+#### Improving the code
 
 In the [chessprogramming wiki][programming-link], many techniques used in
 Stockfish are explained with a lot of background information.
@@ -85,7 +144,7 @@ Discussions about Stockfish take place these days mainly in the Stockfish
 [Discord server][discord-link]. This is also the best place to ask questions
 about the codebase and how to improve it.
 
-## Compiling Stockfish
+### Compiling Stockfish
 
 Stockfish has support for 32 or 64-bit CPUs, certain hardware instructions,
 big-endian machines such as Power PC, and other platforms.
@@ -104,7 +163,7 @@ Detailed compilation instructions for all platforms can be found in our
 [documentation][wiki-compile-link]. Our wiki also has information about
 the [UCI commands][wiki-uci-link] supported by Stockfish.
 
-## Terms of use
+### Terms of use
 
 Stockfish is free and distributed under the
 [**GNU General Public License version 3**][license-link] (GPL v3). Essentially,
@@ -120,7 +179,7 @@ where the source code can be found) to generate the exact binary you are
 distributing. If you make any changes to the source code, these changes must
 also be made available under GPL v3.
 
-## Acknowledgements
+### Acknowledgements
 
 Stockfish uses neural networks trained on [data provided by the Leela Chess Zero
 project][lc0-data-link], which is made available under the [Open Database License][odbl-link] (ODbL).
