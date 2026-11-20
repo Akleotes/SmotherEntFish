@@ -486,3 +486,48 @@ Promoted: merged into this branch as Smotherfish 1.1. The engine name now
 gives the upstream base, "Smotherfish 1.1 (Stockfish dev-20261115-5d03b6e5)",
 not the build date and hash. Bench 1442480 (= upstream 5d03b6e5); the
 Android workflow checks that number.
+
+### Session 3, afternoon (Nov 20 JST): items from a parallel session, and their results
+
+A parallel session added (commits 2e676c95 .. a187fabd, now on this branch):
+`SmotherBuildVersion` 2 (build_score weights fitted by logistic regression,
+notes/fit/), `SmotherPartial` ("all but one" smothers: one square next to
+the mated king empty but covered by us), match.py `--ponder` / `--opp-think`
+and a ponderhit fix (an unlimited ponder prover was waited for after
+"ponderhit"; games were lost on time or hung), SPRT tests on Actions in
+waves (notes/exp/sprt.json, notes/scripts/sprt_stats.py), the "Analysis
+Elo" option for DroidFish, CI path fixes, and a data-race fix (all threads
+now read the smother modes decided once by the main thread).
+
+grid14 (5+0.05; A = defaults, V2 = fitted score, P = SmotherPartial):
+
+```
+run (games)           full smothers /100g   full + all-but-one /100g   score
+Elo 1500 A    (2000)        11.6                  13.5                 0.999
+Elo 1500 V2   (2000)        10.2                  12.2                 0.999
+Elo 1500 P    (2000)         1.6                  56.4                 1.000
+Elo 1500 VP   (2000)         1.1                  59.7                 1.000
+Elo 3000 A / V2 / P / VP (600)  1.5 / 1.8 / 0.0 / 0.3   2.3 / 1.8 / 11.7 / 17.0
+Maia 1100 A / VP (1000)  7.0 / 1.6                13.8 / 50.6          1.000
+```
+
+- V2: better offline (CV AUC 0.766 vs 0.735) but not in games (10.2 vs 11.6
+  at Elo 1500, same openings). SmotherBuildVersion stays 1.
+- P changes the goal: about half of all games end in a full or all-but-one
+  smother, but full smothers almost disappear. Off by default; a choice for
+  the user (see below).
+
+ponder1 (opponent holds each move >= 1 s; our engine ponders):
+deep pondering on vs off, Elo 1500: 11.2 vs 13.8 smothers/100g; Maia 1100:
+7.8 vs 9.5. Not usable: with deep pondering on, the opponent lost 59 of 600
+games on time (1 with it off) and we lost one on time: two games per
+4-core runner, and our ponder search plus unlimited prover took CPU on the
+opponent's turn. match.py now runs one pondering game per 4 cores
+(77a780f4); ponder2 repeats the test.
+
+SPRT hunt_vs_default (full strength head-to-head, 10+0.1, 8moves_v3,
+fastchess): new = SmotherBrutal + SmotherBuildVersion 2 + SmotherPartial,
+base = branch smotherfish defaults. 6400 games, pentanomial
+[0,153,2864,177,6], score 0.5028, +2.0 Elo (95% 0..+4), LLR 66.7 > 2.94:
+H1 (no loss beyond the [-10, 0] bounds). Smother hunting costs no strength
+against an equal opponent, where construction mode never switches on.
