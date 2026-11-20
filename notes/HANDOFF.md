@@ -450,3 +450,23 @@ Elo 1500, defaults, 15+0.15                 74  12.3  600/0/0    1.000
 - Merging into master: master is upstream Stockfish dev (98 commits past
   Stockfish 19, new net architecture SFNNv18); a trial merge conflicts in
   src/Makefile, src/misc.cpp, src/search.cpp. Not merged.
+
+grid12 (survivability confirmation, new openings):
+
+```
+SmotherBuildSurvive     Elo 1500 (2000)       Maia 1100 (1000)
+0  control              215  10.8  1994/6/0     64  6.4
+2  defended             225  11.2  1996/4/0     73  7.3
+10 defended + pawn      207  10.3  1993/6/1     74  7.4
+```
+
+grid10 + grid12 at Elo 1500: defended 357/3000 (11.9) vs control 321/3000
+(10.7), p ~0.14. Not confirmed; SmotherBuildSurvive stays 0, and the cap
+ablation is skipped (no term won). The option stays for later work.
+
+Logo (docs/logo.svg) and a README in the original's style are on branch
+`smotherfish` (pushed copy of this branch; intended as the default branch).
+Branch `smotherfish-next`: Smotherfish merged with upstream master (98
+commits past Stockfish 19); bench 1442480 = upstream, puzzle regression
+identical. grid13 compares it head-to-head with `smotherfish` (new plan
+field "ref" builds a git ref as the opponent).
