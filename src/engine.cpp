@@ -209,10 +209,10 @@ Engine::Engine(std::optional<std::filesystem::path> path) :
     // quickly, for at most SmotherBuildMoves moves per game. Positions at or
     // above SmotherBuildFloor are scored by the enemy king's box, at
     // SmotherBuildWeight centipawns per point; extra material counts 1/8.
-    options.add("SmotherBuild", Option(false));
+    options.add("SmotherBuild", Option(true));
     options.add("SmotherBuildCp", Option(800, 0, 10000));
     options.add("SmotherBuildFloor", Option(600, 0, 10000));
-    options.add("SmotherBuildMoves", Option(20, 0, 200));
+    options.add("SmotherBuildMoves", Option(80, 0, 200));
     options.add("SmotherBuildWeight", Option(8, 0, 100));
     // Blocker survivability in the build score, a bit mask: 1 pinned
     // blocker bonus, 2 defended blocker bonus, 4 penalty if our knight wins
