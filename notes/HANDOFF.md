@@ -642,3 +642,29 @@ near 8 at Elo 1500 (2000 games) and 2500 (1000). Queued ideas from the
 reviews: a blocker-reserve term, holding back optional captures, reply
 prediction from our own game data, and checks that force the defender's
 pieces onto its king ring (for Elo 2500-3000).
+
+### The clock is the bottleneck (Nov 21, 00:30 JST)
+
+Brutal mode at 5+0.05 vs Elo 1500 (grid15 control, 2000 games): median
+clock at our move 30 is 0.24 s (normal play, h2h_default: 1.67 s); 56% of
+our moves are played with < 0.5 s left. Time per move by our move number:
+
+```
+moves        0-4  5-9  10-14 15-19 20-24 25-29 30-34 35+
+brutal (ms)  165  215  265   253   176   100   62    47
+normal (ms)  153  167  167   154   139   120   106   91..59
+```
+
+The prover is waited for when merely winning (+3, SmotherWinTimePercent
+100, plus 50% steering) and when crushing (300% of optimum, capped at 0.6
+of maximum), so the clock is spent before and early in construction, and
+the construction phase (often 30+ moves) runs on the 0.05 s increment. A
+proof needs 0.3-11M nodes (~0.1-3 s). Turning off the waiting when merely
+winning does not fix it (local, 15 games): the drain is moves 15-30, when
+crushing. Real games (3+2 blitz, pondering on human think time) give 10-100x
+more compute in this phase, so 5+0.05 may understate the real rate.
+New option SmotherBuildTime N (off): each construction move uses at least
+1/N of the clock left. grid21 measures the rate at 5+0.05, 30+0.3 and
+180+2 (Hybrid/Near/Full, Elo 1500/2000/2500) and two clock-economy
+variants at 5+0.05. Also new: SmotherBuildStarve/StarveAt (blocker-reserve
+guard, off), measured by grid20.
