@@ -616,3 +616,29 @@ pentanomial [0,145,2885,169,1], score 0.502, +1.4 Elo (95% -0.5..+3.3),
 LLR 20.9: H1, no strength cost.
 
 SmotherGoal default is now Hybrid (brutal mode only; bench unchanged).
+
+### Blocker starvation (Nov 20 evening; outside reviews by GPT and GLM)
+
+Corrected numbers with construction mode on (grid15 control, Elo 1500,
+Full): 17 proof games per 100, 72% delivered (the 50-60% escape rate was
+measured before construction mode). Escapes are rarely budget expiry (14 of
+95). In escaped games the opponent ends with 3 pieces (6 in delivered) and
+we capture ~7 enemy units after the decisive point (4 in delivered).
+Blocker reserve (defender non-king pieces minus open king-ring squares):
+
+```
+                    decided (+9)        first proof         end
+                    pieces  reserve     pieces  reserve     pieces
+delivered (242)        9      6            6      4            6
+escaped (95)           9      6            5      2            3
+```
+
+Same start; the escaped games lose blockers during construction. New
+options (defaults unchanged, 40/40 positions identical): SmotherBuildKeep
+(points per enemy piece, 3), SmotherBuildKeepNear (per piece within two
+squares of its king, 3), SmotherBuildMaterialDiv (extra material counts
+1/N above the floor, 8). grid19 tests keep 8, material 1/16, both, and
+near 8 at Elo 1500 (2000 games) and 2500 (1000). Queued ideas from the
+reviews: a blocker-reserve term, holding back optional captures, reply
+prediction from our own game data, and checks that force the defender's
+pieces onto its king ring (for Elo 2500-3000).
