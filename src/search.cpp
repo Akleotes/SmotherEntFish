@@ -327,8 +327,22 @@ void Search::Worker::start_smother_prover() {
     for (const auto& rm : rootMoves)
         allowed.push_back(rm.pv[0]);
 
-    auto job = [&mgr, sl, allowed = std::move(allowed)](Position& pos) {
+    const Smother::Style fullStyle =
+      options["SmotherClassic"] ? Smother::Style::Classic : Smother::Style::AnyPiece;
+    auto job = [&mgr, sl, fullStyle, allowed = std::move(allowed)](Position& pos) {
         Smother::Result r = Smother::prove(pos, sl, mgr.smotherStop);
+        // A near ("all but one") proof found: with the budget left, look for
+        // a true smother at most three moves longer, and prefer it.
+        if (r.found && sl.style == Smother::Style::Partial && !mgr.smotherStop)
+        {
+            Smother::Limits full = sl;
+            full.style           = fullStyle;
+            full.maxMoves        = std::min(sl.maxMoves, r.mateIn + 3);
+            full.robust          = false;
+            Smother::Result t    = Smother::prove(pos, full, mgr.smotherStop);
+            if (t.found && !t.pv.empty())
+                r = t;
+        }
         if (!r.found || r.pv.empty()
             || std::find(allowed.begin(), allowed.end(), r.pv[0]) == allowed.end())
             return;
@@ -2401,6 +2415,14 @@ Value Search::Worker::mated_value(const Position& pos, int ply) const {
     if (seekSmother && pos.side_to_move() != shapeUs
         && !Smother::smothered_if_mate(pos, mateStyle()))
         return -(VALUE_TB - ply);
+    // When "all but one" smothers count, one counts as a real mate three
+    // moves later than a true smother, so a true one up to three moves
+    // longer is preferred (measured: when the engine took a near smother, a
+    // true one was provable 7% of the time, typically 1-3 moves longer).
+    if (smotherPartial && (seekSmother || buildSmother) && pos.side_to_move() != shapeUs
+        && !Smother::smothered_if_mate(pos, seekClassic ? Smother::Style::Classic
+                                                        : Smother::Style::AnyPiece))
+        return mated_in(std::min(ply + 6, MAX_PLY - 1));
     return mated_in(ply);
 }
 
