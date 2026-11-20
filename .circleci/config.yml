@@ -1,0 +1,92 @@
+# Smotherfish experiments on CircleCI, as a burst next to GitHub Actions.
+#
+# Runs only on branches named circle-exp/<name>, so the free monthly credits
+# are never spent by an ordinary push. The branch's notes/exp/plan.json is
+# the same format as for the GitHub workflow (notes/scripts/expand_plan.py);
+# jobs are spread over the parallel "match" machines. Only Stockfish
+# (UCI_Elo) opponents are built here; Maia and "ref" jobs are skipped.
+# Results: the "collect" job stores the merged games and SUMMARY.md as
+# artifacts (results/).
+version: 2.1
+
+executors:
+  linux:
+    docker:
+      - image: cimg/python:3.12
+    resource_class: large  # 4 vCPU
+    environment:
+      OPPONENT_COMMIT: edb0d9db6731067ec50ce619ff372b463bc4dd5d  # stock Stockfish 19
+
+jobs:
+  build:
+    executor: linux
+    steps:
+      - checkout
+      - run:
+          name: Build Smotherfish and stock Stockfish 19
+          command: |
+            ARCH=x86-64-avx2; grep -q avx2 /proc/cpuinfo || ARCH=x86-64-sse41-popcnt
+            echo "ARCH=$ARCH"
+            (cd src && make -j4 net && make -j4 build ARCH=$ARCH && ./stockfish bench 2>&1 | grep "Nodes searched")
+            git fetch --depth 1 origin $OPPONENT_COMMIT
+            mkdir -p opp && git archive $OPPONENT_COMMIT src scripts | tar -x -C opp
+            cp src/nn-*.nnue opp/src/
+            (cd opp/src && make -j4 build ARCH=$ARCH && ./stockfish bench 2>&1 | grep "Nodes searched")
+            mkdir -p engines && cp src/stockfish engines/ours && cp opp/src/stockfish engines/opp
+      - persist_to_workspace:
+          root: .
+          paths: [engines]
+
+  match:
+    executor: linux
+    parallelism: 30
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - run: pip install -q chess
+      - run:
+          name: Play this machine's share of the plan
+          no_output_timeout: 60m
+          command: |
+            MATCH_DEBUG=600 python -I notes/scripts/circle_run.py notes/exp/plan.json \
+              $CIRCLE_NODE_INDEX $CIRCLE_NODE_TOTAL 4
+      - persist_to_workspace:
+          root: .
+          paths: [out]
+
+  collect:
+    executor: linux
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - run:
+          name: Merge chunks and summarise
+          command: |
+            exp=$(python3 -c "import json; print(json.load(open('notes/exp/plan.json'))['exp'])")
+            mkdir -p results/$exp
+            for f in out/*.jsonl; do
+              [ -e "$f" ] || continue
+              base=$(basename "$f" .jsonl); name=${base%-*}
+              cat "$f" >> results/$exp/$name.jsonl
+            done
+            { echo '```'; python -I notes/scripts/summary.py results/$exp/*.jsonl; echo '```'; } \
+              > results/$exp/SUMMARY.md
+            cat results/$exp/SUMMARY.md
+      - store_artifacts:
+          path: results
+
+workflows:
+  experiment:
+    jobs:
+      - build:
+          filters: &only_exp
+            branches:
+              only: /^circle-exp\/.*/
+      - match:
+          requires: [build]
+          filters: *only_exp
+      - collect:
+          requires: [match]
+          filters: *only_exp
