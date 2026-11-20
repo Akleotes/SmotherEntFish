@@ -553,3 +553,31 @@ games) while adding near ones; 40 looks best. The one loss (H80, ply 66,
 0.15 s left, no proof) came before any hybrid effect. grid15 on GitHub
 (2000 games per threshold, other openings) confirms before a default
 changes.
+
+grid15 (GitHub, 2000 games per setting at Elo 1500, seed 1400):
+
+```
+SmotherPartialAfter    full /100g   full + all-but-one /100g   W/D/L
+0  (off)                  12.1             13.8                 1996/4/0
+80                        10.3             17.6                 1996/4/0
+60                         8.6             25.8                 1993/6/1
+40                         7.3             37.0                 1998/2/0
+Elo 3000, 80 (600)          2.2              3.2                 592/8/0
+Maia 1100, 0 / 80 (1000)  7.7 / 7.6      14.0 / 15.8              all won
+```
+
+With CircleCI's run (other openings): near smothers rise clearly with an
+earlier threshold (40: about 37-38 per 100 games vs 11-14 off); the cost in
+full smothers is between ~0 (CircleCI) and ~40% (GitHub). Default not
+changed yet; the SPRT hybrid40_vs_brutal measures the strength side.
+
+grid16 (Elo 2000 / 2500, 1000 games each): SmotherPartial always on gives
+44.1 / 40.0 full-or-near smothers per 100 games (full 0.4 / 0.8); hybrid 80
+gives 12.1 / 8.4 (full 6.0 / 4.4). All 3996 games won or drawn (0 losses).
+
+ponder2 (one pondering game per 4-core runner, opponent >= 1 s per move):
+deep pondering on vs off, Elo 1500: 12.2 vs 10.8 full smothers/100g; Maia
+1100: 9.0 vs 6.8. Positive in both, but 3 losses on time with it on, each on
+the move a proof arrived. Cause: rebuilding a found proof's line ignored the
+stop flag. Fixed (see the prover commit after this note); a rerun should
+show whether the gain holds without time losses.
