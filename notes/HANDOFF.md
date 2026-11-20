@@ -685,3 +685,29 @@ on. With pondering the clock lasts longer (median 0.56 s at our move 30 vs
 0.24 s without) and Hybrid's total rate at Elo 1500 is ~50 per 100 games,
 against ~37 without pondering in grid18 (other openings): more compute in
 the late game, more smothers, in line with the clock finding above.
+
+grid19 (keeping enemy pieces; 5+0.05, brutal, SmotherGoal=Full; full and
+near per 100 games; proof games = the prover found a forced smother):
+
+```
+arm                       games  full  near  proof games  delivered  draws  losses
+e1500 A control            2000  10.1   1.6     15.2         66%        3      0
+e1500 B keep 8             2000  12.2   2.8     18.2         67%        4      0
+e1500 C material 1/16      2000  10.7   2.5     15.6         69%        8      0
+e1500 D keep 8 + mat 1/16  2000  12.3   3.0     18.6         66%        6      1
+e1500 E keep-near 8        2000   9.7   1.8     15.0         64%        8      0
+e2500 A control            1000   5.7   1.0      8.0         71%        2      0
+e2500 D keep 8 + mat 1/16  1000   7.4   1.6      9.7         76%        5      0
+e2500 E keep-near 8        1000   4.8   0.9      6.8         71%        2      0
+```
+
+- Keeping enemy pieces works: B and D +2.1/+2.2 full smothers at Elo 1500
+  (z ~2.0-2.1 each), D +1.7 at 2500; D vs A pooled over both Elos z ~2.6.
+  It works by creating more chances (proof games 15 -> 18.5 per 100), not
+  by converting more of them (still ~2/3 delivered).
+- Flattening material (C) adds little on its own or on top of keep 8;
+  extra points for pieces near the king (E) slightly hurt.
+- The one loss (D, game 80): back-rank mate at ply 70 while 8 points of
+  material up, clock 0.12-0.2 s for the last 12 moves: the clock problem.
+- Next: keep 8 (alone, fewer draws than D) combined with the winners of
+  grid20 (blocker-reserve guard) and grid21 (clock economy).
