@@ -249,6 +249,10 @@ Engine::Engine(std::optional<std::filesystem::path> path) :
     // Extra points for each enemy piece within two squares of its king.
     options.add("SmotherBuildKeepNear", Option(3, 0, 50));
     options.add("SmotherBuildMaterialDiv", Option(8, 1, 64));
+    // Blocker reserve guard: build-score points lost per unit of reserve
+    // (enemy pieces minus open king-ring squares) below StarveAt. 0 = off.
+    options.add("SmotherBuildStarve", Option(0, 0, 50));
+    options.add("SmotherBuildStarveAt", Option(4, 0, 15));
 
     // While pondering, let the parallel prover search deep and unbounded on
     // the opponent's time.

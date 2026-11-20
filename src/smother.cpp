@@ -656,7 +656,7 @@ static int build_score_v2(const Position& pos, Color us) {
     return score;
 }
 
-int build_score(const Position& pos, Color us, int survive, int cap, int version, int keep, int keepNear) {
+int build_score(const Position& pos, Color us, int survive, int cap, int version, int keep, int keepNear, int starve, int starveAt) {
     if (version == 2)
         return build_score_v2(pos, us);
 
@@ -678,6 +678,16 @@ int build_score(const Position& pos, Color us, int survive, int cap, int version
     score += keep * popcount(theirs);  // SmotherBuildKeep (3)
     while (theirs)
         score += sq_distance(pop_lsb(theirs), ksq) <= 2 ? keepNear : 0;  // SmotherBuildKeepNear (3)
+
+    // Blocker reserve: enemy pieces minus open squares around their king.
+    // Escaped smothers had a reserve of 2 at the first proof, delivered ones
+    // 4, so penalise each unit below SmotherBuildStarveAt (off by default).
+    if (starve > 0)
+    {
+        const int reserve = popcount(pos.pieces(them) & ~pos.pieces(KING)) - holes;
+        if (reserve < starveAt)
+            score -= starve * (starveAt - reserve);
+    }
 
     // The finishers: knights and the queen near the king.
     Bitboard knights = pos.pieces(us, KNIGHT);
