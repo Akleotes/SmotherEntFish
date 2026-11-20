@@ -118,6 +118,11 @@ Engine::Engine(std::optional<std::filesystem::path> path) :
                 Option(Stockfish::Search::Skill::LowestElo, Stockfish::Search::Skill::LowestElo,
                        Stockfish::Search::Skill::HighestElo));
 
+    // Analysis strength (see Engine::go): 0 = full strength, else the Elo
+    // whose search depth analysis ("go infinite") is capped at. Not named
+    // UCI_*, so GUIs that hide those options (DroidFish) show it.
+    options.add("Analysis Elo", Option(0, 0, Stockfish::Search::Skill::HighestElo));
+
     options.add("UCI_ShowWDL", Option(false));
 
     options.add(  //
@@ -267,6 +272,18 @@ Engine::perft(const std::string& fen, Depth depth, bool isChess960) {
 void Engine::go(Search::LimitsType& limits) {
     assert(limits.perft == 0);
     verify_network();
+
+    // "Analysis Elo": GUIs such as DroidFish analyse with "go infinite" at
+    // full strength and hide the UCI_* options. A value above 0 caps the
+    // analysis depth at the depth the UCI_Elo limiter picks its move at for
+    // that Elo (about 2 at 1500, 5 at 2000, 8 at 2500), so the lines shown
+    // are what a player of that strength would see. 0 = full strength.
+    const int analysisElo = int(options["Analysis Elo"]);
+    if (limits.infinite && analysisElo > 0 && !limits.depth)
+    {
+        const Search::Skill skill(20, std::max(analysisElo, int(Search::Skill::LowestElo)));
+        limits.depth = 1 + int(skill.level);
+    }
 
     threads.start_thinking(options, pos, states, limits);
 }
