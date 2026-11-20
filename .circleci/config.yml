@@ -61,6 +61,7 @@ jobs:
       - checkout
       - attach_workspace:
           at: .
+      - run: pip install -q chess  # summary.py reads the games with python-chess
       - run:
           name: Merge chunks and summarise
           command: |
