@@ -221,8 +221,10 @@ void Search::Worker::start_smother_prover() {
     // more, and spending the budget on every move ran the clock down before
     // the chances came.
     mgr.smotherBrutal = bool(options["SmotherBrutal"]);
+    // Construction mode flattens the score, so while building the previous
+    // score understates the advantage: the deep prover stays on.
     mgr.smotherCrush  = mgr.smotherBrutal && prev != VALUE_INFINITE && prev != -VALUE_INFINITE
-                    && (is_win(prev)
+                    && (is_win(prev) || mgr.smotherBuilding
                         || (!is_decisive(prev)
                             && UCIEngine::to_cp(prev, rootPos) >= int(options["SmotherBigCp"])));
 
