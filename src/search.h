@@ -320,6 +320,8 @@ class SearchManager {
     int               smotherHand     = 0;      // moves with the mate-in-hand prover budget
     int               smotherBuilds   = 0;      // moves played in construction mode this game
     bool              smotherBuilding = false;  // construction mode on the last move
+    bool              smotherSeekNow  = false;  // this move: seek mode (set before helpers start)
+    bool              smotherBuildNow = false;  // this move: construction mode (likewise)
     std::atomic_bool  smotherReady{false};
     std::atomic_bool  smotherStop{false};
     bool              smotherUnbounded = false;  // prover started without limits (pondering)
@@ -363,6 +365,7 @@ class Worker {
    private:
     bool iterative_deepening();
     void start_smother_prover();
+    void decide_smother_modes();
     void finish_smother_prover(bool letFinish);
 
     void do_move(Position&    pos,

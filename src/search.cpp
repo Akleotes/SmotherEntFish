@@ -350,6 +350,43 @@ void Search::Worker::finish_smother_prover(bool letFinish) {
         mgr.smotherThread.join();
 }
 
+// Seek mode and construction mode for this move, decided on the main thread
+// before the helper threads start. Seek mode needs won mode, room before the
+// 50-move rule, enough enemy pieces to box their king in, and per-game
+// budget left. Construction mode (brutal): once the game is decided
+// (SmotherBuildCp, or a forced mate), stop playing for more material or the
+// quickest mate and build a smother: positions at or above SmotherBuildFloor
+// are scored mainly by how boxed in the enemy king is, and a plain mate
+// counts no more than the floor (see evaluate(), mated_value()). Against an
+// opponent who plays well the game is never decided, so this never switches
+// on. Budget: SmotherBuildMoves per game, and off before the 50-move rule;
+// then the engine mates normally.
+void Search::Worker::decide_smother_modes() {
+    auto&       mgr = *main_manager();
+    const Color us  = rootPos.side_to_move();
+    const int   budget =
+      mgr.smotherBrutal ? std::max(int(options["SmotherSeek"]), 200) : int(options["SmotherSeek"]);
+    mgr.smotherSeekNow = (mgr.smotherWon || mgr.smotherBrutal) && budget > mgr.smotherSeeks
+                      && rootPos.rule50_count() < int(options["SmotherSeekRule50"])
+                      && popcount(rootPos.pieces(~us)) >= 4;
+    if (mgr.smotherSeekNow)
+        ++mgr.smotherSeeks;
+
+    const Value prev  = mgr.bestPreviousScore;
+    const bool  known = prev != VALUE_INFINITE && prev != -VALUE_INFINITE;
+    const int   cp    = known && !is_decisive(prev) ? UCIEngine::to_cp(prev, rootPos) : 0;
+    const bool  enter = known && (is_win(prev) || cp >= int(options["SmotherBuildCp"]));
+    const bool  stay =
+      mgr.smotherBuilding && known && (is_win(prev) || cp >= int(options["SmotherBuildFloor"]));
+    mgr.smotherBuildNow = mgr.smotherBrutal && options["SmotherBuild"] && (enter || stay)
+                       && mgr.smotherBuilds < int(options["SmotherBuildMoves"])
+                       && rootPos.rule50_count() < int(options["SmotherSeekRule50"])
+                       && popcount(rootPos.pieces(~us)) >= 4;
+    mgr.smotherBuilding = mgr.smotherBuildNow;
+    if (mgr.smotherBuildNow)
+        ++mgr.smotherBuilds;
+}
+
 void Search::Worker::start_searching() {
 
     accumulatorStack.reset();
@@ -375,6 +412,7 @@ void Search::Worker::start_searching() {
     }
 
     start_smother_prover();
+    decide_smother_modes();
 
     // Main thread starts non-main threads, and begins own search
     threads.start_searching();
@@ -653,37 +691,15 @@ bool Search::Worker::iterative_deepening() {
     shapeCap    = int(options["SmotherShapeCap"]);
     shapeUs     = us;
     {
-        // Seek mode needs won mode, room before the 50-move rule, enough enemy
-        // pieces to box their king in, and per-game budget left.
-        auto& mgr        = *threads.main_manager();
-        seekClassic      = bool(options["SmotherClassic"]);
-        smotherPartial   = bool(options["SmotherPartial"]);
-        const int budget = mgr.smotherBrutal ? std::max(int(options["SmotherSeek"]), 200)
-                                             : int(options["SmotherSeek"]);
-        seekSmother      = (mgr.smotherWon || mgr.smotherBrutal) && budget > mgr.smotherSeeks
-                   && rootPos.rule50_count() < int(options["SmotherSeekRule50"])
-                   && popcount(rootPos.pieces(~us)) >= 4;
-        if (seekSmother && mainThread)
-            ++mgr.smotherSeeks;
-
-        // Construction mode (brutal): once the game is decided (SmotherBuildCp,
-        // or a forced mate), stop playing for more material or the quickest
-        // mate and build a smother: positions at or above SmotherBuildFloor
-        // are scored mainly by how boxed in the enemy king is, and a plain
-        // mate counts no more than the floor (see evaluate(), mated_value()).
-        // Against an opponent who plays well the game is never decided, so
-        // this never switches on. Budget: SmotherBuildMoves per game, and off
-        // before the 50-move rule; then the engine mates normally.
-        const Value prev  = mgr.bestPreviousScore;
-        const bool  known = prev != VALUE_INFINITE && prev != -VALUE_INFINITE;
-        const int   cp    = known && !is_decisive(prev) ? UCIEngine::to_cp(prev, rootPos) : 0;
-        const bool  enter = known && (is_win(prev) || cp >= int(options["SmotherBuildCp"]));
-        const bool  stay =
-          mgr.smotherBuilding && known && (is_win(prev) || cp >= int(options["SmotherBuildFloor"]));
-        buildSmother = mgr.smotherBrutal && options["SmotherBuild"] && (enter || stay)
-                    && mgr.smotherBuilds < int(options["SmotherBuildMoves"])
-                    && rootPos.rule50_count() < int(options["SmotherSeekRule50"])
-                    && popcount(rootPos.pieces(~us)) >= 4;
+        // Seek and construction mode are decided once per move by the main
+        // thread before the helper threads start (decide_smother_modes()), so
+        // every thread searches with the same setting and none reads the
+        // per-game counters while the main thread updates them.
+        auto& mgr      = *threads.main_manager();
+        seekClassic    = bool(options["SmotherClassic"]);
+        smotherPartial = bool(options["SmotherPartial"]);
+        seekSmother    = mgr.smotherSeekNow;
+        buildSmother   = mgr.smotherBuildNow;
         if (buildSmother)
         {
             const int perK = std::max(1, UCIEngine::to_cp(Value(1000), rootPos));  // cp per 1000
@@ -693,12 +709,6 @@ bool Search::Worker::iterative_deepening() {
             buildCap       = int(options["SmotherBuildSurviveCap"]);
             buildVersion   = int(options["SmotherBuildVersion"]);
             shapeWeight    = 0;
-        }
-        if (mainThread)
-        {
-            mgr.smotherBuilding = buildSmother;
-            if (buildSmother)
-                ++mgr.smotherBuilds;
         }
     }
     double timeReduction = 1, totBestMoveChanges = 0;
