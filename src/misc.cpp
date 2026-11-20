@@ -54,7 +54,7 @@ namespace fs = std::filesystem;
 namespace {
 
 // Version number or dev.
-constexpr std::string_view version = "dev";
+constexpr std::string_view version            = "dev";
 constexpr std::string_view smotherfishVersion = "1.1";
 constexpr std::string_view upstreamBase       = "20261115-5d03b6e5";  // upstream master merged
 
@@ -145,8 +145,8 @@ std::string engine_version_info() {
     // "dev" date and hash of upstream master at the last merge), not the
     // date and hash of this build.
     std::stringstream ss;
-    ss << "Smotherfish " << smotherfishVersion << " (Stockfish " << version << "-"
-       << upstreamBase << ")";
+    ss << "Smotherfish " << smotherfishVersion << " (Stockfish " << version << "-" << upstreamBase
+       << ")";
     return ss.str();
 }
 
