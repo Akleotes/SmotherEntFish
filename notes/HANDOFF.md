@@ -785,3 +785,28 @@ changed 3 -> 8 (4e401120); only construction mode (brutal) reads it.
 grid23 (queued): the new default with Near and Hybrid at Elo 1500/2000/
 2500, Maia 1100, pondering, and Elo 3000, to compare with the targets
 (70 / 40-50 / 15-20 smothers, full or near, per 100 games).
+
+grid23 (keep 8 default, prover wait fix; brutal, 5+0.05; total = full +
+near "all but one" smothers per 100 games):
+
+```
+opponent     goal              games  full  total   W    D  L   target (total)
+Elo 1500     Hybrid             1000   8.4   53.1  999   1  0
+Elo 1500     Hybrid, pondering   400   7.0   60.8  400   0  0
+Elo 1500     Near               1000   3.8   65.6  999   1  0   70
+Elo 2000     Hybrid             1000   5.7   43.8  995   4  1
+Elo 2000     Near               1000   2.5   54.3  998   2  0   40-50
+Elo 2500     Hybrid             1000   4.7   38.3  998   2  0
+Elo 2500     Near               1000   1.5   45.7  998   2  0   15-20
+Elo 3000     Hybrid              500   0.4   12.6  499   1  0
+Maia 1100    Hybrid              500   7.8   43.8  500   0  0
+Maia 1100    Near                500   1.6   49.2  500   0  0
+```
+
+- Targets for full-or-near smothers: Elo 2000 and 2500 met (2500 by
+  twice the target); Elo 1500 at 65.6 (Near) vs 70; pondering adds ~8 to
+  Hybrid, so Near with pondering is likely over 70 (not yet measured).
+- Near trades true smothers for near ones (3.8 vs 8.4 full at 1500).
+- The loss (Elo 2000, Hybrid): never more than +3, ordinary blitz loss at
+  0.2 s per move; construction never started.
+- Human-like opponent (Maia 1100): 43.8 (Hybrid) / 49.2 (Near).
