@@ -711,3 +711,21 @@ e2500 E keep-near 8        1000   4.8   0.9      6.8         71%        2      0
   material up, clock 0.12-0.2 s for the last 12 moves: the clock problem.
 - Next: keep 8 (alone, fewer draws than D) combined with the winners of
   grid20 (blocker-reserve guard) and grid21 (clock economy).
+
+grid20 (blocker-reserve guard, SmotherBuildStarve; Elo 1500, Full, 2000
+games each):
+
+```
+arm                  full  near  proof games  delivered  reserve at proof (deliv/esc)
+A control             9.6   1.8     14.9         64%        3 / 2
+S10 (10 per unit <4) 10.9   2.1     15.8         69%        4 / 3
+S20 (20 per unit <4)  8.4   2.1     12.0         70%        4 / 4
+S10 at 6              7.3   2.5     11.1         66%        5 / 4
+```
+
+The guard does keep the reserve up, but strong settings cost more chances
+than they save (fewer proof games); S10 is +1.3 (z ~1.3, noise). Option
+stays off. Time forfeits by us: 1 in ~17,000 games of grid19/20 (S10, ply
+95, 0.19 s left, far ahead; the opponent flags at a similar rate, so it
+looks like runner jitter at a near-empty clock). grid22 (queued after
+grid21): SmotherBuildKeep 3/8/12/16 with Full, and keep 8 with Hybrid.
