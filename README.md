@@ -55,11 +55,12 @@ with any UCI chess GUI, such as DroidFish on Android. It identifies itself as
   material, keeps the enemy pieces next to their king, drives the king into a
   corner and brings the queen and knights close. It never lets its advantage
   drop below 6 pawns, and mates normally when the budget runs out.
-- **Smother goal** (`SmotherGoal`): Full (only true smothers, the default),
-  Near (also "all but one" smothers, where one square next to the king is
-  empty but covered), or Hybrid (true ones first, near ones later in the
-  game). Near ends about 40-56 of every 100 games against Elo 1500-2500
-  opponents with a full or near smother.
+- **Smother goal** (`SmotherGoal`): Hybrid (the default: true smothers
+  first, near ones later in the game), Full (only true smothers), or Near
+  (also "all but one" smothers, where one square next to the king is empty
+  but covered). A true smother up to three moves longer is always preferred
+  to a near one. Near ends about 43-56 of every 100 games against Elo
+  1500-2500 opponents with a full or near smother.
 - **Default mode** (brutal off) plays Stockfish's moves except when a smother
   is proven.
 

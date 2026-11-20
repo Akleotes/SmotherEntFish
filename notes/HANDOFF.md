@@ -605,3 +605,14 @@ CircleCI: the account was suspended by CircleCI (API: "Your account has
 been suspended") during the second run, reason not stated; likely the
 pattern of a new free account running 30 parallel CPU-bound jobs. Not used
 any more; .circleci/config.yml stays for reference.
+
+grid18 (Near with the true-smother preference; openings of grid14 P and
+grid16 P): Elo 1500 (2000 games) true 3.3 / total 56.4 per 100 (before:
+1.6 / 56.4); Elo 2000 (1000) true 2.1 / total 43.3 (before: 0.4 / 44.1).
+2999 wins, 1 draw.
+
+SPRT hybrid40_vs_brutal (current code, full strength, 10+0.1): 6400 games,
+pentanomial [0,145,2885,169,1], score 0.502, +1.4 Elo (95% -0.5..+3.3),
+LLR 20.9: H1, no strength cost.
+
+SmotherGoal default is now Hybrid (brutal mode only; bench unchanged).

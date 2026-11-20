@@ -82,7 +82,7 @@ All options are standard UCI options. Defaults are what was measured best.
 | `SmotherMate` | true | Run the smother prover at all. |
 | `SmotherBrutal` | false | Brutal mode (see above). The main switch for smother hunting. |
 | `SmotherBuild` | true | Construction mode; only active with `SmotherBrutal`. |
-| `SmotherGoal` | Full | What counts as a smother in brutal mode: **Full** (only true smothers), **Hybrid** (true smothers first, "all but one" ones after 40 construction moves), **Near** ("all but one" ones always). See "Full, hybrid or near" below. |
+| `SmotherGoal` | Hybrid | What counts as a smother in brutal mode: **Hybrid** (default: true smothers first, "all but one" ones after 40 construction moves), **Full** (only true smothers), **Near** ("all but one" ones always). See "Full, hybrid or near" below. |
 | `SmotherClassic` | false | Count only knight smothers. By default any piece may deliver the mate. |
 | `SmotherStrict` | false | Require a smother against every defence (no faster-mate escapes). Finds far fewer proofs. |
 
@@ -152,13 +152,17 @@ Smothers per 100 games, brutal mode, 5+0.05:
 
 | `SmotherGoal` | Elo 1500: true | Elo 1500: true + near | Elo 2000: true + near | Elo 2500: true + near |
 | ------------- | -------------- | --------------------- | --------------------- | --------------------- |
-| Full (default) | 12.1 | 13.8 | about 8-9 | about 4-6 |
-| Hybrid (40) | 7.3-7.6 | 37-38 | - | - |
-| Near | 1.6 | 56.4 | 44.1 | 40.0 |
+| Full | 12.1 | 13.8 | about 8-9 | about 4-6 |
+| Hybrid (default) | 7.3-7.6 | 37-38 | - | - |
+| Near | 3.3 | 56.4 | 43.3 (true 2.1) | 40.0 |
 
-Near gives the most smothers of either kind; Full gives the most true ones;
-Hybrid is in between. None of them loses games (no losses in these runs). The
-strength cost of Hybrid at full strength is being measured (SPRT).
+When near smothers count, a true smother up to three moves longer is
+preferred; that raised true smothers in Near mode from 1.6 to 3.3 per 100
+games at Elo 1500 (0.4 to 2.1 at Elo 2000) with the same total. Near gives
+the most smothers of either kind; Full gives the most true ones; Hybrid is
+in between. None of them loses games. Strength at full strength (SPRT, 6400
+games at 10+0.1): Hybrid against brutal mode without it scored 0.502
+(+1.4 Elo, 95% -0.5 to +3.3), so no strength cost.
 
 ## Measurements
 
