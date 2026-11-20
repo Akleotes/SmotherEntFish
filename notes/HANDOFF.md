@@ -403,3 +403,24 @@ Commits 0b8bc9f5, 6f95b567: optional blocker survivability,
 wins it by SEE -4, 8 pawn blocker can step forward -3; capped +-12).
 With 0 the search is identical to before (40/40 positions, same move and
 nodes at depth 12). grid10 measures 0 / 3 / 15 and each bit alone.
+
+grid10 (blocker survivability, budget 80; 1000 games each at Elo 1500):
+
+```
+SmotherBuildSurvive        smothers /100g (95%)   proof games  delivered  W/D/L
+0  control (A)                  106  10.6 +-1.9   154          69%        997/3/0
+1  pinned bonus                  99   9.9          166          60%        999/1/0
+2  defended bonus               132  13.2 +-2.1   181          73%        999/1/0
+3  pinned+defended (B)           89   8.9          146          61%        995/5/0
+4  knight-SEE penalty           100  10.0          149          67%        997/3/0
+8  pawn-push penalty            117  11.7          153          76%        999/1/0
+15 all (C)                      108  10.8          158          68%        999/1/0
+Maia 1100 (600): A 8.0, C 6.2.   Elo 3000 C (300): 1.3, 0.995, no losses.
+```
+
+Inconclusive: "defended" alone +2.6 (p ~0.07) but bad combined with
+"pinned"; nothing else separates from the control. Default stays 0.
+grid12 re-tests 0 / 2 / 10 with 2000 new games (Elo 1500) and 1000 vs
+Maia 1100. grid11 tests the Elo 3000 trigger (800/600/400 vs off), Elo
+2500 and 15+0.15. Also: `SmotherBuildSurviveCap` (default 12) for a cap
+ablation if a survivability setting wins.
