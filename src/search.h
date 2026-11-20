@@ -415,7 +415,7 @@ class Worker {
     Value buildFloor     = VALUE_ZERO;
     int   buildSurvive   = 0;      // SmotherBuildSurvive
     int   buildCap       = 12;     // SmotherBuildSurviveCap
-    int   buildKeep      = 3;      // SmotherBuildKeep
+    int   buildKeep      = 8;      // SmotherBuildKeep
     int   buildKeepNear  = 3;      // SmotherBuildKeepNear
     int   buildMatDiv    = 8;      // SmotherBuildMaterialDiv
     int   buildStarve    = 0;      // SmotherBuildStarve

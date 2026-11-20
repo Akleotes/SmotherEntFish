@@ -61,8 +61,9 @@ the puzzle's main line, not forced under the rule above.
     Below the floor the normal evaluation applies, so the engine never gives
     back more than that.
   - The construction score rewards the enemy king in a corner or on an edge,
-    boxed in by its own pieces; the enemy pieces kept on the board, especially
-    near their king; and our queen and knights close to it. In the measured
+    boxed in by its own pieces; the enemy pieces kept on the board (a smother
+    needs blockers, and capturing them was the main way chances were lost);
+    and our queen and knights close to it. In the measured
     games 77% of smothered mates were delivered against a king in a corner.
   - An ordinary mate counts no more than the floor, a smothered mate stays a
     real mate.
@@ -118,6 +119,11 @@ All options are standard UCI options. Defaults are what was measured best.
 | `SmotherBuildFloor` | 600 | Advantage it never gives up while building. |
 | `SmotherBuildMoves` | 80 | Most moves per game spent building. |
 | `SmotherBuildWeight` | 8 | Centipawns per construction-score point. |
+| `SmotherBuildKeep` | 8 | Construction-score points per enemy piece kept on the board (possible blockers). 8 instead of 3: +2 to +5 full smothers and +17 in total per 100 games at Elo 1500 (grid19, grid22). |
+| `SmotherBuildKeepNear` | 3 | Extra points per enemy piece within two squares of its king. |
+| `SmotherBuildMaterialDiv` | 8 | Extra material above the floor counts 1/N. |
+| `SmotherBuildStarve` | 0 | Experimental: points lost per unit of blocker reserve (enemy pieces minus open king squares) below `SmotherBuildStarveAt` (4). Measured: no gain. |
+| `SmotherBuildTime` | 0 | Experimental: each construction move uses at least 1/N of the clock left. Measured: no gain. |
 | `SmotherBuildSurvive` | 0 | Experimental blocker terms, a bit mask: 1 pinned blocker, 2 defended blocker, 4 blocker our knight wins, 8 pawn blocker that can step away. |
 | `SmotherBuildSurviveCap` | 12 | Cap on those terms, in score points. |
 | `SmotherBuildVersion` | 1 | 2 = construction-score weights fitted to game data (`notes/fit/`); better at predicting, not better in games. |
