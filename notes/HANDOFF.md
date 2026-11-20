@@ -766,3 +766,22 @@ Hybrid Elo 2500           30+0.3     200   5.5  24.5   30.0       -             
   budget. In crushing positions the engine also uses ~20% of the clock
   left per move (deep prover, mate-in-hand), which leaves little margin
   on a loaded machine.
+
+grid22 (SmotherBuildKeep sweep, Elo 1500, 5+0.05, brutal):
+
+```
+arm              games  full  near  total  proof games  delivered  draws
+Full keep 3       2000   9.7   1.4   11.0     14.2          68%        6
+Full keep 8       2000  14.6   1.8   16.4     19.6          74%        3
+Full keep 12      2000  12.0   2.4   14.3     17.4          69%        3
+Full keep 16      2000  13.1   2.8   15.8     18.0          73%        1
+Hybrid keep 3     1000   7.6  27.3   34.9       -             -        2
+Hybrid keep 8     1000   6.9  45.4   52.3       -             -        2
+```
+
+Keep 8 replicates grid19 and more: Full +4.9 per 100 (z ~4.5), Hybrid
+total +17.4 per 100 (z ~5.9). 12 and 16 are no better than 8. Default
+changed 3 -> 8 (4e401120); only construction mode (brutal) reads it.
+grid23 (queued): the new default with Near and Hybrid at Elo 1500/2000/
+2500, Maia 1100, pondering, and Elo 3000, to compare with the targets
+(70 / 40-50 / 15-20 smothers, full or near, per 100 games).
