@@ -200,7 +200,7 @@ class SharedMemoryBackend {
     static constexpr DWORD IS_INITIALIZED_VALUE = 1;
 
     SharedMemoryBackend() :
-        status(Status::NotInitialized) {};
+        status(Status::NotInitialized) {}
 
     SharedMemoryBackend(const std::string& shm_name, const T& value) :
         status(Status::NotInitialized) {
@@ -278,7 +278,7 @@ class SharedMemoryBackend {
         const usize total_size = sizeof(T) + sizeof(IS_INITIALIZED_VALUE);
 
         // Try allocating with large pages first.
-        hMapFile = windows_try_with_large_page_priviliges(
+        hMapFile = windows_try_with_large_page_privileges(
           [&](usize largePageSize) {
               const usize total_size_aligned =
                 (total_size + largePageSize - 1) / largePageSize * largePageSize;
@@ -318,7 +318,7 @@ class SharedMemoryBackend {
             const DWORD err    = GetLastError();
             last_error_message = GetLastErrorAsString(err);
             status             = Status::MapViewError;
-            cleanup_partial();
+            cleanup();
             return;
         }
 
@@ -330,7 +330,7 @@ class SharedMemoryBackend {
             const DWORD err    = GetLastError();
             last_error_message = GetLastErrorAsString(err);
             status             = Status::MutexCreateError;
-            cleanup_partial();
+            cleanup();
             return;
         }
 
@@ -341,7 +341,7 @@ class SharedMemoryBackend {
             last_error_message = GetLastErrorAsString(err);
             status             = Status::MutexWaitError;
             CloseHandle(hMutex);
-            cleanup_partial();
+            cleanup();
             return;
         }
 
@@ -365,24 +365,11 @@ class SharedMemoryBackend {
             const DWORD err    = GetLastError();
             last_error_message = GetLastErrorAsString(err);
             status             = Status::MutexReleaseError;
-            cleanup_partial();
+            cleanup();
             return;
         }
 
         status = Status::Success;
-    }
-
-    void cleanup_partial() {
-        if (pMap != nullptr)
-        {
-            UnmapViewOfFile(pMap);
-            pMap = nullptr;
-        }
-        if (hMapFile)
-        {
-            CloseHandle(hMapFile);
-            hMapFile = 0;
-        }
     }
 
     void cleanup() {

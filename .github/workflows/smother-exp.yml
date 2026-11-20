@@ -28,6 +28,7 @@ jobs:
       matrix: ${{ steps.m.outputs.matrix }}
       exp: ${{ steps.m.outputs.exp }}
       maia: ${{ steps.m.outputs.maia }}
+      ref: ${{ steps.m.outputs.ref }}
     steps:
       - uses: actions/checkout@v4
       - id: m
@@ -50,6 +51,15 @@ jobs:
           mkdir -p opp && git archive $OPPONENT_COMMIT src scripts | tar -x -C opp
           cp src/nn-*.nnue opp/src/
           cd opp/src && make -j"$(nproc)" build ARCH=$ARCH
+          ./stockfish bench 2>&1 | grep "Nodes searched"
+      - name: Build the reference engine (plan "ref")
+        if: needs.plan.outputs.ref != ''
+        run: |
+          git fetch origin "${{ needs.plan.outputs.ref }}"
+          mkdir -p ref && git archive FETCH_HEAD src scripts | tar -x -C ref
+          cd ref/src
+          make -j"$(nproc)" net
+          make -j"$(nproc)" build ARCH=$ARCH
           ./stockfish bench 2>&1 | grep "Nodes searched"
       - name: Build lc0 and fetch Maia networks
         if: needs.plan.outputs.maia != ''
@@ -77,6 +87,7 @@ jobs:
           mkdir -p engines
           cp src/stockfish engines/ours
           cp opp/src/stockfish engines/opp
+          if [ -d ref ]; then cp ref/src/stockfish engines/ref; fi
           if [ -d maia ]; then cp lc0/build/release/lc0 engines/lc0; cp maia/*.pb.gz engines/; fi
       - uses: actions/upload-artifact@v4
         with:
@@ -118,6 +129,9 @@ jobs:
           case "${{ matrix.opp }}" in
             maia-*) opp=engines/lc0
                     args+=(--opp-opt "WeightsFile=engines/${{ matrix.opp }}.pb.gz" --opp-go "nodes 1") ;;
+            ref)    opp=engines/ref
+                    args+=(--opp-opt "Hash=16")
+                    for o in ${{ matrix.oppopts }}; do args+=(--opp-opt "$o"); done ;;
           esac
           python -I notes/scripts/match.py "out/${{ matrix.name }}-${{ matrix.chunk }}.jsonl" \
             engines/ours "$opp" ${{ matrix.elo }} ${{ matrix.games }} \

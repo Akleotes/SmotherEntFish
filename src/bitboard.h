@@ -98,8 +98,7 @@ constexpr Bitboard file_bb(File f) { return FileABB << f; }
 
 constexpr Bitboard file_bb(Square s) { return file_bb(file_of(s)); }
 
-
-// Moves a bitboard one or two steps as specified by the direction D
+// Moves a bitboard one or two steps as specified by dir
 inline constexpr Bitboard shift(Bitboard b, Direction dir) {
     return dir == NORTH         ? b << 8
          : dir == SOUTH         ? b >> 8
@@ -185,17 +184,6 @@ inline int popcount(Bitboard b) {
 #endif
 }
 
-inline constexpr int lsb_index64[64] = {
-  0,  47, 1,  56, 48, 27, 2,  60, 57, 49, 41, 37, 28, 16, 3,  61, 54, 58, 35, 52, 50, 42,
-  21, 44, 38, 32, 29, 23, 17, 11, 4,  62, 46, 55, 26, 59, 40, 36, 15, 53, 34, 51, 20, 43,
-  31, 22, 10, 45, 25, 39, 14, 33, 19, 30, 9,  24, 13, 18, 8,  12, 7,  6,  5,  63};
-
-constexpr int constexpr_lsb(u64 bb) {
-    assert(bb != 0);
-    constexpr u64 debruijn64 = 0x03F79D71B4CB0A89ULL;
-    return lsb_index64[((bb ^ (bb - 1)) * debruijn64) >> 58];
-}
-
 // Returns the least significant bit in a non-zero bitboard.
 inline Square lsb(Bitboard b) {
     assert(b);
@@ -219,11 +207,9 @@ inline Square lsb(Bitboard b) {
         _BitScanForward(&idx, i32(b));
         return Square(idx);
     }
-    else
-    {
-        _BitScanForward(&idx, i32(b >> 32));
-        return Square(idx + 32);
-    }
+
+    _BitScanForward(&idx, i32(b >> 32));
+    return Square(idx + 32);
     #endif
 #else  // Compiler is neither GCC nor MSVC compatible
     #error "Compiler not supported."
@@ -254,11 +240,9 @@ inline Square msb(Bitboard b) {
         _BitScanReverse(&idx, i32(b >> 32));
         return Square(idx + 32);
     }
-    else
-    {
-        _BitScanReverse(&idx, i32(b));
-        return Square(idx);
-    }
+
+    _BitScanReverse(&idx, i32(b));
+    return Square(idx);
     #endif
 #else  // Compiler is neither GCC nor MSVC compatible
     #error "Compiler not supported."
@@ -267,7 +251,7 @@ inline Square msb(Bitboard b) {
 
 // Returns the bitboard of the least significant
 // square of a non-zero bitboard. It is equivalent to square_bb(lsb(bb)).
-inline Bitboard least_significant_square_bb(Bitboard b) {
+constexpr Bitboard least_significant_square_bb(Bitboard b) {
     assert(b);
     return b & -b;
 }
