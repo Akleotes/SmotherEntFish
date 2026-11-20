@@ -581,3 +581,27 @@ deep pondering on vs off, Elo 1500: 12.2 vs 10.8 full smothers/100g; Maia
 the move a proof arrived. Cause: rebuilding a found proof's line ignored the
 stop flag. Fixed (see the prover commit after this note); a rerun should
 show whether the gain holds without time losses.
+
+grid17 (construction floor = how far construction may sacrifice; brutal,
+5+0.05; 1000 games at Elo 1500/2000, 600 at 2500):
+
+```
+SmotherBuildFloor   Elo 1500 /100g   Elo 2000 /100g   Elo 2500 /100g   draws 1500/2000/2500
+600 (default)            8.3              7.4              3.8            4 / 3 / 3
+400                     10.4              7.0              4.3            3 / 6 / 3
+250                      9.6              6.6              3.8            7 / 9 / 5
+```
+
+No clear gain from sacrificing more (differences within noise), and the
+lowest floor adds draws; 600 stays. One loss in the run (Elo 2000, floor 600).
+
+SmotherGoal (Full / Hybrid / Near) added for GUIs; combo options fixed
+(the inherited check aborted on the repeated words of any combo). Near now
+prefers a true smother up to three moves longer (search: a near mate scores
+three moves later; prover: looks for a true one with the budget left);
+200 grid14 positions: true smother in 15 vs 2. grid18 measures it in games.
+
+CircleCI: the account was suspended by CircleCI (API: "Your account has
+been suspended") during the second run, reason not stated; likely the
+pattern of a new free account running 30 parallel CPU-bound jobs. Not used
+any more; .circleci/config.yml stays for reference.
