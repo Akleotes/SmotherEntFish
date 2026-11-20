@@ -25,12 +25,12 @@
 #include <optional>
 #include <string>
 #include <string_view>
-#include <tuple>
 #include <filesystem>
 
-#include "../types.h"
 #include "../misc.h"
+#include "../types.h"
 #include "nnue_architecture.h"
+#include "nnue_common.h"
 #include "nnue_feature_transformer.h"
 #include "nnue_misc.h"
 
@@ -42,8 +42,6 @@ namespace Stockfish::Eval::NNUE {
 
 class AccumulatorStack;
 struct AccumulatorCaches;
-
-using NetworkOutput = std::tuple<Value, Value>;
 
 // The network must be a trivial type, i.e. the memory must be in-line.
 // This is required to allow sharing the network via shared memory, as
@@ -65,9 +63,9 @@ class Network {
 
     usize get_content_hash() const;
 
-    NetworkOutput evaluate(const Position&    pos,
-                           AccumulatorStack&  accumulatorStack,
-                           AccumulatorCaches& cache) const;
+    Value evaluate(const Position&    pos,
+                   AccumulatorStack&  accumulatorStack,
+                   AccumulatorCaches& cache) const;
 
 
     void verify(const std::function<void(std::string_view)>& f,
@@ -93,17 +91,24 @@ class Network {
     bool read_parameters(std::istream&, std::string&);
     bool write_parameters(std::ostream&, const std::string&) const;
 
+    int layer_stack(const Position& pos) const;
+
     // Input feature converter
     FeatureTransformer featureTransformer;
 
     // Evaluation function
     NetworkArchitecture network[LayerStacks];
+    u16                 layerStackFallback[RawLayerStacks];
+    u16                 layerStackIndex[RawLayerStacks];
+    IndexType           storedLayerStacks = 0;
 
     bool initialized = false;
 
+    static constexpr u32 LayerStackTableHash = 0x5A7AB1E5u;
+
     // Hash value of evaluation function structure
-    static constexpr u32 hash =
-      FeatureTransformer::get_hash_value() ^ NetworkArchitecture::get_hash_value();
+    static constexpr u32 hash = FeatureTransformer::get_hash_value()
+                              ^ NetworkArchitecture::get_hash_value() ^ LayerStackTableHash;
 
     friend struct AccumulatorCaches;
 };

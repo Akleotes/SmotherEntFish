@@ -28,7 +28,7 @@ int sq_distance(Square a, Square b) {
 // Assumes the side to move is already known to be checkmated.
 bool smothered_given_mate(const Position& pos, Style style) {
     const Color    us    = pos.side_to_move();
-    const Bitboard ring  = Attacks::attacks_bb<KING>(pos.square<KING>(us));
+    const Bitboard ring  = Attacks::attacks_bb(KING, pos.square<KING>(us));
     const Bitboard holes = ring & ~pos.pieces(us);
 
     return style == Style::Classic ? !holes : !(holes & ~pos.checkers());
@@ -87,7 +87,7 @@ class Prover {
 
    private:
     bool attack(int n, Kind kind, int q);
-    bool defend(int n, Kind kind, int q, const MoveList<LEGAL>& replies);
+    bool defend(int n, Kind kind, int q, const MoveList<ALL>& replies);
     int  min_moves(Kind kind, int limit, int q);
     void extract_pv(int n, std::vector<Move>& pv);
     void poll();
@@ -146,7 +146,7 @@ bool Prover::attack(int n, Kind kind, int q) {
 
     const Color    them  = ~pos.side_to_move();
     const Square   ksq   = pos.square<KING>(them);
-    const Bitboard holes = Attacks::attacks_bb<KING>(ksq) & ~pos.pieces(them);
+    const Bitboard holes = Attacks::attacks_bb(KING, ksq) & ~pos.pieces(them);
 
     // Last attacker move: the defender cannot fill any square, so the king's
     // current neighbourhood must already be closed, except possibly the one
@@ -164,7 +164,7 @@ bool Prover::attack(int n, Kind kind, int q) {
 
     ScoredMove moves[MAX_MOVES];
     int        cnt = 0;
-    for (const Move m : MoveList<LEGAL>(pos))
+    for (const Move m : MoveList<ALL>(pos))
     {
         if (kind == SMOTHER && n == 1 && (holes & ~square_bb(m.to_sq())))
             continue;
@@ -202,7 +202,7 @@ bool Prover::attack(int n, Kind kind, int q) {
 
         bool ok = false;
         {
-            MoveList<LEGAL> replies(pos);
+            MoveList<ALL> replies(pos);
             if (!quiet)
             {
                 if (replies.size() == 0)  // in check with no moves: mate
@@ -245,7 +245,7 @@ bool Prover::attack(int n, Kind kind, int q) {
 
 // Defender to move (in check): does every reply still lose to a smothered
 // mate within n attacker moves?
-bool Prover::defend(int n, Kind kind, int q, const MoveList<LEGAL>& replies) {
+bool Prover::defend(int n, Kind kind, int q, const MoveList<ALL>& replies) {
     ++nodes;
 
     if (kind == ANY)
@@ -392,7 +392,7 @@ void Prover::extract_pv(int n, std::vector<Move>& pv) {
         pos.do_move(m, states.emplace_back());
         ++ply;
 
-        MoveList<LEGAL> replies(pos);
+        MoveList<ALL> replies(pos);
         if (replies.size() == 0)
             break;
 
@@ -449,7 +449,7 @@ double Prover::robustness(Move m, int n) {
     pos.do_move(m, st);
     ++ply;
     double hit = 0, total = 0;
-    for (const Move r : MoveList<LEGAL>(pos))
+    for (const Move r : MoveList<ALL>(pos))
     {
         const bool   safe = pos.see_ge(r, Value(0));
         const double w    = pos.capture(r) && safe ? 1.0 : safe ? 0.6 : 0.2;
@@ -532,7 +532,7 @@ Result Prover::run() {
 int potential(const Position& pos, Color us) {
     const Color    them  = ~us;
     const Square   ksq   = pos.square<KING>(them);
-    const Bitboard ring  = Attacks::attacks_bb<KING>(ksq);
+    const Bitboard ring  = Attacks::attacks_bb(KING, ksq);
     const Bitboard own   = pos.pieces(them);
     const int      boxed = popcount(ring & own);
     const int      holes = popcount(ring & ~own);
@@ -544,19 +544,19 @@ int potential(const Position& pos, Color us) {
     int score = 4 * boxed - 3 * holes;
 
     // Knight distance (in knight moves) to a square that checks the king.
-    const Bitboard checkSqs = Attacks::attacks_bb<KNIGHT>(ksq) & ~pos.pieces(us);
+    const Bitboard checkSqs = Attacks::attacks_bb(KNIGHT, ksq) & ~pos.pieces(us);
     Bitboard       knights  = pos.pieces(us, KNIGHT);
     while (knights)
     {
         const Square s   = pop_lsb(knights);
-        Bitboard     one = Attacks::attacks_bb<KNIGHT>(s);
+        Bitboard     one = Attacks::attacks_bb(KNIGHT, s);
         if (one & checkSqs)
             score += 6;
         else
         {
             Bitboard two = 0;
             while (one)
-                two |= Attacks::attacks_bb<KNIGHT>(pop_lsb(one));
+                two |= Attacks::attacks_bb(KNIGHT, pop_lsb(one));
             if (two & checkSqs)
                 score += 3;
         }
@@ -574,7 +574,7 @@ int potential(const Position& pos, Color us) {
 int shape(const Position& pos, Color us) {
     const Color    them  = ~us;
     const Square   ksq   = pos.square<KING>(them);
-    const Bitboard ring  = Attacks::attacks_bb<KING>(ksq);
+    const Bitboard ring  = Attacks::attacks_bb(KING, ksq);
     const int      boxed = popcount(ring & pos.pieces(them));
     const int      holes = popcount(ring & ~pos.pieces(them));
 
@@ -597,7 +597,7 @@ int shape(const Position& pos, Color us) {
 int build_score(const Position& pos, Color us, int survive, int cap) {
     const Color    them  = ~us;
     const Square   ksq   = pos.square<KING>(them);
-    const Bitboard ring  = Attacks::attacks_bb<KING>(ksq);
+    const Bitboard ring  = Attacks::attacks_bb(KING, ksq);
     const int      boxed = popcount(ring & pos.pieces(them));
     const int      holes = popcount(ring & ~pos.pieces(them));
 
@@ -666,7 +666,7 @@ bool smothered_if_mate(const Position& pos, Style style) {
 }
 
 bool is_smothered_mate(const Position& pos, Style style) {
-    return pos.checkers() && MoveList<LEGAL>(pos).size() == 0 && smothered_given_mate(pos, style);
+    return pos.checkers() && MoveList<ALL>(pos).size() == 0 && smothered_given_mate(pos, style);
 }
 
 namespace {
@@ -681,14 +681,14 @@ traps(Position& pos, const Limits& perReply, TimePoint deadline, const std::atom
     TrapResult     tr;
     const Color    them = pos.side_to_move();  // the defender replies now
     const Square   ksq  = pos.square<KING>(them);
-    const Bitboard ring = Attacks::attacks_bb<KING>(ksq);
+    const Bitboard ring = Attacks::attacks_bb(KING, ksq);
 
     Limits lim    = perReply;
     lim.keepTable = true;   // entries stay valid across sibling positions
     lim.robust    = false;  // only "is there a proof" matters here
     lim.deadline  = deadline;
 
-    for (const Move r : MoveList<LEGAL>(pos))
+    for (const Move r : MoveList<ALL>(pos))
     {
         // Plausibility of the reply for a shallow, human-like opponent: a
         // reply that loses material by SEE is rarely played.
@@ -708,9 +708,9 @@ traps(Position& pos, const Limits& perReply, TimePoint deadline, const std::atom
         // Cheap filter: a king with many open neighbours cannot be smothered
         // within a few moves.
         const Square   k2    = r.from_sq() == ksq ? r.to_sq() : ksq;
-        const Bitboard ring2 = r.from_sq() == ksq ? Attacks::attacks_bb<KING>(k2) : ring;
+        const Bitboard ring2 = r.from_sq() == ksq ? Attacks::attacks_bb(KING, k2) : ring;
         const int      holes = popcount(ring2 & ~pos.pieces(them));
-        if (holes <= lim.maxMoves + 1 && MoveList<LEGAL>(pos).size())
+        if (holes <= lim.maxMoves + 1 && MoveList<ALL>(pos).size())
         {
             Prover p(pos, lim, stop, shared_table());
             Result res = p.run();
