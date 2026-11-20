@@ -128,10 +128,15 @@ class Prover {
 };
 
 void Prover::poll() {
-    if (ignoreLimits || (nodes & 2047))
+    if (nodes & 2047)
         return;
-    if (stop.load(std::memory_order_relaxed) || (lim.maxNodes && nodes >= lim.maxNodes)
-        || (lim.deadline && now() >= lim.deadline))
+    // While the line of a found proof is rebuilt (ignoreLimits), the node and
+    // time budgets no longer apply, but "stop" still does: a deep proof found
+    // while pondering can take seconds to rebuild, and the engine waited for
+    // it on its own clock (ponder2: 3 games lost on time on the proof's move).
+    if (stop.load(std::memory_order_relaxed)
+        || (!ignoreLimits
+            && ((lim.maxNodes && nodes >= lim.maxNodes) || (lim.deadline && now() >= lim.deadline))))
         aborted = true;
 }
 
@@ -524,8 +529,13 @@ Result Prover::run() {
                 res.alternatives = int(cands.size());
                 res.robustness   = bestR;
             }
-            ignoreLimits = true;  // the proof exists; rebuilding the line is bounded
+            // The proof exists. Rebuild its line; if a stop cuts that short,
+            // the proven first move from the table is enough to play.
+            const Move first = probe(rootKey)->move;
+            ignoreLimits     = true;
             extract_pv(n, res.pv);
+            if (res.pv.empty() && first != Move::none())
+                res.pv.push_back(first);
             break;
         }
         if (aborted)
