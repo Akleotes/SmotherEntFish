@@ -810,3 +810,18 @@ Maia 1100    Near                500   1.6   49.2  500   0  0
 - The loss (Elo 2000, Hybrid): never more than +3, ordinary blitz loss at
   0.2 s per move; construction never started.
 - Human-like opponent (Maia 1100): 43.8 (Hybrid) / 49.2 (Near).
+
+grid24 (Near goal, keep 8, 5+0.05; arm "e1000_N" is Stockfish at UCI_Elo
+1320, its minimum):
+
+```
+opponent              games  full  total (full + near)
+Elo 1320               600   6.3   73.2
+Elo 1500, pondering    600   3.7   65.3   (65.6 without, grid23)
+Maia 1100, pondering   300   1.3   49.0   (49.2 without, grid23)
+```
+
+Near reaches the 70 target at Elo 1320 and is at ~65 at Elo 1500.
+Pondering adds nothing to Near (it added ~8 to Hybrid in grid23).
+No losses. Android build of e564712d (android-build/keep8, run
+44831189138): success (the workflow checks bench 1442480 under qemu).
