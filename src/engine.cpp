@@ -218,6 +218,8 @@ Engine::Engine(std::optional<std::filesystem::path> path) :
     // blocker bonus, 2 defended blocker bonus, 4 penalty if our knight wins
     // it (SEE), 8 penalty if a pawn blocker can step forward. 0 = off.
     options.add("SmotherBuildSurvive", Option(0, 0, 15));
+    // Cap on the survivability total, in build-score points (+-).
+    options.add("SmotherBuildSurviveCap", Option(12, 0, 48));
 
     // While pondering, let the parallel prover search deep and unbounded on
     // the opponent's time.

@@ -418,6 +418,7 @@ class Worker {
     bool  buildSmother = false;
     Value buildFloor   = VALUE_ZERO;
     int   buildSurvive = 0;  // SmotherBuildSurvive
+    int   buildCap     = 12; // SmotherBuildSurviveCap
     int   buildUnit    = 0;  // internal units per Smother::build_score() point
     Value mated_value(const Position& pos, int ply) const;
     Color shapeUs     = WHITE;

@@ -668,6 +668,7 @@ bool Search::Worker::iterative_deepening() {
             buildFloor = Value(int(options["SmotherBuildFloor"]) * 1000 / perK);
             buildUnit  = std::max(1, int(options["SmotherBuildWeight"]) * 1000 / perK);
             buildSurvive = int(options["SmotherBuildSurvive"]);
+            buildCap     = int(options["SmotherBuildSurviveCap"]);
             shapeWeight = 0;
         }
         if (mainThread)
@@ -2362,7 +2363,7 @@ Value Search::Worker::evaluate(const Position& pos) {
         Value u = pos.side_to_move() == shapeUs ? v : -v;
         if (u >= buildFloor)
         {
-            u = buildFloor + (u - buildFloor) / 8 + Smother::build_score(pos, shapeUs, buildSurvive) * buildUnit;
+            u = buildFloor + (u - buildFloor) / 8 + Smother::build_score(pos, shapeUs, buildSurvive, buildCap) * buildUnit;
             u = std::min(u, VALUE_TB_WIN_IN_MAX_PLY - 1);
             v = pos.side_to_move() == shapeUs ? u : -u;
         }

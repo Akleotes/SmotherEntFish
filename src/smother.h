@@ -75,7 +75,7 @@ int shape(const Position& pos, Color us);
 // (its own pieces around it, a corner or edge, its pieces kept alive, our
 // queen and knights close). Measured: 77% of delivered smothers were in a
 // corner, blocked mostly by the defender's own pawns, rooks and bishops.
-int build_score(const Position& pos, Color us, int survive = 0);
+int build_score(const Position& pos, Color us, int survive = 0, int cap = 12);
 
 // Smother traps: pos has the DEFENDER to move (we just played our candidate).
 // For every legal reply, try to prove a forced smother for us with perReply

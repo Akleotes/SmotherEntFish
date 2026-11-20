@@ -594,7 +594,7 @@ int shape(const Position& pos, Color us) {
     return std::max(score, 0);
 }
 
-int build_score(const Position& pos, Color us, int survive) {
+int build_score(const Position& pos, Color us, int survive, int cap) {
     const Color    them  = ~us;
     const Square   ksq   = pos.square<KING>(them);
     const Bitboard ring  = Attacks::attacks_bb<KING>(ksq);
@@ -655,7 +655,7 @@ int build_score(const Position& pos, Color us, int survive) {
                     s -= 3;
             }
         }
-        score += std::clamp(s, -12, 12);
+        score += std::clamp(s, -cap, cap);
     }
 
     return score;

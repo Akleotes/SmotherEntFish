@@ -19,3 +19,23 @@
   weakness = 120-2*level. Picking depth: Elo 1500 ~2-3, 2000 ~5, 2500 ~8,
   3000 ~15. So short traps work only at low Elo; at 3000 smothers must come
   from converting won positions.
+
+## Aesthetic mate selection (Nov 20, with an outside review)
+
+- No Stockfish fork or other engine found that prefers a mating pattern
+  over the shortest mate. Smotherfish already does this (a proven smother
+  overrides; in brutal mode a plain mate scores below any smothered mate).
+- CHESTHETICA (Azlan Iqbal): composes problems and can choose the most
+  aesthetic winning line; aesthetics model in Iqbal's papers (WSEAS 2008,
+  2012). No public source code found; a composition system, not a player.
+  Choosing among forced mates does not create smother chances, which is
+  the measured bottleneck here (proofs in ~2-3% of games).
+- Mate finders (e.g. jhellis3's MateFinder fork, vondele/matetrack) aim at
+  the shortest mate; nothing to borrow for smothers.
+- Talkchess "Checkmate evaluation functions": reward progress toward the
+  goal and the full reward only on delivery. Construction mode
+  (SmotherBuild) is that idea applied to the corner smother.
+- Outside review suggestions, status: blocker survivability (built, grid10);
+  several target patterns instead of one corner pattern (later); escape
+  prediction only on the opponent's time (later); full backward search from
+  smother patterns (too expensive).
