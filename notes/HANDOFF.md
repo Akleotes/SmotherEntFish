@@ -381,3 +381,25 @@ First method that moves the rate several-fold. grid9 measures budgets
 Idea queued (from an outside review): score blocker survivability in
 build_score() (pinned/protected blockers vs ones that can capture our
 knight or step away).
+
+grid9 (construction budget; 600 games each, 300 at Elo 3000):
+
+```
+setting                 smothers /100g  non-wins                 score
+Elo 1500, budget 40          37   6.2   0                        1.000
+Elo 1500, budget 80          76  12.7   0                        1.000
+Elo 1500, budget 200         71  11.8   3 draws, 5 at 400 plies  0.993
+Elo 2000, budget 80          47   7.8   1 draw                   0.999
+Maia 1100, budget 80         44   7.3   1 draw                   0.999
+Maia 1900, budget 80         28   4.7   2 draws                  0.998
+Elo 3000, budget 80           6   2.0   2 draws                  0.997
+```
+
+Commit 97256b6f: construction mode on by default in brutal mode, budget
+80. Games are longer (median ~120 plies vs ~53). No losses in any run.
+Android build of it: run 44654465325 (artifacts until 2026-12-20).
+Commits 0b8bc9f5, 6f95b567: optional blocker survivability,
+`SmotherBuildSurvive` bit mask (1 pinned +4, 2 defended +2, 4 our knight
+wins it by SEE -4, 8 pawn blocker can step forward -3; capped +-12).
+With 0 the search is identical to before (40/40 positions, same move and
+nodes at depth 12). grid10 measures 0 / 3 / 15 and each bit alone.
