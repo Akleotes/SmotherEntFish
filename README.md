@@ -1,6 +1,6 @@
 <div align="center">
 
-  <img src="docs/logo.svg" alt="Smotherfish" width="128">
+  <img src="docs/smotherfish-icon.png" alt="Smotherfish" width="128">
 
   <h3>Smotherfish</h3>
 
@@ -107,6 +107,9 @@ change the normal search.
 - `docs/SMOTHERFISH.md`: how it works, all options, all measurements.
 - `notes/HANDOFF.md`: the full development log, experiment by experiment.
 - `notes/RESEARCH.md`: related engines and research.
+- `docs/smotherfish-icon.png` (512 px), `docs/smotherfish-icon-full.png`
+  (1254 px) and `docs/smotherfish-icon-sizes.png` (size preview): the
+  project icon.
 - `notes/scripts/`: the match runner, opening book generator, prover
   regression test (Lichess smothered-mate puzzles) and summary tools.
 - `.github/workflows/smother-exp.yml`, `android-build.yml`: experiments on
