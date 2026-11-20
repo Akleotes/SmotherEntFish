@@ -8,6 +8,17 @@ Each opening is played twice with colours swapped. Clocks are real: a side
 whose move takes longer than its remaining time (+ 100 ms grace) loses.
 Smothered mate = checkmate where every square next to the mated king is
 held by its own pieces or off the board; "classic" if the checker is a knight.
+Each won mate also records "open": how many squares next to the mated king
+are neither its own pieces nor the checker's square (0 = smother, 1 = "all
+but one", the SmotherPartial rule).
+
+--ponder: our engine ponders on the opponent's time (go ponder, then
+ponderhit or stop), as in a real game. Games then use two CPU cores each, so
+the number of concurrent games is halved.
+--opp-think SEC: the opponent's move is held back until SEC seconds have
+passed, like a person thinking; that wait is not charged to its clock. With
+--ponder it is time our engine can use. Maia ("go nodes 1") answers at once
+without it.
 """
 import argparse, faulthandler, json, os, random, subprocess, sys, threading, time
 from multiprocessing import Pool, TimeoutError
@@ -25,6 +36,8 @@ ap.add_argument("--seed", type=int, default=1)
 # With --opp-opt given, the UCI_Elo limit is not applied to the opponent.
 ap.add_argument("--opp-opt", action="append", default=[])
 ap.add_argument("--opp-go", default="")
+ap.add_argument("--ponder", action="store_true")
+ap.add_argument("--opp-think", type=float, default=0.0)
 A = ap.parse_args()
 BASE, INC = (float(x) for x in A.tc.split("+"))
 
@@ -80,7 +93,33 @@ class Eng:
             l = self.readline()
             if l.startswith("info string"): infos.append(l.strip())
             elif l.startswith("bestmove"):
+                self.last_bestmove = l
                 return l.split()[1], time.monotonic() - t0, infos
+
+    def go_ponder(self, fen, moves, wt, bt):
+        # Start pondering on `moves` (which end with the expected reply).
+        self.send(f"position fen {fen} moves {' '.join(moves)}")
+        self.send(f"go ponder wtime {int(wt*1000)} btime {int(bt*1000)} "
+                  f"winc {int(INC*1000)} binc {int(INC*1000)}")
+
+    def ponderhit(self):
+        # The opponent played the expected move: the search goes on as a
+        # normal one, timed from now.
+        self.send("ponderhit")
+        t0 = time.monotonic(); infos = []
+        while True:
+            l = self.readline()
+            if l.startswith("info string"): infos.append(l.strip())
+            elif l.startswith("bestmove"):
+                self.last_bestmove = l
+                return l.split()[1], time.monotonic() - t0, infos, l
+
+    def stop_ponder(self):
+        # Wrong guess: stop and throw the pondering result away.
+        self.send("stop")
+        while True:
+            if self.readline().startswith("bestmove"):
+                return
 
     def quit(self):
         try: self.send("quit"); self.p.wait(2)
@@ -102,6 +141,21 @@ def smother_kind(b):
     if any(b.piece_type_at(s) == chess.KNIGHT for s in checkers):
         return "classic"
     return "any"
+
+
+def open_squares(b):
+    """Squares next to the mated king that are neither its own pieces nor the
+    checker's square (0 = smother, 1 = 'all but one')."""
+    k = b.king(b.turn)
+    checkers = b.checkers()
+    n = 0
+    for sq in chess.SquareSet(chess.BB_KING_ATTACKS[k]):
+        if sq in checkers:
+            continue
+        pc = b.piece_at(sq)
+        if not pc or pc.color != b.turn:
+            n += 1
+    return n
 
 
 ENGS = {}
@@ -176,12 +230,30 @@ def play_game(job):
     PLAYED["moves"] = moves
     steers = 0; steer_plies = []; result = None; reason = ""
     our_clock = []; proofs = []  # our clock after each of our moves; plies with a proven smother
+    pondering = None  # the opponent move our engine is pondering on
+    ponder_hits = ponder_total = 0
     while result is None:
         stm = b.turn
         is_ours = (stm == chess.WHITE) == ours_white
         e = ours if is_ours else opp
         fixed = "" if is_ours else A.opp_go
-        mv, dt, infos = e.go(fen0, moves, clock[chess.WHITE], clock[chess.BLACK], fixed)
+        if is_ours and pondering is not None:
+            ponder_total += 1
+            if moves and moves[-1] == pondering:
+                ponder_hits += 1
+                mv, dt, infos, _ = ours.ponderhit()
+            else:
+                ours.stop_ponder()
+                mv, dt, infos = e.go(fen0, moves, clock[chess.WHITE], clock[chess.BLACK], fixed)
+            pondering = None
+        else:
+            t_start = time.monotonic()
+            mv, dt, infos = e.go(fen0, moves, clock[chess.WHITE], clock[chess.BLACK], fixed)
+            if not is_ours and A.opp_think > 0:
+                # A thinking person: hold the move back; not charged to the clock.
+                rest = A.opp_think - (time.monotonic() - t_start)
+                if rest > 0:
+                    time.sleep(rest)
         if fixed:
             dt = 0  # a fixed-node opponent plays without a clock
         if is_ours:
@@ -202,6 +274,17 @@ def play_game(job):
         except Exception:
             result = "0-1" if stm == chess.WHITE else "1-0"; reason = f"illegal {mv}"; break
         b.push(m); moves.append(mv)
+        if is_ours and A.ponder and not b.is_game_over():
+            # Ponder on the reply our engine expects, if it gave a legal one.
+            parts = getattr(ours, "last_bestmove", "").split()
+            if len(parts) >= 4 and parts[2] == "ponder":
+                try:
+                    pm = chess.Move.from_uci(parts[3])
+                except ValueError:
+                    pm = None
+                if pm is not None and pm in b.legal_moves:
+                    ours.go_ponder(fen0, moves + [parts[3]], clock[chess.WHITE], clock[chess.BLACK])
+                    pondering = parts[3]
         if b.is_checkmate():
             result = "1-0" if b.turn == chess.BLACK else "0-1"; reason = "mate"
         # Draw only when it has happened: a third occurrence, fifty moves.
@@ -212,7 +295,10 @@ def play_game(job):
             result = "1/2-1/2"; reason = "draw"
         elif len(moves) >= 400:
             result = "1/2-1/2"; reason = "cap"
+    if pondering is not None:
+        ours.stop_ponder()
     sm = smother_kind(b) if reason == "mate" else None
+    nopen = open_squares(b) if reason == "mate" else None
     ours_score = {"1-0": 1.0, "0-1": 0.0}.get(result, 0.5)
     if not ours_white: ours_score = 1.0 - ours_score
     ours_mated_them = reason == "mate" and ours_score == 1.0
@@ -221,7 +307,9 @@ def play_game(job):
             "smother": sm if ours_mated_them else None,
             "smothered_us": sm if (reason == "mate" and ours_score == 0.0) else None,
             "steers": steers, "steer_plies": steer_plies, "moves": " ".join(moves),
-            "our_clock": our_clock, "proofs": proofs}
+            "our_clock": our_clock, "proofs": proofs,
+            "open": nopen if ours_mated_them else None,
+            "ponder_hits": ponder_hits, "ponder_total": ponder_total}
 
 
 def parse_opts(lst):
@@ -239,6 +327,9 @@ if __name__ == "__main__":
         fen = book[r % len(book)]
         jobs += [(2 * r, fen, True), (2 * r + 1, fen, False)]
     ours_opts = {"Threads": 1, "Hash": 16, **parse_opts(A.opt)}
+    if A.ponder:
+        ours_opts["Ponder"] = "true"
+        A.conc = max(1, A.conc // 2)  # our engine thinks on the opponent's time too
     opp_opts = ({"Threads": 1, **parse_opts(A.opp_opt)} if A.opp_opt else
                 {"Threads": 1, "Hash": 16, "UCI_LimitStrength": "true", "UCI_Elo": A.elo})
     # (No debug_dumps() here: a faulthandler timer armed in the parent is

@@ -38,6 +38,7 @@
 #include "numa.h"
 #include "position.h"
 #include "score.h"
+#include "smother.h"
 #include "syzygy/tbprobe.h"
 #include "timeman.h"
 #include "types.h"
@@ -310,17 +311,18 @@ class SearchManager {
     // private copy of the root position while the normal search thinks.
     // smotherReady is set (release) only after smotherPV is complete.
     std::vector<Move> smotherPV;
-    int               smotherMateIn = 0;
-    bool              smotherWon    = false;  // won mode for this move
-    bool              smotherBrutal = false;  // SmotherBrutal for this move
-    bool              smotherCrush  = false;  // brutal and crushing: deep prover
-    int               smotherSeeks  = 0;      // moves played in seek mode this game
-    int               smotherDelays = 0;  // mate-phase steering choices this game
-    int               smotherHand   = 0;  // moves with the mate-in-hand prover budget
-    int               smotherBuilds = 0;  // moves played in construction mode this game
+    int               smotherMateIn   = 0;
+    bool              smotherWon      = false;  // won mode for this move
+    bool              smotherBrutal   = false;  // SmotherBrutal for this move
+    bool              smotherCrush    = false;  // brutal and crushing: deep prover
+    int               smotherSeeks    = 0;      // moves played in seek mode this game
+    int               smotherDelays   = 0;      // mate-phase steering choices this game
+    int               smotherHand     = 0;      // moves with the mate-in-hand prover budget
+    int               smotherBuilds   = 0;      // moves played in construction mode this game
     bool              smotherBuilding = false;  // construction mode on the last move
     std::atomic_bool  smotherReady{false};
     std::atomic_bool  smotherStop{false};
+    bool              smotherUnbounded = false;  // prover started without limits (pondering)
     std::thread       smotherThread;
     Position          smotherPos;
     StateInfo         smotherState;
@@ -396,19 +398,27 @@ class Worker {
     Value evaluate(const Position&);
 
     // Won-mode smother shaping (SmotherShape): eval bonus for the root side.
-    int   shapeWeight = 0;
-    int   shapeCap    = 0;
-    bool  seekSmother = false;  // won mode: only smothered mates score as mate
-    bool  seekClassic = false;
+    int  shapeWeight = 0;
+    int  shapeCap    = 0;
+    bool seekSmother = false;  // won mode: only smothered mates score as mate
+    bool seekClassic = false;
     // Construction mode (SmotherBuild): above buildFloor the evaluation stops
     // rewarding more material and rewards a boxed-in enemy king instead.
-    bool  buildSmother = false;
-    Value buildFloor   = VALUE_ZERO;
-    int   buildSurvive = 0;  // SmotherBuildSurvive
-    int   buildCap     = 12; // SmotherBuildSurviveCap
-    int   buildUnit    = 0;  // internal units per Smother::build_score() point
+    bool  buildSmother   = false;
+    Value buildFloor     = VALUE_ZERO;
+    int   buildSurvive   = 0;      // SmotherBuildSurvive
+    int   buildCap       = 12;     // SmotherBuildSurviveCap
+    int   buildVersion   = 1;      // SmotherBuildVersion
+    bool  smotherPartial = false;  // SmotherPartial: "all but one" counts
+    // Smother definition used for the search's own mate scoring.
+    Smother::Style mateStyle() const {
+        return seekClassic    ? Smother::Style::Classic
+             : smotherPartial ? Smother::Style::Partial
+                              : Smother::Style::AnyPiece;
+    }
+    int   buildUnit = 0;  // internal units per Smother::build_score() point
     Value mated_value(const Position& pos, int ply) const;
-    Color shapeUs     = WHITE;
+    Color shapeUs = WHITE;
 
     LimitsType limits;
 

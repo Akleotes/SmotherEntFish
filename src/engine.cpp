@@ -214,6 +214,11 @@ Engine::Engine(std::optional<std::filesystem::path> path) :
     options.add("SmotherBuildFloor", Option(600, 0, 10000));
     options.add("SmotherBuildMoves", Option(80, 0, 200));
     options.add("SmotherBuildWeight", Option(8, 0, 100));
+    // 1 = hand-set build_score weights, 2 = weights fitted to game data.
+    options.add("SmotherBuildVersion", Option(1, 1, 2));
+    // Also count "all but one" smothers: one square next to the mated king
+    // may be empty, covered by the attacker (see Smother::Style::Partial).
+    options.add("SmotherPartial", Option(false));
     // Blocker survivability in the build score, a bit mask: 1 pinned
     // blocker bonus, 2 defended blocker bonus, 4 penalty if our knight wins
     // it (SEE), 8 penalty if a pawn blocker can step forward. 0 = off.

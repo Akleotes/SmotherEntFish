@@ -31,7 +31,16 @@ bool smothered_given_mate(const Position& pos, Style style) {
     const Bitboard ring  = Attacks::attacks_bb(KING, pos.square<KING>(us));
     const Bitboard holes = ring & ~pos.pieces(us);
 
-    return style == Style::Classic ? !holes : !(holes & ~pos.checkers());
+    if (style == Style::Classic)
+        return !holes;
+    const Bitboard open = holes & ~pos.checkers();
+    return style == Style::Partial ? !more_than_one(open) : !open;
+}
+
+// Holes around the king that the attacker's last move may leave: 0 for
+// Classic, 1 (the mating piece's square) for AnyPiece, 2 for Partial.
+int allowed_holes(Style style) {
+    return style == Style::Classic ? 0 : style == Style::AnyPiece ? 1 : 2;
 }
 
 // Proof table. Attack and defence nodes share it: their keys differ because
@@ -151,8 +160,7 @@ bool Prover::attack(int n, Kind kind, int q) {
     // Last attacker move: the defender cannot fill any square, so the king's
     // current neighbourhood must already be closed, except possibly the one
     // square the mating piece lands on.
-    if (kind == SMOTHER && n == 1
-        && (lim.style == Style::Classic ? bool(holes) : more_than_one(holes)))
+    if (kind == SMOTHER && n == 1 && popcount(holes) > allowed_holes(lim.style))
     {
         e->failN = 1;
         return false;
@@ -166,7 +174,8 @@ bool Prover::attack(int n, Kind kind, int q) {
     int        cnt = 0;
     for (const Move m : MoveList<ALL>(pos))
     {
-        if (kind == SMOTHER && n == 1 && (holes & ~square_bb(m.to_sq())))
+        if (kind == SMOTHER && n == 1
+            && popcount(holes & ~square_bb(m.to_sq())) > allowed_holes(lim.style) - 1)
             continue;
         if (altRoots
             && std::find(rootExcluded.begin(), rootExcluded.end(), m) != rootExcluded.end())
@@ -483,7 +492,7 @@ Result Prover::run() {
             // opponent is least likely to escape from. Alternatives are found
             // by excluding the moves already proven; the search stays within
             // the limits, and whatever was found by then is used.
-            const Key        rootKey = salted(pos.key(), SMOTHER, lim.quietMoves);
+            const Key         rootKey = salted(pos.key(), SMOTHER, lim.quietMoves);
             std::vector<Move> cands{probe(rootKey)->move};
             if (lim.robust && n > 1)
             {
@@ -578,7 +587,7 @@ int shape(const Position& pos, Color us) {
     const int      boxed = popcount(ring & pos.pieces(them));
     const int      holes = popcount(ring & ~pos.pieces(them));
 
-    const int f    = file_of(ksq), r = rank_of(ksq);
+    const int f = file_of(ksq), r = rank_of(ksq);
     const int edge = std::min(std::min(f, 7 - f), std::min(r, 7 - r));  // 0 = on an edge
 
     int score = 5 * boxed - 3 * holes + 6 * (3 - edge);
@@ -594,14 +603,59 @@ int shape(const Position& pos, Color us) {
     return std::max(score, 0);
 }
 
-int build_score(const Position& pos, Color us, int survive, int cap) {
+// Version 2: weights fitted (logistic regression, notes/fit) to "a proven
+// smother follows within 20 plies" over ~150k decided positions from games
+// played without construction mode: a stronger corner, no plain-edge bonus,
+// the queen weighted more, and open holes (not covered by us) costing more
+// than covered ones.
+static int build_score_v2(const Position& pos, Color us) {
+    const Color    them  = ~us;
+    const Square   ksq   = pos.square<KING>(them);
+    const Bitboard ring  = Attacks::attacks_bb(KING, ksq);
+    const int      boxed = popcount(ring & pos.pieces(them));
+    Bitboard       hb    = ring & ~pos.pieces(them);
+    const int      holes = popcount(hb);
+    int            open  = 0;
+    while (hb)
+        open += !(pos.attackers_to(pop_lsb(hb)) & pos.pieces(us));
+
+    const int  f = file_of(ksq), r = rank_of(ksq);
+    const bool corner = (f == 0 || f == 7) && (r == 0 || r == 7);
+
+    int score = 12 * boxed - 4 * holes - 6 * open + (corner ? 45 : 0);
+
+    Bitboard theirs = pos.pieces(them) & ~pos.pieces(KING);
+    score += 4 * popcount(theirs);
+    while (theirs)
+        score += sq_distance(pop_lsb(theirs), ksq) <= 2 ? 4 : 0;
+
+    // Knights near the king, and knights one move from a checking square.
+    const Bitboard checkSqs = Attacks::attacks_bb(KNIGHT, ksq) & ~pos.pieces(us);
+    Bitboard       knights  = pos.pieces(us, KNIGHT);
+    while (knights)
+    {
+        const Square s = pop_lsb(knights);
+        score += 5 * std::max(0, 4 - sq_distance(s, ksq));
+        score += (Attacks::attacks_bb(KNIGHT, s) & checkSqs) ? 5 : 0;
+    }
+    Bitboard queens = pos.pieces(us, QUEEN);
+    while (queens)
+        score += 15 * std::max(0, 4 - sq_distance(pop_lsb(queens), ksq));
+
+    return score;
+}
+
+int build_score(const Position& pos, Color us, int survive, int cap, int version) {
+    if (version == 2)
+        return build_score_v2(pos, us);
+
     const Color    them  = ~us;
     const Square   ksq   = pos.square<KING>(them);
     const Bitboard ring  = Attacks::attacks_bb(KING, ksq);
     const int      boxed = popcount(ring & pos.pieces(them));
     const int      holes = popcount(ring & ~pos.pieces(them));
 
-    const int  f      = file_of(ksq), r = rank_of(ksq);
+    const int  f = file_of(ksq), r = rank_of(ksq);
     const bool corner = (f == 0 || f == 7) && (r == 0 || r == 7);
     const bool edge   = f == 0 || f == 7 || r == 0 || r == 7;
 
@@ -634,8 +688,8 @@ int build_score(const Position& pos, Color us, int survive, int cap) {
         Bitboard       bl     = ring & pos.pieces(them);
         while (bl)
         {
-            const Square   b    = pop_lsb(bl);
-            const Bitboard atk  = pos.attackers_to(b);
+            const Square   b   = pop_lsb(bl);
+            const Bitboard atk = pos.attackers_to(b);
             if ((survive & 1) && (pinned & b))
                 s += 4;  // cannot leave its square
             if ((survive & 2) && (atk & pos.pieces(them) & ~pos.pieces(KING)))

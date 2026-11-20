@@ -133,6 +133,8 @@ jobs:
                     args+=(--opp-opt "Hash=16")
                     for o in ${{ matrix.oppopts }}; do args+=(--opp-opt "$o"); done ;;
           esac
+          if [ "${{ matrix.ponder }}" = "true" ]; then args+=(--ponder); fi
+          args+=(--opp-think "${{ matrix.think }}")
           python -I notes/scripts/match.py "out/${{ matrix.name }}-${{ matrix.chunk }}.jsonl" \
             engines/ours "$opp" ${{ matrix.elo }} ${{ matrix.games }} \
             --seed ${{ matrix.seed }} --conc "$(nproc)" --tc "${{ matrix.tc }}" \

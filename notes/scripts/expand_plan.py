@@ -13,6 +13,9 @@ A run may set "opponent": "maia-<rating>" (1100-1900) to play Maia on lc0
 (human-like, "go nodes 1") instead of Stockfish at UCI_Elo, or "opponent":
 "ref" to play the engine built from the plan's "ref" (a git ref) at full
 strength, with the run's "opp_opts".
+A run may set "ponder": true (our engine ponders on the opponent's time;
+two cores per game) and "opp_think": SEC (the opponent's move is held back
+to at least SEC seconds, like a person thinking).
 Prints `exp=...`, `maia=...` and `matrix=...` lines for $GITHUB_OUTPUT.
 """
 import json, sys
@@ -34,7 +37,9 @@ for run in plan["runs"]:
                      "seed": int(run.get("seed", 1)) + i, "chunk": i,
                      "opts": " ".join(run.get("opts", [])), "tc": run.get("tc", tc),
                      "opp": run.get("opponent", ""),
-                     "oppopts": " ".join(run.get("opp_opts", []))})
+                     "oppopts": " ".join(run.get("opp_opts", [])),
+                     "ponder": bool(run.get("ponder", False)),
+                     "think": float(run.get("opp_think", 0))})
         games -= g
         i += 1
 # Slowest jobs first, so the run does not wait on a long tail at the end:
@@ -55,6 +60,9 @@ def cost(j):
     c = j["games"] * elo_cost(j["elo"]) * base
     if "SmotherBrutal=true" in j["opts"]:
         c *= 2
+    if j["ponder"]:
+        c *= 2  # half as many games at a time
+    c *= 1 + j["think"]  # the opponent's thinking time dominates
     return -c
 jobs.sort(key=cost)
 if len(jobs) > 256:

@@ -29,9 +29,13 @@ namespace Smother {
 //          (only a knight, or a pawn promoting to one, can deliver this).
 // AnyPiece: every square next to the king holds one of its own pieces,
 //           except the square of the checking piece itself.
+// Partial:  "all but one": as AnyPiece, but at most one more square may be
+//           empty or hold an enemy piece (it is covered by the attacker,
+//           since the position is mate). SmotherPartial.
 enum class Style {
     Classic,
-    AnyPiece
+    AnyPiece,
+    Partial
 };
 
 // True if the side to move is checkmated and the mate is smothered.
@@ -56,7 +60,7 @@ struct Result {
     bool              aborted = false;
     int               mateIn  = 0;  // attacker moves
     std::uint64_t     nodes   = 0;
-    std::vector<Move> pv;  // principal (longest-resistance) line
+    std::vector<Move> pv;                 // principal (longest-resistance) line
     int               alternatives = 0;   // proven first moves compared
     double            robustness   = -1;  // share of likely replies kept in the line
 };
@@ -75,7 +79,7 @@ int shape(const Position& pos, Color us);
 // (its own pieces around it, a corner or edge, its pieces kept alive, our
 // queen and knights close). Measured: 77% of delivered smothers were in a
 // corner, blocked mostly by the defender's own pawns, rooks and bishops.
-int build_score(const Position& pos, Color us, int survive = 0, int cap = 12);
+int build_score(const Position& pos, Color us, int survive = 0, int cap = 12, int version = 1);
 
 // Smother traps: pos has the DEFENDER to move (we just played our candidate).
 // For every legal reply, try to prove a forced smother for us with perReply

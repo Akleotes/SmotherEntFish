@@ -211,9 +211,10 @@ void Search::Worker::start_smother_prover() {
 
     auto& mgr = *main_manager();
     mgr.smotherPV.clear();
-    mgr.smotherMateIn = 0;
-    mgr.smotherReady  = false;
-    mgr.smotherStop   = false;
+    mgr.smotherMateIn    = 0;
+    mgr.smotherReady     = false;
+    mgr.smotherStop      = false;
+    mgr.smotherUnbounded = false;
 
     // "Won mode": the last search said we are clearly winning. The result
     // is not in doubt, so the prover gets a larger share of the move's time,
@@ -221,7 +222,7 @@ void Search::Worker::start_smother_prover() {
     const Value prev = mgr.bestPreviousScore;
     // A TB-range win counts too: in seek mode a plain forced mate is scored
     // as one, and the mating phase is exactly where smothers are found.
-    mgr.smotherWon   = prev != VALUE_INFINITE && prev != -VALUE_INFINITE
+    mgr.smotherWon = prev != VALUE_INFINITE && prev != -VALUE_INFINITE
                   && (is_win(prev)
                       || (!is_decisive(prev)
                           && UCIEngine::to_cp(prev, rootPos) >= int(options["SmotherWinCp"])));
@@ -234,7 +235,7 @@ void Search::Worker::start_smother_prover() {
     mgr.smotherBrutal = bool(options["SmotherBrutal"]);
     // Construction mode flattens the score, so while building the previous
     // score understates the advantage: the deep prover stays on.
-    mgr.smotherCrush  = mgr.smotherBrutal && prev != VALUE_INFINITE && prev != -VALUE_INFINITE
+    mgr.smotherCrush = mgr.smotherBrutal && prev != VALUE_INFINITE && prev != -VALUE_INFINITE
                     && (is_win(prev) || mgr.smotherBuilding
                         || (!is_decisive(prev)
                             && UCIEngine::to_cp(prev, rootPos) >= int(options["SmotherBigCp"])));
@@ -244,7 +245,9 @@ void Search::Worker::start_smother_prover() {
 
     Smother::Limits sl;
     sl.maxMoves   = int(options["SmotherMaxMoves"]);
-    sl.style      = options["SmotherClassic"] ? Smother::Style::Classic : Smother::Style::AnyPiece;
+    sl.style      = options["SmotherClassic"] ? Smother::Style::Classic
+                  : options["SmotherPartial"] ? Smother::Style::Partial
+                                              : Smother::Style::AnyPiece;
     sl.strict     = bool(options["SmotherStrict"]);
     sl.quietMoves = int(options["SmotherQuietMoves"]);
     sl.maxNodes   = std::uint64_t(int(options["SmotherNodes"]));
@@ -257,8 +260,8 @@ void Search::Worker::start_smother_prover() {
 
 
     const int pct = mgr.smotherCrush ? int(options["SmotherBrutalTimePercent"])
-                  : mgr.smotherWon    ? int(options["SmotherWinTimePercent"])
-                                      : int(options["SmotherTimePercent"]);
+                  : mgr.smotherWon   ? int(options["SmotherWinTimePercent"])
+                                     : int(options["SmotherTimePercent"]);
     if (limits.use_time_management() || limits.movetime)
     {
         TimePoint budget =
@@ -280,8 +283,8 @@ void Search::Worker::start_smother_prover() {
             && mgr.smotherHand < 12)
         {
             ++mgr.smotherHand;
-            const TimePoint left = limits.time[rootPos.side_to_move()]
-                                 - 2 * TimePoint(int(options["Move Overhead"]));
+            const TimePoint left =
+              limits.time[rootPos.side_to_move()] - 2 * TimePoint(int(options["Move Overhead"]));
             budget      = std::max(budget, left * int(options["SmotherMatePercent"]) / 100);
             sl.maxNodes = 0;
         }
@@ -296,10 +299,11 @@ void Search::Worker::start_smother_prover() {
     // is a forced win, so this only adds smothers.
     if (mgr.ponder && options["SmotherParallel"] && options["SmotherPonderDeep"])
     {
-        sl.maxMoves   = std::max(sl.maxMoves, 12);
-        sl.quietMoves = std::max(sl.quietMoves, 2);
-        sl.deadline   = 0;
-        sl.maxNodes   = 0;
+        sl.maxMoves          = std::max(sl.maxMoves, 12);
+        sl.quietMoves        = std::max(sl.quietMoves, 2);
+        sl.deadline          = 0;
+        sl.maxNodes          = 0;
+        mgr.smotherUnbounded = true;  // must be stopped, never waited for
     }
 
     // Copy what the prover needs; the search reorders rootMoves meanwhile.
@@ -386,10 +390,14 @@ void Search::Worker::start_searching() {
 
     // Without a clock, let the prover use its node budget. In won mode, let it
     // run to its own deadline: a slower move costs nothing there.
+    // Never wait for a prover started without limits (pondering): after
+    // "ponderhit" the ponder flag is already clear, and waiting for it lost
+    // games on time.
     const bool letProverFinish =
-      (!threads.stop && !limits.use_time_management() && !limits.movetime)
-      || ((main_manager()->smotherWon || main_manager()->smotherCrush) && !main_manager()->ponder
-          && !limits.infinite);
+      !main_manager()->smotherUnbounded
+      && ((!threads.stop && !limits.use_time_management() && !limits.movetime)
+          || ((main_manager()->smotherWon || main_manager()->smotherCrush)
+              && !main_manager()->ponder && !limits.infinite));
 
     // Stop the threads if not already stopped (also raise the stop if "ponderhit"
     // just reset threads.ponder).
@@ -452,34 +460,37 @@ void Search::Worker::start_searching() {
         && !main_manager()->smotherReady.load(std::memory_order_acquire)
         && (!is_decisive(rootMoves[0].score) || matePhase) && rootMoves.size() > 1)
     {
-        const Color us      = rootPos.side_to_move();
-        const bool  c960    = rootPos.is_chess960();
-        auto        cp      = [&](Value v) { return UCIEngine::to_cp(v, rootPos); };
-        const int   bestCp  = cp(rootMoves[0].score);
+        const Color us     = rootPos.side_to_move();
+        const bool  c960   = rootPos.is_chess960();
+        auto        cp     = [&](Value v) { return UCIEngine::to_cp(v, rootPos); };
+        const int   bestCp = cp(rootMoves[0].score);
         // In won mode a candidate may give up up to SmotherWinMargin, as long
         // as it keeps at least SmotherWinCp, and the trap prover looks deeper.
-        const int  floorCp = won ? std::max(int(options["SmotherSteerFloor"]),
-                                            int(options["SmotherWinCp"]))
-                                 : int(options["SmotherSteerFloor"]);
+        const int floorCp =
+          won ? std::max(int(options["SmotherSteerFloor"]), int(options["SmotherWinCp"]))
+              : int(options["SmotherSteerFloor"]);
         const bool winning = bestCp >= floorCp;
-        const int  margin  = won ? std::max(steer, int(options["SmotherWinMargin"]))
+        const int  margin  = won     ? std::max(steer, int(options["SmotherWinMargin"]))
                            : winning ? steer
                                      : steer / 4;
 
         Smother::Limits per;
-        per.maxMoves   = won ? int(options["SmotherWinTrapDepth"]) : int(options["SmotherTrapDepth"]);
+        per.maxMoves = won ? int(options["SmotherWinTrapDepth"]) : int(options["SmotherTrapDepth"]);
         per.quietMoves = std::min(1, int(options["SmotherQuietMoves"]));
-        per.style  = options["SmotherClassic"] ? Smother::Style::Classic : Smother::Style::AnyPiece;
-        per.strict = bool(options["SmotherStrict"]);
-        per.maxNodes = won ? std::uint64_t(int(options["SmotherWinTrapNodes"])) : 4096;
+        per.style      = options["SmotherClassic"] ? Smother::Style::Classic
+                       : options["SmotherPartial"] ? Smother::Style::Partial
+                                                   : Smother::Style::AnyPiece;
+        per.strict     = bool(options["SmotherStrict"]);
+        per.maxNodes   = won ? std::uint64_t(int(options["SmotherWinTrapNodes"])) : 4096;
 
         TimePoint deadline = 0;
         if (limits.use_time_management() || limits.movetime)
         {
             const TimePoint t =
               limits.use_time_management() ? main_manager()->tm.optimum() : limits.movetime;
-            const int pct = won ? int(options["SmotherWinSteerTime"]) : int(options["SmotherSteerTime"]);
-            deadline      = now() + std::max<TimePoint>(5, t * pct / 100);
+            const int pct =
+              won ? int(options["SmotherWinSteerTime"]) : int(options["SmotherSteerTime"]);
+            deadline = now() + std::max<TimePoint>(5, t * pct / 100);
         }
 
         auto potentialAfter = [&](const RootMove& rm) {
@@ -510,10 +521,9 @@ void Search::Worker::start_searching() {
         // prover gets its own flag; the deadline bounds its time instead.
         const std::atomic<bool> noStop{false};
         std::vector<Cand>       cands;
-        std::uint64_t     trapNodes = 0;
-        const usize lines = std::min(
-          rootMoves.size(),
-          usize(int(options[won ? "SmotherWinLines" : "SmotherSteerLines"])));
+        std::uint64_t           trapNodes = 0;
+        const usize             lines     = std::min(
+          rootMoves.size(), usize(int(options[won ? "SmotherWinLines" : "SmotherSteerLines"])));
         for (usize i = 0; i < lines; ++i)
         {
             const RootMove& rm = rootMoves[i];
@@ -632,9 +642,9 @@ bool Search::Worker::iterative_deepening() {
     Depth       lastBestMoveDepth = 0;
     Value       lastBestMoveScore = -VALUE_INFINITE;
 
-    Value  alpha, beta;
-    Value  bestValue     = -VALUE_INFINITE;
-    Color  us            = rootPos.side_to_move();
+    Value alpha, beta;
+    Value bestValue = -VALUE_INFINITE;
+    Color us        = rootPos.side_to_move();
 
     // Shaping applies in won mode, or on every move with SmotherShapeAlways.
     shapeWeight = threads.main_manager()->smotherWon || options["SmotherShapeAlways"]
@@ -645,11 +655,12 @@ bool Search::Worker::iterative_deepening() {
     {
         // Seek mode needs won mode, room before the 50-move rule, enough enemy
         // pieces to box their king in, and per-game budget left.
-        auto& mgr   = *threads.main_manager();
-        seekClassic = bool(options["SmotherClassic"]);
+        auto& mgr        = *threads.main_manager();
+        seekClassic      = bool(options["SmotherClassic"]);
+        smotherPartial   = bool(options["SmotherPartial"]);
         const int budget = mgr.smotherBrutal ? std::max(int(options["SmotherSeek"]), 200)
                                              : int(options["SmotherSeek"]);
-        seekSmother = (mgr.smotherWon || mgr.smotherBrutal) && budget > mgr.smotherSeeks
+        seekSmother      = (mgr.smotherWon || mgr.smotherBrutal) && budget > mgr.smotherSeeks
                    && rootPos.rule50_count() < int(options["SmotherSeekRule50"])
                    && popcount(rootPos.pieces(~us)) >= 4;
         if (seekSmother && mainThread)
@@ -663,12 +674,12 @@ bool Search::Worker::iterative_deepening() {
         // Against an opponent who plays well the game is never decided, so
         // this never switches on. Budget: SmotherBuildMoves per game, and off
         // before the 50-move rule; then the engine mates normally.
-        const Value prev = mgr.bestPreviousScore;
+        const Value prev  = mgr.bestPreviousScore;
         const bool  known = prev != VALUE_INFINITE && prev != -VALUE_INFINITE;
         const int   cp    = known && !is_decisive(prev) ? UCIEngine::to_cp(prev, rootPos) : 0;
         const bool  enter = known && (is_win(prev) || cp >= int(options["SmotherBuildCp"]));
-        const bool  stay  = mgr.smotherBuilding && known
-                        && (is_win(prev) || cp >= int(options["SmotherBuildFloor"]));
+        const bool  stay =
+          mgr.smotherBuilding && known && (is_win(prev) || cp >= int(options["SmotherBuildFloor"]));
         buildSmother = mgr.smotherBrutal && options["SmotherBuild"] && (enter || stay)
                     && mgr.smotherBuilds < int(options["SmotherBuildMoves"])
                     && rootPos.rule50_count() < int(options["SmotherSeekRule50"])
@@ -676,11 +687,12 @@ bool Search::Worker::iterative_deepening() {
         if (buildSmother)
         {
             const int perK = std::max(1, UCIEngine::to_cp(Value(1000), rootPos));  // cp per 1000
-            buildFloor = Value(int(options["SmotherBuildFloor"]) * 1000 / perK);
-            buildUnit  = std::max(1, int(options["SmotherBuildWeight"]) * 1000 / perK);
-            buildSurvive = int(options["SmotherBuildSurvive"]);
-            buildCap     = int(options["SmotherBuildSurviveCap"]);
-            shapeWeight = 0;
+            buildFloor     = Value(int(options["SmotherBuildFloor"]) * 1000 / perK);
+            buildUnit      = std::max(1, int(options["SmotherBuildWeight"]) * 1000 / perK);
+            buildSurvive   = int(options["SmotherBuildSurvive"]);
+            buildCap       = int(options["SmotherBuildSurviveCap"]);
+            buildVersion   = int(options["SmotherBuildVersion"]);
+            shapeWeight    = 0;
         }
         if (mainThread)
         {
@@ -2358,12 +2370,10 @@ Value Search::Worker::mated_value(const Position& pos, int ply) const {
     // Construction mode: a plain mate is worth no more than the floor, so the
     // engine keeps building while it can; a smothered mate stays a real mate.
     if (buildSmother && pos.side_to_move() != shapeUs
-        && !Smother::smothered_if_mate(pos, seekClassic ? Smother::Style::Classic
-                                                        : Smother::Style::AnyPiece))
+        && !Smother::smothered_if_mate(pos, mateStyle()))
         return -buildFloor;
     if (seekSmother && pos.side_to_move() != shapeUs
-        && !Smother::smothered_if_mate(pos, seekClassic ? Smother::Style::Classic
-                                                        : Smother::Style::AnyPiece))
+        && !Smother::smothered_if_mate(pos, mateStyle()))
         return -(VALUE_TB - ply);
     return mated_in(ply);
 }
@@ -2377,8 +2387,7 @@ Value Search::Worker::evaluate(const Position& pos) {
     // keeps it well below the winning margin.
     if (shapeWeight)
     {
-        const int b = std::min(Smother::shape(pos, shapeUs) * shapeWeight / 16,
-                               shapeCap);
+        const int b = std::min(Smother::shape(pos, shapeUs) * shapeWeight / 16, shapeCap);
         v += pos.side_to_move() == shapeUs ? b : -b;
         v = std::clamp(v, VALUE_TB_LOSS_IN_MAX_PLY + 1, VALUE_TB_WIN_IN_MAX_PLY - 1);
     }
@@ -2391,7 +2400,9 @@ Value Search::Worker::evaluate(const Position& pos) {
         Value u = pos.side_to_move() == shapeUs ? v : -v;
         if (u >= buildFloor)
         {
-            u = buildFloor + (u - buildFloor) / 8 + Smother::build_score(pos, shapeUs, buildSurvive, buildCap) * buildUnit;
+            u = buildFloor + (u - buildFloor) / 8
+              + Smother::build_score(pos, shapeUs, buildSurvive, buildCap, buildVersion)
+                  * buildUnit;
             u = std::min(u, VALUE_TB_WIN_IN_MAX_PLY - 1);
             v = pos.side_to_move() == shapeUs ? u : -u;
         }
