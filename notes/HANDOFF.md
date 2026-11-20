@@ -531,3 +531,25 @@ base = branch smotherfish defaults. 6400 games, pentanomial
 [0,153,2864,177,6], score 0.5028, +2.0 Elo (95% 0..+4), LLR 66.7 > 2.94:
 H1 (no loss beyond the [-10, 0] bounds). Smother hunting costs no strength
 against an equal opponent, where construction mode never switches on.
+
+CircleCI (free plan; .circleci/config.yml, branches circle-exp/*, 30
+parallel 4-CPU machines, results as artifacts). Setting the project up via
+"Use an existing GitHub Actions workflow" made CircleCI treat the file as a
+GitHub workflow (every job a no-op); a pipeline definition created through
+the API ("Experiments") runs it natively. First run, circle-exp/hybrid,
+Elo 1500, 1000 games each (openings seed 1450), about 15 minutes:
+
+```
+SmotherPartialAfter    full smothers /100g   full + all-but-one /100g   W/D/L
+0  (off)                     8.8                    11.1                 997/3/0
+80                           9.5                    15.4                 996/3/1
+60                           7.2                    21.9                 998/2/0
+40                           7.6                    38.0                 997/3/0
+(SmotherPartial always, grid14: 1.6 / 56.4)
+```
+
+The hybrid keeps the full smothers (differences within noise at 1000
+games) while adding near ones; 40 looks best. The one loss (H80, ply 66,
+0.15 s left, no proof) came before any hybrid effect. grid15 on GitHub
+(2000 games per threshold, other openings) confirms before a default
+changes.
