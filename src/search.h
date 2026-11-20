@@ -326,6 +326,9 @@ class SearchManager {
     std::atomic_bool  smotherReady{false};
     std::atomic_bool  smotherStop{false};
     bool              smotherUnbounded = false;  // prover started without limits (pondering)
+    std::atomic_bool  smotherDone{true};         // the prover thread has returned
+    TimePoint         smotherDeadline = 0;       // the prover's deadline (0 = none)
+    TimePoint         smotherBudget   = 0;       // and its time budget
     std::thread       smotherThread;
     Position          smotherPos;
     StateInfo         smotherState;

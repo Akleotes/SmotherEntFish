@@ -32,6 +32,7 @@
 #include <list>
 #include <ratio>
 #include <string>
+#include <thread>
 #include <utility>
 
 #include "bitboard.h"
@@ -215,6 +216,8 @@ void Search::Worker::start_smother_prover() {
     mgr.smotherReady     = false;
     mgr.smotherStop      = false;
     mgr.smotherUnbounded = false;
+    mgr.smotherDeadline  = 0;
+    mgr.smotherBudget    = 0;
 
     // "Won mode": the last search said we are clearly winning. The result
     // is not in doubt, so the prover gets a larger share of the move's time,
@@ -306,7 +309,9 @@ void Search::Worker::start_smother_prover() {
         }
         if (budget < 1)
             return;
-        sl.deadline = now() + budget;
+        sl.deadline         = now() + budget;
+        mgr.smotherDeadline = sl.deadline;
+        mgr.smotherBudget   = budget;
     }
 
     // Pondering: the opponent's thinking time is free, so the parallel prover
@@ -367,7 +372,11 @@ void Search::Worker::start_smother_prover() {
 
     mgr.smotherPos.set(rootPos.fen(), rootPos.is_chess960(), &mgr.smotherState);
     mgr.smotherState  = rootState;
-    mgr.smotherThread = std::thread([job, &mgr]() mutable { job(mgr.smotherPos); });
+    mgr.smotherDone   = false;
+    mgr.smotherThread = std::thread([job, &mgr]() mutable {
+        job(mgr.smotherPos);
+        mgr.smotherDone = true;
+    });
 }
 
 // letFinish: the search ended on its own (no GUI stop) without a clock, so
@@ -376,6 +385,19 @@ void Search::Worker::finish_smother_prover(bool letFinish) {
     auto& mgr = *main_manager();
     if (!letFinish)
         mgr.smotherStop = true;
+    // Letting it finish is bounded by its deadline: rebuilding the line of a
+    // found proof ignores the prover's own limits (only a stop ends it), and
+    // on a loaded machine that lost a game on time at 30+0.3 (grid21). Allow
+    // a tenth of its budget (at least 20 ms) past the deadline, then stop it;
+    // a stopped rebuild keeps at least the proof's first move.
+    else if (mgr.smotherDeadline && mgr.smotherThread.joinable())
+    {
+        const TimePoint hard =
+          mgr.smotherDeadline + std::max<TimePoint>(20, mgr.smotherBudget / 10);
+        while (!mgr.smotherDone.load(std::memory_order_acquire) && now() < hard)
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        mgr.smotherStop = true;
+    }
     if (mgr.smotherThread.joinable())
         mgr.smotherThread.join();
 }
