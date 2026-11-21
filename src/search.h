@@ -318,6 +318,9 @@ class SearchManager {
     int               smotherSeeks    = 0;      // moves played in seek mode this game
     int               smotherDelays   = 0;      // mate-phase steering choices this game
     int               smotherHand     = 0;      // moves with the mate-in-hand prover budget
+    Key               smotherExpectKey = 0;     // position expected after a proof's reply
+    int               smotherExpectPly = 0;     // and its game ply
+    int               smotherEscapeLeft = 0;    // moves left with the escape budget
     int               smotherBuilds   = 0;      // moves played in construction mode this game
     bool              smotherBuilding = false;  // construction mode on the last move
     bool              smotherSeekNow  = false;  // this move: seek mode (set before helpers start)

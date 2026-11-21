@@ -219,6 +219,21 @@ void Search::Worker::start_smother_prover() {
     mgr.smotherDeadline  = 0;
     mgr.smotherBudget    = 0;
 
+    // Escape detection: last move we played a proven smother and expected
+    // a reply. If this is the position one reply later but not the expected
+    // one, the defender left the proven line. (Pondering searches the
+    // expected position, so the check waits for the real one.)
+    if (mgr.smotherExpectKey && !mgr.ponder)
+    {
+        if (rootPos.game_ply() == mgr.smotherExpectPly && rootPos.key() != mgr.smotherExpectKey)
+        {
+            mgr.smotherEscapeLeft = int(options["SmotherEscapeMoves"]);
+            sync_cout << "info string smother escape: the defender left the proven line"
+                      << sync_endl;
+        }
+        mgr.smotherExpectKey = 0;
+    }
+
     // "Won mode": the last search said we are clearly winning. The result
     // is not in doubt, so the prover gets a larger share of the move's time,
     // and the move waits for it (see start_searching()).
@@ -305,6 +320,19 @@ void Search::Worker::start_smother_prover() {
             const TimePoint left =
               limits.time[rootPos.side_to_move()] - 2 * TimePoint(int(options["Move Overhead"]));
             budget      = std::max(budget, left * int(options["SmotherMatePercent"]) / 100);
+            sl.maxNodes = 0;
+        }
+        // Escape budget (SmotherEscapeMoves, SmotherEscapePercent): the
+        // defender has just left a proven smother. While building, a plain
+        // mate scores as the floor, so the root score does not show the mate
+        // in hand and the budget above does not apply; yet the game is
+        // decided and a new smother is often forced a few moves later.
+        if (mgr.smotherCrush && mgr.smotherEscapeLeft > 0 && limits.use_time_management())
+        {
+            --mgr.smotherEscapeLeft;
+            const TimePoint left =
+              limits.time[rootPos.side_to_move()] - 2 * TimePoint(int(options["Move Overhead"]));
+            budget      = std::max(budget, left * int(options["SmotherEscapePercent"]) / 100);
             sl.maxNodes = 0;
         }
         if (budget < 1)
@@ -729,6 +757,22 @@ void Search::Worker::start_searching() {
 
         bestmove = UCIEngine::move(spv[0], c960);
         ponder   = spv.size() > 1 ? UCIEngine::move(spv[1], c960) : "";
+
+        // Remember the position the proof expects after the defender's reply
+        // (see the escape budget in start_smother_prover()).
+        if (spv.size() > 1 && rootPos.legal(spv[0]))
+        {
+            StateInfo s1, s2;
+            rootPos.do_move(spv[0], s1);
+            if (rootPos.legal(spv[1]))
+            {
+                rootPos.do_move(spv[1], s2);
+                main_manager()->smotherExpectKey = rootPos.key();
+                main_manager()->smotherExpectPly = rootPos.game_ply();
+                rootPos.undo_move(spv[1]);
+            }
+            rootPos.undo_move(spv[0]);
+        }
     }
     main_manager()->updates.onBestmove(bestmove, ponder);
 }
@@ -1224,6 +1268,8 @@ void Search::Worker::clear() {
         main_manager()->smotherDelays = 0;  // new game
     if (is_mainthread())
         main_manager()->smotherHand = 0;
+    if (is_mainthread())
+        main_manager()->smotherExpectKey = 0, main_manager()->smotherEscapeLeft = 0;
     if (is_mainthread())
         main_manager()->smotherBuilds = 0, main_manager()->smotherBuilding = false;
     if (is_mainthread())

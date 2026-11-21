@@ -210,6 +210,10 @@ Engine::Engine(std::optional<std::filesystem::path> path) :
     // Brutal mode with a forced mate in hand: the prover may use this share
     // of the remaining clock per move (the result is no longer in doubt).
     options.add("SmotherMatePercent", Option(15, 0, 50));
+    // After the defender leaves a proven smother: for this many moves the
+    // prover may use SmotherEscapePercent of the clock left (0 = off).
+    options.add("SmotherEscapeMoves", Option(0, 0, 20));
+    options.add("SmotherEscapePercent", Option(20, 0, 50));
 
     // Brutal construction mode: once the game is decided (SmotherBuildCp,
     // centipawns, or a forced mate), build a smother instead of mating
