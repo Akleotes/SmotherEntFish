@@ -918,5 +918,6 @@ on the smotherfish branch: the fork syncs only that, and its token cannot
 push commits that change workflow files.
 Helper routing: helper-exp/<id>/<name> runs only on the fork whose owner
 gives that ID (first 6 hex of sha256 of the lower-case owner name);
-helper-exp/<name> runs on every helper fork. The first helper fork's ID
-is 8e9ce5.
+helper-exp/<name> runs on every helper fork. Helper IDs: 70c949 (the
+first helper fork; it was 8e9ce5 before its owner was renamed), dc665d
+(second helper). A rename changes the ID.
