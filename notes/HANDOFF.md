@@ -941,3 +941,11 @@ at 1500, +2.5 at 2000) for ~4 fewer in total. Default stays 40. At
 at Elo 1500, 48.9 vs ~44 at 2000). Helper fork: helpertest1 (200 games,
 Elo 1500, 5+0.05): all won, 9.0 full, 56.0 total; tc180 was cancelled by
 the helper and re-run as tc180b.
+
+Sharded experiments (Nov 22): "shard": [i, n] in a plan keeps every n-th
+job of the full matrix, so one experiment runs on several accounts at once
+(our actions-exp/<exp> with shard [0, n], each helper's
+helper-exp/<id>/<exp> with its own i). notes/scripts/merge_shards.py EXP
+OUTDIR URL[@BRANCH]... merges the result files; then summary.py. For an
+SPRT: give every account max_waves 1, add up the pair counts of all
+shards (sprt_stats.py) and push the next wave by hand until it decides.

@@ -65,6 +65,15 @@ def cost(j):
         c *= 4  # a quarter as many games at a time
     c *= 1 + j["think"]  # the opponent's thinking time dominates
     return -c
+# Sharding: "shard": [i, n] keeps every n-th job of the full matrix
+# (starting at i), so one experiment can be split over several accounts
+# (ours and helper forks); the shards' results are merged afterwards
+# (notes/scripts/merge_shards.py). Seeds come from the chunk index, so the
+# shards never repeat a game.
+if "shard" in plan:
+    i, n = plan["shard"]
+    jobs.sort(key=lambda j: (j["name"], j["chunk"]))
+    jobs = [j for k, j in enumerate(jobs) if k % n == i]
 jobs.sort(key=cost)
 if len(jobs) > 256:
     sys.exit("matrix too large (max 256 jobs)")
