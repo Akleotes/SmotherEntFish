@@ -847,3 +847,24 @@ No losses. Android build of e564712d (android-build/keep8, run
   budget at 5+0.05 and 15+0.15).
 - Lichess bot: waiting for the user to create a new Lichess account and save
   a bot:play token as the repository secret LICHESS_BOT_TOKEN.
+
+grid25 (earlier construction vs strong opponents; defaults otherwise):
+
+```
+opponent   BuildCp/Floor  games   W    D   L   score  full  total
+Elo 3000   800/600        1000   990   9   1  0.995   1.2  13.5
+Elo 3000   500/300        1000   951  47   2  0.975   1.1   8.5
+Elo 3000   300/150        1000   733 247  20  0.857   0.4   3.5
+Elo 3190   800/600         500   485  13   2  0.983   0.6   8.0
+Elo 3190   500/300         500   455  43   2  0.953   0.2   5.6
+```
+
+Starting construction earlier is clearly worse: more draws and fewer
+smothers. Against strong opponents the floor is what keeps the win; the
+default 800/600 stays. Smothers at 3000+ need another idea (choosing
+smother-friendly moves among near-equal ones).
+
+grid26 (defaults vs Maia-3): Maia-3 1900: 474 games, all won, 9.5 full,
+49.6 total per 100; Maia-3 2300: 500 games, all won, 7.8 full, 46.6
+total. The 1100 and 1500 arms were lost when the run was cancelled and
+re-run; grid26b repeats them.
