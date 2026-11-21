@@ -921,3 +921,7 @@ gives that ID (first 6 hex of sha256 of the lower-case owner name);
 helper-exp/<name> runs on every helper fork. Helper IDs: 70c949 (the
 first helper fork; it was 8e9ce5 before its owner was renamed), dc665d
 (second helper). A rename changes the ID.
+Helper branches must be built on the current smotherfish tip (only
+notes/exp/plan.json may differ): a helper's token cannot push a branch
+whose workflow files differ from its fork's, and the poll then skips it
+every time (tc180b was first built on an older branch and never started).
