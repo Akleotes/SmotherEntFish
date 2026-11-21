@@ -925,3 +925,19 @@ Helper branches must be built on the current smotherfish tip (only
 notes/exp/plan.json may differ): a helper's token cannot push a branch
 whose workflow files differ from its fork's, and the poll then skips it
 every time (tc180b was first built on an older branch and never started).
+
+grid32 (Hybrid switch point 40 vs 55 at 15+0.15, 600 games each):
+
+```
+opponent   after 40 (default)   after 55
+           full   total         full   total
+Elo 1500   9.2    57.8          9.7    53.5
+Elo 2000   5.7    48.9          8.2    45.3
+```
+
+Same trade as at 5+0.05 (grid29/30): 55 gives more true smothers (+0.5
+at 1500, +2.5 at 2000) for ~4 fewer in total. Default stays 40. At
+15+0.15 both settings are higher than at 5+0.05 (Hybrid 40: 57.8 vs ~53
+at Elo 1500, 48.9 vs ~44 at 2000). Helper fork: helpertest1 (200 games,
+Elo 1500, 5+0.05): all won, 9.0 full, 56.0 total; tc180 was cancelled by
+the helper and re-run as tc180b.
