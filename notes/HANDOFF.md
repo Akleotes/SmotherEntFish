@@ -953,3 +953,17 @@ shards (sprt_stats.py) and push the next wave by hand until it decides.
 SPRT defaults_vs_brutal_off (shipped defaults: brutal, Hybrid, keep 8, vs
 the same build with SmotherBrutal=false; 10+0.1, [-5, 0]): H1 after 4400
 games, +0.2 Elo (95% -2.1 to +2.6). The current defaults cost no strength.
+
+helper_tc180b (helper fork; shipped defaults at 3+2, i.e. a real blitz
+time control; all games won):
+
+```
+opponent   games   full /100   total (full + near) /100   (5+0.05, grid23)
+Elo 1500    288      11.8          69.1                     (8.4 / 53.1)
+Elo 2000    300       9.7          61.3                     (5.7 / 43.8)
+Elo 2500    203       6.9          45.8                     (4.7 / 38.3)
+```
+
+At a real time control the defaults reach the targets: ~70 at Elo 1500,
+well above 40-50 at 2000 and 15-20 at 2500. More time helps both full and
+near smothers (+30-70% over 5+0.05).
