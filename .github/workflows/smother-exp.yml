@@ -9,6 +9,8 @@ on:
   push:
     branches: ["actions-exp/**"]
     paths: ["notes/exp/plan.json"]
+  # Started by the helper poll in a volunteer's fork (helper-poll.yml).
+  workflow_dispatch:
 
 permissions:
   contents: write

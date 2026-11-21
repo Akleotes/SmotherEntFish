@@ -1,0 +1,50 @@
+# Helper poll: lets a volunteer lend their GitHub account's Actions capacity.
+#
+# Runs only in a fork (never in Demonic1594/Smotherfish itself). Every 15
+# minutes it lists the main repository's branches named helper-exp/<name>;
+# each one not yet started here is copied to this fork as
+# actions-exp/<name> and the experiment workflow is dispatched on it. The
+# results are committed to that branch in this fork, where the main project
+# reads them (the fork is public). Nothing in the main repository is
+# written. The fork must be public (unlimited free minutes) and kept in sync
+# with the main repository ("Sync fork"), since this token may not push
+# changed workflow files.
+name: Helper poll
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: helper-poll
+  cancel-in-progress: false
+
+jobs:
+  poll:
+    if: github.repository != 'Demonic1594/Smotherfish'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Start new helper experiments
+        env:
+          GH_TOKEN: ${{ github.token }}
+          UPSTREAM: https://github.com/Demonic1594/Smotherfish.git
+        run: |
+          git ls-remote "$UPSTREAM" 'refs/heads/helper-exp/*' | while read -r sha ref; do
+            name=${ref#refs/heads/helper-exp/}
+            if git ls-remote --exit-code origin "refs/heads/actions-exp/$name" >/dev/null 2>&1; then
+              continue  # already started here
+            fi
+            git fetch -q "$UPSTREAM" "$ref"
+            if ! git push -q origin "FETCH_HEAD:refs/heads/actions-exp/$name"; then
+              echo "::error::could not copy $name; press 'Sync fork' on this fork's page and it will retry"
+              continue
+            fi
+            gh workflow run smother-exp.yml --ref "actions-exp/$name"
+            echo "started $name ($sha)"
+          done

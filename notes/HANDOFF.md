@@ -907,3 +907,12 @@ Elo 3190  steer 10    500  421  70   9   0.912   0.4   3.4
 Steering is clearly worse: the MultiPV search costs strength (losses
 appear), and the weaker play reaches fewer won positions, so fewer
 smothers. Stays off.
+
+Helper capacity (another person's GitHub account, Nov 21): their public
+fork runs .github/workflows/helper-poll.yml every 15 minutes. It copies new
+upstream branches helper-exp/<name> to actions-exp/<name> in the fork and
+dispatches smother-exp.yml there (a GITHUB_TOKEN push does not trigger
+workflows; a dispatch does). Results land on actions-exp/<name> in the
+fork (read with git fetch from the public fork). Base helper-exp branches
+on the smotherfish branch: the fork syncs only that, and its token cannot
+push commits that change workflow files.
