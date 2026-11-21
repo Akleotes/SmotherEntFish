@@ -886,3 +886,24 @@ A clean trade: each 20 moves earlier gives ~6 more total and ~3 fewer
 true smothers. Default stays 40 (user preference: Hybrid, more true ones
 are good). grid27/28 lost most jobs in the cancel and re-run; re-launched
 fresh as grid27b/grid28b.
+
+First Lichess bot session (run 44873642075, 5 h, 2 games at once, 2+1 to
+3+2, rated matchmaking): 33 games, +6 =27 -0, 1 near smother (vs a 1607
+bot), 4 plain mates. Opponents were mostly bots rated 2850-3030; 27 draws
+against them. No losses, no time losses.
+
+grid31 (SmotherSteer, choosing smother-friendly moves among near-equal
+ones, MultiPV 4):
+
+```
+opponent  arm       games   W    D   L   score  full  total
+Elo 3000  default    1000  990  10   0   0.995   1.2  14.5
+Elo 3000  steer 10   1000  937  51  12   0.963   0.7   5.9
+Elo 3000  steer 25   1000  937  48  15   0.961   0.3   5.8
+Elo 3190  default     500  483  17   0   0.983   0.4  10.6
+Elo 3190  steer 10    500  421  70   9   0.912   0.4   3.4
+```
+
+Steering is clearly worse: the MultiPV search costs strength (losses
+appear), and the weaker play reaches fewer won positions, so fewer
+smothers. Stays off.
