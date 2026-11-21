@@ -825,3 +825,25 @@ Near reaches the 70 target at Elo 1320 and is at ~65 at Elo 1500.
 Pondering adds nothing to Near (it added ~8 to Hybrid in grid23).
 No losses. Android build of e564712d (android-build/keep8, run
 44831189138): success (the workflow checks bench 1442480 under qemu).
+
+### Nov 21 (day): defaults, new opponents, escapes, Elo 3000
+
+- Defaults now: SmotherBrutal true, SmotherGoal Hybrid, SmotherBuildKeep 8
+  (deb0c5b8). The bench runs with brutal off (1442480 = upstream). With all
+  defaults, 40 local games vs Elo 1500: 40 wins, 42.5 full-or-near /100.
+- Maia-3 opponents in the experiment workflow ("opponent": "maia3-<elo>",
+  CSSLab maia3 1e13597c, 5M model, CPU, torch 2.15.0, offline wrapper).
+  Samples moves like humans at that rating (Temperature 1.0).
+- Escapes after construction (grid22 keep 8, Full, 100 escaped games): the
+  engine keeps building a median 57 plies after the last proof but rarely
+  finds a second smother; games end in plain mates with 2-4 open squares.
+  While building, a plain mate scores as the floor, so the mate-in-hand
+  budget (is_win(prev)) never applied after an escape. New: escape budget
+  (SmotherEscapeMoves/Percent, off), triggered when the defender's reply
+  differs from the proof's ("info string smother escape").
+- Queued: grid25 (earlier construction vs Elo 3000/3190: BuildCp/Floor
+  800/600, 500/300, 300/150), grid26 (defaults vs Maia-3 1100-2300),
+  grid27 (robust / strict proofs / mate-in-hand 30%), grid28 (escape
+  budget at 5+0.05 and 15+0.15).
+- Lichess bot: waiting for the user to create a new Lichess account and save
+  a bot:play token as the repository secret LICHESS_BOT_TOKEN.
