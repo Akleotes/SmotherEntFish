@@ -117,6 +117,19 @@ jobs:
       - run: pip install -q chess
       - if: startsWith(matrix.opp, 'maia-')
         run: sudo apt-get install -y -q libopenblas0 >/dev/null
+      - name: Install Maia-3 (human-like, any rating)
+        if: startsWith(matrix.opp, 'maia3-')
+        run: |
+          # Pinned to the versions tested (Nov 21): maia3 1e13597c, torch 2.15.0 CPU.
+          pip install -q torch==2.15.0 --index-url https://download.pytorch.org/whl/cpu
+          git clone -q https://github.com/CSSLab/maia3.git /tmp/maia3
+          git -C /tmp/maia3 checkout -q 1e13597c42d4858b7cfd7cfdae01e297263364b2
+          pip install -q /tmp/maia3
+          maia3-cache --model maia3-5m
+          m=$(command -v maia3-uci)
+          printf '#!/bin/sh\nexport OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 HF_HUB_OFFLINE=1\nexec %s --model maia3-5m --device cpu --no-use-amp "$@"\n' "$m" > engines/maia3
+          chmod +x engines/maia3
+          (printf 'uci\nisready\nposition startpos\ngo nodes 1\n'; sleep 30) | timeout 60 engines/maia3 | grep -m1 bestmove
       - name: Play ${{ matrix.name }} chunk ${{ matrix.chunk }}
         env:
           OPENBLAS_NUM_THREADS: "1"  # one BLAS thread per lc0 process
@@ -129,6 +142,10 @@ jobs:
           case "${{ matrix.opp }}" in
             maia-*) opp=engines/lc0
                     args+=(--opp-opt "WeightsFile=engines/${{ matrix.opp }}.pb.gz" --opp-go "nodes 1") ;;
+            maia3-*) opp=engines/maia3
+                    elo="${{ matrix.opp }}"; elo="${elo#maia3-}"
+                    args+=(--opp-opt "Elo=$elo" --opp-go "nodes 1")
+                    for o in ${{ matrix.oppopts }}; do args+=(--opp-opt "$o"); done ;;
             ref)    opp=engines/ref
                     args+=(--opp-opt "Hash=16")
                     for o in ${{ matrix.oppopts }}; do args+=(--opp-opt "$o"); done ;;

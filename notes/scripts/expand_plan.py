@@ -71,6 +71,8 @@ if len(jobs) > 256:
 maia = sorted({j["opp"].split("-")[1] for j in jobs if j["opp"].startswith("maia-")})
 print("exp=" + plan["exp"])
 print("maia=" + " ".join(maia))
+# Maia-3 opponents ("opponent": "maia3-1500"): the CSSLab maia3 package (5M
+# model on CPU, PyTorch), installed by each match job that needs it.
 # "ref": a git ref built as an extra engine; runs with "opponent": "ref"
 # play it at full strength (head-to-head), with "opp_opts" as its options.
 print("ref=" + plan.get("ref", ""))
