@@ -188,9 +188,11 @@ Engine::Engine(std::optional<std::filesystem::path> path) :
     options.add("SmotherSeekRule50", Option(60, 0, 99));
 
     // Brutal mode: seek smothers on every move (not only when winning), with
-    // a deeper prover (12 moves, 2 quiet) that always gets the won-mode time.
-    // Plain mates still count as sure wins, so a win is never refused.
-    options.add("SmotherBrutal", Option(false));
+    // a deeper prover (12 moves, 2 quiet) that always gets the won-mode time,
+    // and construction mode once the game is decided. On by default since
+    // 1.1: full-strength SPRTs found no cost (+2.0 and +1.4 Elo). The bench
+    // runs with it off, so the bench signature stays the upstream one.
+    options.add("SmotherBrutal", Option(true));
 
     // After a smother proof, compare up to 4 proven first moves and play the
     // one whose likely replies stay in the smother line. Off by default: it

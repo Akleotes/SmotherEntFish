@@ -44,7 +44,7 @@ the puzzle's main line, not forced under the rule above.
 
 ### Modes
 
-- **Default mode.** The prover runs with a small share of the move's time
+- **Brutal mode off.** The prover runs with a small share of the move's time
   (`SmotherTimePercent`), more once the engine is clearly winning
   (`SmotherWinCp`, `SmotherWinTimePercent`). Otherwise the move is Stockfish's.
 - **Brutal mode** (`SmotherBrutal`). In the search, an ordinary mate of the
@@ -81,7 +81,7 @@ All options are standard UCI options. Defaults are what was measured best.
 | Option | Default | Meaning |
 | ------ | ------- | ------- |
 | `SmotherMate` | true | Run the smother prover at all. |
-| `SmotherBrutal` | false | Brutal mode (see above). The main switch for smother hunting. |
+| `SmotherBrutal` | true | Brutal mode (see above). The main switch for smother hunting; on by default since November 2026 (full-strength SPRTs: no cost). |
 | `SmotherBuild` | true | Construction mode; only active with `SmotherBrutal`. |
 | `SmotherGoal` | Hybrid | What counts as a smother in brutal mode: **Hybrid** (default: true smothers first, "all but one" ones after 40 construction moves), **Full** (only true smothers), **Near** ("all but one" ones always). See "Full, hybrid or near" below. |
 | `SmotherClassic` | false | Count only knight smothers. By default any piece may deliver the mate. |
@@ -108,7 +108,7 @@ All options are standard UCI options. Defaults are what was measured best.
 | `SmotherBigCp` | 1000 | Brutal mode: advantage from which the deep prover runs. |
 | `SmotherBrutalTimePercent` | 300 | Deep prover time, percent of the planned time (capped at 60% of the maximum). |
 | `SmotherMatePercent` | 15 | Brutal mode with a forced mate in hand: share of the remaining clock per move. |
-| `SmotherSeek` | 0 | Default mode: moves per game in which ordinary mates count below smothers (brutal mode uses 200). |
+| `SmotherSeek` | 0 | Brutal mode off: moves per game in which ordinary mates count below smothers (brutal mode uses 200). |
 | `SmotherSeekRule50` | 60 | No seeking or construction once the 50-move counter reaches this (half-moves). |
 
 ### Construction mode
@@ -188,7 +188,7 @@ Smothered mates per 100 games:
 
 | Setting | Elo 1500 | Elo 2000 | Elo 2500 | Elo 3000 | Maia 1100 | Maia 1900 |
 | ------- | -------- | -------- | -------- | -------- | --------- | --------- |
-| Default mode | 1.1 | - | - | 0.2 | - | - |
+| Brutal mode off | 1.1 | - | - | 0.2 | - | - |
 | Brutal, no construction | 1.2-1.5 | 1.1 | - | 0.5 | 1.4 | 1.3 |
 | Brutal, construction (20 moves) | 5.0 | - | - | 1.0 | 4.5 | - |
 | Brutal, construction (40 moves) | 6.2-8.7 | - | - | - | - | - |
@@ -235,7 +235,8 @@ smother can be forced at all.
 ## Testing your own changes
 
 - `./stockfish bench` must still report 1442480 nodes (the bench of the
-  upstream base commit).
+  upstream base commit). The bench runs with brutal mode off; it switches
+  it back on afterwards.
 - `notes/scripts/puzzles.py ENGINE smothered.csv N SEED` re-runs the prover
   regression test (the CSV is the Lichess puzzle database filtered on the
   `smotheredMate` theme).

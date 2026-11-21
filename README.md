@@ -49,7 +49,7 @@ with any UCI chess GUI, such as DroidFish on Android. It identifies itself as
 - **Proves smothered mates.** A dedicated search looks for forced sequences
   (checks, sacrifices and a few quiet moves) that end in a smothered mate.
   When it finds one, the engine plays it, even over a faster ordinary mate.
-- **Brutal mode** (`SmotherBrutal`, off by default). Hunts for smothers on
+- **Brutal mode** (`SmotherBrutal`, on by default). Hunts for smothers on
   every move. Once the game is decided (at least 8 pawns up, or a forced
   mate), it spends up to 80 moves building one: it stops caring about extra
   material, keeps the enemy pieces next to their king, drives the king into a
@@ -59,9 +59,9 @@ with any UCI chess GUI, such as DroidFish on Android. It identifies itself as
   first, near ones later in the game), Full (only true smothers), or Near
   (also "all but one" smothers, where one square next to the king is empty
   but covered). A true smother up to three moves longer is always preferred
-  to a near one. Near ends about 43-56 of every 100 games against Elo
-  1500-2500 opponents with a full or near smother.
-- **Default mode** (brutal off) plays Stockfish's moves except when a smother
+  to a near one. Near ends about 46-73 of every 100 games against Elo
+  1320-2500 opponents with a full or near smother, Hybrid about 38-53.
+- **With brutal mode off** it plays Stockfish's moves except when a smother
   is proven.
 
 ## Measured results
@@ -70,7 +70,7 @@ Games at 5 seconds plus 0.05 seconds per move, 600 to 2000 games per row,
 against Stockfish 19 limited by `UCI_Elo` and against the human-like Maia
 networks. Smothered mates per 100 games:
 
-| Opponent | Default mode | Brutal mode | Score (brutal) |
+| Opponent | Brutal mode off | Brutal mode | Score (brutal) |
 | -------- | ------------ | ----------- | -------------- |
 | Stockfish, Elo 1500 | 1.1 | 12.7 | 1.000 |
 | Stockfish, Elo 2000 | - | 7.8 | 0.999 |
@@ -101,8 +101,11 @@ mate to build the smother.
 
 ## Using it
 
-Set the option `SmotherBrutal` to `true` in your chess GUI to get the
-smother-hunting behaviour. Everything else works like Stockfish.
+Smother hunting is on out of the box (brutal mode with the Hybrid goal), so no
+settings are needed. Set `SmotherGoal` to Near for the most smothers of either
+kind, or Full for true smothers only; set `SmotherBrutal` to `false` for
+ordinary Stockfish play that only takes smothers when they come up.
+Everything else works like Stockfish.
 
 **Android (DroidFish and similar apps).** Static arm64 binaries are built by
 the `Android build` workflow (push to a branch named `android-build/<name>`).
@@ -119,8 +122,8 @@ make -j profile-build
 ```
 
 `./stockfish bench` must report 1442480 nodes, the same as the upstream
-Stockfish commit it is based on; the smother features do not change the
-normal search.
+Stockfish commit it is based on: the bench runs with brutal mode off, and the
+smother features do not change the normal search.
 
 ## Project files
 

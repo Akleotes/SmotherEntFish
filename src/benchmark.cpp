@@ -430,6 +430,10 @@ std::vector<std::string> setup_bench(const std::string& currentFen, std::istream
 
     list.emplace_back("setoption name Threads value " + threads);
     list.emplace_back("setoption name Hash value " + ttSize);
+    // Smotherfish: the bench measures the search itself, so it runs with brutal
+    // mode off and must match the upstream Stockfish signature; brutal mode
+    // (on by default) is switched back on afterwards.
+    list.emplace_back("setoption name SmotherBrutal value false");
     list.emplace_back("ucinewgame");
 
     for (const std::string& fen : fens)
@@ -441,6 +445,7 @@ std::vector<std::string> setup_bench(const std::string& currentFen, std::istream
             list.emplace_back(go);
         }
 
+    list.emplace_back("setoption name SmotherBrutal value true");
     return list;
 }
 
