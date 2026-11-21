@@ -967,3 +967,24 @@ Elo 2500    203       6.9          45.8                     (4.7 / 38.3)
 At a real time control the defaults reach the targets: ~70 at Elo 1500,
 well above 40-50 at 2000 and 15-20 at 2500. More time helps both full and
 near smothers (+30-70% over 5+0.05).
+
+grid33 (first sharded experiment: 3 accounts, 75 jobs, ~75 min; shipped
+defaults at 3+2):
+
+```
+opponent        games   W    D   L    full /100   total /100   (at 5+0.05)
+Maia-3 1500      300   300   0   0     13.0         68.3        (12.6 / 53.2)
+Maia-3 1900      300   300   0   0     10.0         58.3        ( 9.5 / 49.6)
+Elo 3000         288   286   2   0      2.8         19.1        ( 1.2 / 13.5)
+```
+
+At 3+2 the rates against human-like play match those against Stockfish
+(Elo 1500: 69.1 total); against Elo 3000 a real time control more than
+doubles full smothers (2.8 vs 1.2 per 100) and lifts the total to 19
+with no losses.
+
+Lichess session 2 (weaker bots mixed in): 30 games +23 =7 -0, 1 full
+smother (vs a 1768 bot) and 7 near; 15 of 23 wins were plain mates (lower
+rate than the Stockfish/Maia grids; the bot plays 2 games at once with 1
+thread each, and the 1500-2400 Lichess bots are other engines). Both
+sessions: 63 games, 0 losses.
