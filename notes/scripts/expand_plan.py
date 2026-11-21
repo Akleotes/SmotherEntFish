@@ -39,6 +39,7 @@ for run in plan["runs"]:
                      "opp": run.get("opponent", ""),
                      "oppopts": " ".join(run.get("opp_opts", [])),
                      "ponder": bool(run.get("ponder", False)),
+                     "runner": run.get("runner", plan.get("runner", "")),
                      "think": float(run.get("opp_think", 0))})
         games -= g
         i += 1

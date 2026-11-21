@@ -44,6 +44,16 @@ mm["challenge_initial_time"] = [120, 180]
 mm["challenge_increment"] = [1, 2]
 mm["challenge_mode"] = "rated"
 mm["opponent_rating_difference"] = 400
+# Do not keep re-challenging bots that decline (slowed the first session).
+mm["challenge_filter"] = "coarse"
+# Two thirds of challenges go to weaker bots, where smothers happen
+# (lichess-bot picks the base settings or one override at random).
+mm["overrides"] = {
+    "weaker_1500_2000": {"opponent_min_rating": 1500, "opponent_max_rating": 2000,
+                         "opponent_rating_difference": None},
+    "weaker_2000_2400": {"opponent_min_rating": 2000, "opponent_max_rating": 2400,
+                         "opponent_rating_difference": None},
+}
 
 c["pgn_directory"] = "game_records"
 c["pgn_file_grouping"] = "game"

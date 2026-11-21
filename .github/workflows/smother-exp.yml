@@ -97,7 +97,9 @@ jobs:
 
   match:
     needs: [plan, build]
-    runs-on: ubuntu-latest
+    # "runner": "self" in the plan sends a job to the self-hosted runner (a
+    # volunteer's machine); everything else runs on GitHub's runners.
+    runs-on: ${{ matrix.runner == 'self' && fromJSON('["self-hosted", "Linux", "X64"]') || 'ubuntu-latest' }}
     timeout-minutes: 90
     strategy:
       fail-fast: false
@@ -136,6 +138,27 @@ jobs:
           MATCH_DEBUG: "600"         # stack dumps every 10 min if a job gets stuck
         run: |
           mkdir -p out
+          # Games at once: all cores on GitHub's runners. On a volunteer's
+          # machine, SMOTHER_CORES (runner .env) if set, else half the
+          # physical cores while it is idle and 4 when the owner is using it
+          # (2+ threads busy over 3 s before the job starts; the load average
+          # would still count our own previous job).
+          conc=$(nproc)
+          if [ "${{ matrix.runner }}" = "self" ]; then
+            half=$(( $(nproc) / 4 )); [ "$half" -lt 1 ] && half=1
+            if [ -n "$SMOTHER_CORES" ]; then conc=$SMOTHER_CORES
+            else
+              read -r _ a1 b1 c1 d1 e1 f1 g1 _ < /proc/stat; sleep 3
+              read -r _ a2 b2 c2 d2 e2 f2 g2 _ < /proc/stat
+              busy=$(( (a2+b2+c2+f2+g2) - (a1+b1+c1+f1+g1) ))
+              total=$(( busy + (d2+e2) - (d1+e1) ))
+              used=$(( busy * $(nproc) / (total > 0 ? total : 1) ))
+              if [ "$used" -ge 2 ]; then conc=4; else conc=$half; fi
+              [ "$conc" -gt "$half" ] && conc=$half
+              echo "self-hosted: about $used of $(nproc) threads busy"
+            fi
+            echo "self-hosted: $conc games at once"
+          fi
           args=()
           for o in ${{ matrix.opts }}; do args+=(--opt "$o"); done
           opp=engines/opp
@@ -154,7 +177,7 @@ jobs:
           args+=(--opp-think "${{ matrix.think }}")
           python -I notes/scripts/match.py "out/${{ matrix.name }}-${{ matrix.chunk }}.jsonl" \
             engines/ours "$opp" ${{ matrix.elo }} ${{ matrix.games }} \
-            --seed ${{ matrix.seed }} --conc "$(nproc)" --tc "${{ matrix.tc }}" \
+            --seed ${{ matrix.seed }} --conc "$conc" --tc "${{ matrix.tc }}" \
             --book notes/openings.txt "${args[@]}" | tail -1
       - uses: actions/upload-artifact@v4
         if: always()
