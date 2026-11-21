@@ -1,7 +1,8 @@
 # Helper poll: lets a volunteer lend their GitHub account's Actions capacity.
 #
 # Runs only in a fork (never in Demonic1594/Smotherfish itself). Every 15
-# minutes it lists the main repository's branches named helper-exp/<name>;
+# minutes it lists the main repository's branches named helper-exp/<name>
+# (any helper) or helper-exp/<helper ID>/<name> (one helper, see below);
 # each one not yet started here is copied to this fork as
 # actions-exp/<name> and the experiment workflow is dispatched on it. The
 # results are committed to that branch in this fork, where the main project
@@ -35,8 +36,17 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           UPSTREAM: https://github.com/Demonic1594/Smotherfish.git
         run: |
+          # This fork's helper ID: the first 6 hex digits of the SHA-256 of
+          # the owner's name in lower case (no names in the main repo).
+          # helper-exp/<id>/<name> runs only on that helper's fork;
+          # helper-exp/<name> (no ID) on any helper's fork.
+          me=$(printf '%s' "${{ github.repository_owner }}" | tr 'A-Z' 'a-z' | sha256sum | cut -c1-6)
+          echo "helper ID: $me"
           git ls-remote "$UPSTREAM" 'refs/heads/helper-exp/*' | while read -r sha ref; do
             name=${ref#refs/heads/helper-exp/}
+            case "$name" in
+              */*) [ "${name%%/*}" = "$me" ] || continue; name=${name#*/} ;;
+            esac
             if git ls-remote --exit-code origin "refs/heads/actions-exp/$name" >/dev/null 2>&1; then
               continue  # already started here
             fi
