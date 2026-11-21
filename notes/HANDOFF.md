@@ -868,3 +868,21 @@ grid26 (defaults vs Maia-3): Maia-3 1900: 474 games, all won, 9.5 full,
 49.6 total per 100; Maia-3 2300: 500 games, all won, 7.8 full, 46.6
 total. The 1100 and 1500 arms were lost when the run was cancelled and
 re-run; grid26b repeats them.
+
+grid26b (defaults vs Maia-3, 500 games each, all won): 1100: 10.6 full,
+57.6 total per 100; 1500: 12.6 full, 53.2 total. With grid26: Maia-3 at
+1100-2300 gives 47-58 total and 8-13 full, about as against Stockfish.
+
+grid29 (Hybrid switch point, SmotherPartialAfter; 1000 games each):
+
+```
+opponent   after 20 build moves   after 40 (default)   after 60
+           full   total           full   total         full   total
+Elo 1500   4.6    61.4            7.2    55.9          10.1   45.0
+Elo 2000   3.0    50.1            5.7    44.4           7.4   38.6
+```
+
+A clean trade: each 20 moves earlier gives ~6 more total and ~3 fewer
+true smothers. Default stays 40 (user preference: Hybrid, more true ones
+are good). grid27/28 lost most jobs in the cancel and re-run; re-launched
+fresh as grid27b/grid28b.
