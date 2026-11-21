@@ -1,0 +1,89 @@
+# Smotherfish on Lichess as a BOT account: plays other bots (matchmaking) and
+# anyone who challenges it, for a few hours, then commits the games to the
+# branch "lichess-games" under games/<run>/ with a smother count.
+#
+# Triggered manually (Actions -> Lichess bot -> Run workflow) or by a push to
+# a branch named lichess-bot/<anything>. The token is the repository secret
+# LICHESS_BOT_TOKEN, from a new Lichess account; the first run upgrades that
+# account to a BOT account, which cannot be undone. lichess-bot
+# (lichess-bot-devs, AGPL-3.0) is used unmodified, pinned to a commit.
+name: Lichess bot
+
+on:
+  push:
+    branches: ["lichess-bot/**"]
+  workflow_dispatch:
+    inputs:
+      hours:
+        description: "Hours to play (max 5)"
+        default: "5"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: lichess-bot  # one account: one session at a time
+  cancel-in-progress: false
+
+env:
+  ARCH: x86-64-avx2
+  LICHESS_BOT_COMMIT: 06f4f10b5a5a70549b9fc5f8f759a532723b5dab
+
+jobs:
+  bot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build Smotherfish
+        run: |
+          cd src
+          make -j"$(nproc)" net
+          make -j"$(nproc)" build ARCH=$ARCH
+          ./stockfish bench 2>&1 | grep "Nodes searched"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Set up lichess-bot
+        run: |
+          git clone -q https://github.com/lichess-bot-devs/lichess-bot.git /tmp/lb
+          git -C /tmp/lb checkout -q "$LICHESS_BOT_COMMIT"
+          pip install -q -r /tmp/lb/requirements.txt
+          mkdir -p /tmp/lb/engines
+          cp src/stockfish /tmp/lb/engines/smotherfish
+          python notes/scripts/lichess_config.py /tmp/lb/config.yml.default /tmp/lb/config.yml 3 2048
+      - name: Play
+        env:
+          LICHESS_BOT_TOKEN: ${{ secrets.LICHESS_BOT_TOKEN }}
+          HOURS: ${{ inputs.hours || '5' }}
+        run: |
+          h=$HOURS; [ "$h" -gt 5 ] 2>/dev/null && h=5
+          cd /tmp/lb
+          # SIGINT after the time is up: lichess-bot finishes the games in
+          # progress (quit_after_all_games_finish) and stops.
+          timeout -s INT --kill-after=40m "${h}h" python lichess-bot.py -u || true
+      - name: Commit the games
+        if: always()
+        run: |
+          run="$(date -u +%Y%m%d-%H%M)-${GITHUB_RUN_ID}"
+          mkdir -p /tmp/out/games/$run
+          cp /tmp/lb/game_records/*.pgn /tmp/out/games/$run/ 2>/dev/null || true
+          n=$(ls /tmp/out/games/$run | wc -l)
+          echo "$n games"
+          [ "$n" -gt 0 ] || exit 0
+          pip install -q chess
+          me=$(python -c "import json,urllib.request,os; r=urllib.request.Request('https://lichess.org/api/account',headers={'Authorization':'Bearer '+os.environ['T']}); print(json.load(urllib.request.urlopen(r))['username'])")
+          python notes/scripts/pgn_smothers.py "$me" /tmp/out/games/$run | tee /tmp/out/games/$run/SUMMARY.txt >> "$GITHUB_STEP_SUMMARY"
+          git config user.name "smother-exp bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git fetch -q origin lichess-games; then
+            git checkout -q -B lichess-games FETCH_HEAD
+          else
+            git checkout -q --orphan lichess-games
+            git rm -rfq . >/dev/null
+          fi
+          mkdir -p games && cp -r /tmp/out/games/$run games/
+          git add games
+          git commit -q -m "lichess games: $run ($n games)" && git push -q origin lichess-games
+        env:
+          T: ${{ secrets.LICHESS_BOT_TOKEN }}
