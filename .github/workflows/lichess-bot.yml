@@ -51,7 +51,9 @@ jobs:
           pip install -q -r /tmp/lb/requirements.txt
           mkdir -p /tmp/lb/engines
           cp src/stockfish /tmp/lb/engines/smotherfish
-          python notes/scripts/lichess_config.py /tmp/lb/config.yml.default /tmp/lb/config.yml 3 2048
+          # Two games at once (about 60-75 per 5 hours), each engine 1 search
+          # thread + 1 prover thread: 4 threads on the runner's 4 cores.
+          python notes/scripts/lichess_config.py /tmp/lb/config.yml.default /tmp/lb/config.yml 1 1024 2
       - name: Play
         env:
           LICHESS_BOT_TOKEN: ${{ secrets.LICHESS_BOT_TOKEN }}
