@@ -949,3 +949,7 @@ helper-exp/<id>/<exp> with its own i). notes/scripts/merge_shards.py EXP
 OUTDIR URL[@BRANCH]... merges the result files; then summary.py. For an
 SPRT: give every account max_waves 1, add up the pair counts of all
 shards (sprt_stats.py) and push the next wave by hand until it decides.
+
+SPRT defaults_vs_brutal_off (shipped defaults: brutal, Hybrid, keep 8, vs
+the same build with SmotherBrutal=false; 10+0.1, [-5, 0]): H1 after 4400
+games, +0.2 Elo (95% -2.1 to +2.6). The current defaults cost no strength.
