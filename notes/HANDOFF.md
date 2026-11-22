@@ -1029,3 +1029,27 @@ unmodified Stockfish 3e8fde75, 10+0.1, 43,200 games (108 chunks over six
 accounts, incl. re-runs of the 16 chunks that crashed from the fastchess
 -march=native build, fixed in 185ee255): -0.3 Elo, 95% -1.1 to +0.4,
 pentanomial [5, 1097, 19435, 1061, 2]. Equal within noise. Added to README.
+
+### Phase 0: opportunity recall (Nov 22, 22:45 JST)
+
+notes/scripts/recall.py on 1000 won games of conc200 (1.2 defaults vs Elo
+1500, 5+0.05): every winning position (eval >= +6, depth 10) checked with
+a large prover budget (12 moves, 2 quiet, 20M nodes, true smothers only).
+Results on branch analysis/recall1.
+
+```
+full          93   9.3%  true smother delivered
+missed       149  14.9%  a forced true smother existed, no engine proof there
+unconverted   21   2.1%  engine proof there, no true smother followed
+never        737  73.7%  no forced true smother in any winning position
+```
+
+A forced true smother appeared in 26.3% of won games, but only 9.3% got
+one. At first availability we already had a forced mate (260 of 263),
+median mate in 8, median 44 plies after the first winning position. Of the
+149 missed: the engine's next proof came a median 36 plies later, and 107
+ended in a near smother. Hybrid mode proves a near smother first and then
+looked for a true one at most 3 moves longer, so a shorter near one won.
+Now an option, SmotherFullExtra (default 3); grid37 tests 6 and 12.
+recall2/recall3 repeat the analysis on the 3+2 games (tc180b, Elo 1500 /
+2500) to see how much of "missed" is bullet time pressure.
