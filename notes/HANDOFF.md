@@ -1053,3 +1053,18 @@ looked for a true one at most 3 moves longer, so a shorter near one won.
 Now an option, SmotherFullExtra (default 3); grid37 tests 6 and 12.
 recall2/recall3 repeat the analysis on the 3+2 games (tc180b, Elo 1500 /
 2500) to see how much of "missed" is bullet time pressure.
+
+grid36 (phase 1 search control, 5+0.05, sharded over six forks; full
+smothers per 100, full+near in brackets): Elo 1500 (1200 games each):
+control 6.8 (53.8), Lmr 1024 7.7, Lmr 2048 8.8 (56.8), DefLmr 1024 7.3,
+Lmr+DefLmr 8.0, Nmp 2 7.2. Elo 2500 (600): 3.3-4.3, control 4.3. Lmr 2048
++2.0 at 1500 (p ~0.09), not at 2500: retest with more games.
+
+recall2 (3+2, Elo 1500, 288 games): full 11.8%, missed 10.1%, unconverted
+10.8% (engine proved a smother where a forced true one existed; 28 of 31
+ended near), never 67.4%. recall3 (3+2, Elo 2500, 203): full 6.9%, missed
+3.9%, unconverted 7.4%, never 81.8%.
+
+grid37 (SmotherFullExtra; Elo 1500, 1500 games): 3: 7.9 (57.6), 6: 9.0
+(54.1), 12: 7.8 (54.5); Elo 2500 (600): 3: 4.5, 12: 4.3. Not the cause.
+grid38 tests SmotherFullFirst 0 / 30 / 60 (true smother first, then near).
