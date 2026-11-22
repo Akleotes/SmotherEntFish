@@ -992,3 +992,17 @@ sessions: 63 games, 0 losses.
 grid34 (fourth helper fork; Near goal at 3+2 vs Elo 1500, 240 games, all
 won): 71.7 total, 4.2 full per 100 (Hybrid at 3+2: 69.1 / 11.8). Near
 passes 70 but at the cost of most true smothers; Hybrid stays the default.
+
+### Upstream merge: Smotherfish 1.2 (Nov 22)
+
+Merged upstream 3e8fde75 (20 commits; StateInfo ring buffer in Position,
+optimism removed, hyperbola-quintessence slider attacks, Robin Hood
+repetition hashing, NMP clamp). Upstream bench 1210779 = ours with brutal
+off. Prover regression: 2000/2000 Lichess smother puzzles verified, 0 bad.
+Validation running: SPRT v12_vs_v11 (actions-exp/sprt-v12, 10+0.1,
+[-5, 0]) and grid35 (defaults vs Elo 1500/2000/2500/3000, 5+0.05, sharded
+over the four helper forks; their branches carry the merged engine with the
+old workflow files, because the forks cannot take workflow changes until
+they press "Sync fork"). smotherfish is fast-forwarded only after both pass;
+then every helper presses "Sync fork" once. Compare grid35 with grid23
+(1.1: Hybrid totals 53.1 / 43.8 / 38.3, Elo 3000 12.6).
