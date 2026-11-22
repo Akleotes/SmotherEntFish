@@ -1076,3 +1076,18 @@ script; update it after that fork presses "Sync fork"). Forks poll about
 hourly; the user can press Run workflow on Helper poll for a quick start.
 One fork (dc665d) has no working schedule; the enterprise fork's poll can be
 dispatched from this session.
+
+grid38 (SmotherFullFirst, 5+0.05, sharded 7 ways, ~20 min): Elo 1500 (1500
+each): 0: 7.9 (52.8), 30: 7.5 (52.5), 60: 7.4 (57.9); Elo 2500 (600): 0:
+5.0, 60: 4.3. No gain.
+
+Why (replay of a recall2 "unconverted" game, Elo 1500, 3+2): the engine
+plays every proven move, yet the proven distance goes 5,4,5,6,5,4,6,7. The
+proofs use the default (non-strict) rule: a reply may escape the smother if
+it runs into a quicker plain mate. The opponent takes those escapes, brutal
+mode declines the plain mate and proves a new smother, and the cycle repeats
+until Hybrid accepts a near smother. So recall's "available" counts these
+non-strict proofs and overstates what is convertible; the escape problem is
+the one already measured (grid27b: robust 13.0 vs 12.1, strict 12.2, n.s.).
+Next: recall with a strict oracle (every reply smothered) for the real
+headroom.
