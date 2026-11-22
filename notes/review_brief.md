@@ -45,9 +45,16 @@ inside a Stockfish-style search.
   smother traps set" at all times; starting construction earlier (lower eval
   threshold) - more draws, fewer smothers vs strong opponents.
 - Helped: keeping enemy pieces alive (keep weight 3 -> 8), construction itself.
-- Queued but untested: (a) score blocker survivability (pinned/protected
-  blockers vs blockers that can capture our knight or move away);
-  (b) hold back optional captures of pieces that help box the king;
+- Tested, inconclusive: blocker survivability in the build score (bonus for
+  pinned / defended blockers, penalty if our knight can be won or a pawn
+  blocker can step forward). 3000 games: "defended" 11.9 vs control 10.7
+  full per 100 (p ~0.14); "pinned" and combinations no better.
+- The prover already has: a proof table (transposition table, reused across
+  sibling positions), iterative deepening mate-in-1..N, attacker move
+  ordering (checks first, by distance to king) and defender ordering.
+  Knight distance in the build score is a BFS in knight moves.
+- Queued but untested: (b) hold back optional captures of pieces that help
+  box the king;
   (c) predict opponent replies from our own game data; (d) forcing checks
   that drive defender pieces onto their own king's neighbourhood
   (for 2500-3000 opponents); (e) at 3000+, among near-equal moves choose
@@ -66,6 +73,6 @@ inside a Stockfish-style search.
 1. Up to 8 ideas, ranked by (expected gain in TRUE smothers) x (chance it
    works without strength loss). For each: the mechanism, where in the search
    it goes, rough cost, and how to test it.
-2. Your opinion on the queued ideas (a)-(e): which are worth it, which not.
+2. Your opinion on the queued ideas (b)-(e): which are worth it, which not.
 3. One "long shot" idea that could double the rate if it worked.
 4. Anything in our approach you think is a mistake.
