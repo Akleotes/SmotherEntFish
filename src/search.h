@@ -421,6 +421,9 @@ class Worker {
     int   buildLmr       = 0;      // SmotherBuildLmr
     int   buildDefLmr    = 0;      // SmotherBuildDefLmr
     int   buildNmp       = 0;      // SmotherBuildNmp
+    int   buildOwnKeep   = 0;      // SmotherBuildOwnKeep
+    int   buildEscape    = 0;      // SmotherBuildEscape
+    int   buildKnightSafe = 0;     // SmotherBuildKnightSafe
     int   buildVersion   = 1;      // SmotherBuildVersion
     bool  smotherPartial = false;  // SmotherPartial: "all but one" counts
     // Smother definition used for the search's own mate scoring.

@@ -275,6 +275,13 @@ Engine::Engine(std::optional<std::filesystem::path> path) :
     options.add("SmotherBuildLmr", Option(0, 0, 4096));
     options.add("SmotherBuildDefLmr", Option(0, 0, 4096));
     options.add("SmotherBuildNmp", Option(0, 0, 8));
+    // Build-score terms (points; 0 = off): OwnKeep per queen and knight of
+    // ours on the board; Escape per square next to the enemy king that holds
+    // none of its pieces and that we do not attack; KnightSafe per knight of
+    // ours near the king that is attacked and not defended.
+    options.add("SmotherBuildOwnKeep", Option(0, 0, 50));
+    options.add("SmotherBuildEscape", Option(0, 0, 50));
+    options.add("SmotherBuildKnightSafe", Option(0, 0, 50));
 
     // While pondering, let the parallel prover search deep and unbounded on
     // the opponent's time.
