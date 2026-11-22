@@ -404,7 +404,36 @@ void Search::Worker::start_smother_prover() {
     // After a near proof, how many moves longer a true smother may be
     // (SmotherFullExtra) for the prover to look for it and prefer it.
     const int fullExtra = int(options["SmotherFullExtra"]);
-    auto job = [&mgr, sl, fullStyle, fullExtra, allowed = std::move(allowed)](Position& pos) {
+    // Near smothers allowed: first spend SmotherFullFirst percent of the
+    // budget (time or nodes) on a true smother only, then look for a near
+    // one. 0 = off (near first, as before). Not used without any budget
+    // (deep pondering), where the true-smother search would never end.
+    const int fullFirst = int(options["SmotherFullFirst"]);
+    auto job = [&mgr, sl, fullStyle, fullExtra, fullFirst,
+                allowed = std::move(allowed)](Position& pos) {
+        if (fullFirst > 0 && sl.style == Smother::Style::Partial && (sl.deadline || sl.maxNodes))
+        {
+            Smother::Limits full = sl;
+            full.style           = fullStyle;
+            full.robust          = false;
+            if (sl.deadline)
+                full.deadline = now() + std::max<TimePoint>(1, (sl.deadline - now()) * fullFirst / 100);
+            if (sl.maxNodes)
+                full.maxNodes = std::max<std::uint64_t>(1, sl.maxNodes * fullFirst / 100);
+            Smother::Result t = Smother::prove(pos, full, mgr.smotherStop);
+            if (t.found && !t.pv.empty()
+                && std::find(allowed.begin(), allowed.end(), t.pv[0]) != allowed.end())
+            {
+                mgr.smotherPV     = t.pv;
+                mgr.smotherMateIn = t.mateIn;
+                mgr.smotherReady.store(true, std::memory_order_release);
+                sync_cout << "info string smother mate in " << t.mateIn << " proven, " << t.nodes
+                          << " nodes (true smother first)" << sync_endl;
+                return;
+            }
+            if (mgr.smotherStop)
+                return;
+        }
         Smother::Result r = Smother::prove(pos, sl, mgr.smotherStop);
         // A near ("all but one") proof found: with the budget left, look for
         // a true smother at most SmotherFullExtra (3) moves longer, and prefer it.

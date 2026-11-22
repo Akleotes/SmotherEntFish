@@ -235,6 +235,9 @@ Engine::Engine(std::optional<std::filesystem::path> path) :
     // Near ("all but one") proof found: look for a true smother at most this
     // many moves longer and prefer it (bounded by the prover's move limit).
     options.add("SmotherFullExtra", Option(3, 0, 20));
+    // Near smothers allowed: percent of the prover's budget spent first on a
+    // true smother only (0 = off: near first, then a true one if time is left).
+    options.add("SmotherFullFirst", Option(0, 0, 100));
     // One switch for the smother goal in brutal mode, for GUIs (DroidFish):
     // Full   = only true smothers count (the options above decide),
     // Hybrid = (default) true smothers first, "all but one" ones after 40 construction
