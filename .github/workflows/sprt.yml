@@ -52,7 +52,9 @@ jobs:
           import json
           p = json.load(open("notes/exp/sprt.json"))
           wave = int("${{ github.event.inputs.wave }}" or 1)
-          jobs = [{"chunk": i, "seed": wave * 1000 + i} for i in range(int(p.get("runners", 16)))]
+          # "seed_offset" gives each account of a sharded SPRT its own openings.
+          off = int(p.get("seed_offset", 0))
+          jobs = [{"chunk": i, "seed": off + wave * 1000 + i} for i in range(int(p.get("runners", 16)))]
           print("name=" + p["name"])
           print("base_ref=" + p.get("base_ref", ""))
           print(f"wave={wave}")

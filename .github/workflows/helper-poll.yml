@@ -55,6 +55,10 @@ jobs:
               echo "::error::could not copy $name; press 'Sync fork' on this fork's page and it will retry"
               continue
             fi
-            gh workflow run smother-exp.yml --ref "actions-exp/$name"
+            # helper-exp/<id>/sprt-<name>: a strength test (sprt.yml, plan
+            # notes/exp/sprt.json); anything else: an experiment grid.
+            wf=smother-exp.yml
+            case "$name" in sprt-*) wf=sprt.yml ;; esac
+            gh workflow run "$wf" --ref "actions-exp/$name"
             echo "started $name ($sha)"
           done
