@@ -19,12 +19,11 @@ targets=(
   "7a213a:185ee255"
   "0f17ee:185ee255"
   "dc665d:185ee255"   # no working schedule: Run workflow by hand
-  "d32e35:origin/smotherfish"  # enterprise account
+  # "d32e35:origin/smotherfish"  # enterprise account: off while it runs only
+  #   ~6 jobs at a time (support ticket open); an equal shard made it the
+  #   last to finish by ~10 min. Re-enable when its limit is raised.
   "own:origin/smotherfish"     # this repository
 )
-# The enterprise fork still runs ~6 jobs at a time (support ticket open):
-# give it one shard of SLOW_SHARE (default 4) times as many, so it finishes
-# with the others. Shards are counted with it as one small slot.
 n=${#targets[@]}
 exp=$(python3 -c 'import json,sys;print(json.load(open(sys.argv[1]))["exp"])' "$plan")
 tmp=$(mktemp); cp "$plan" "$tmp"
