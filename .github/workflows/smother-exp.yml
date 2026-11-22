@@ -30,6 +30,7 @@ jobs:
       matrix: ${{ steps.m.outputs.matrix }}
       exp: ${{ steps.m.outputs.exp }}
       maia: ${{ steps.m.outputs.maia }}
+      maxpar: ${{ steps.m.outputs.maxpar }}
       ref: ${{ steps.m.outputs.ref }}
     steps:
       - uses: actions/checkout@v4
@@ -105,7 +106,9 @@ jobs:
     timeout-minutes: 90
     strategy:
       fail-fast: false
-      max-parallel: 18
+      # Jobs at once: the plan's "max_parallel" (default 18, within a free
+      # account's 20); an Enterprise account allows up to 500.
+      max-parallel: ${{ fromJSON(needs.plan.outputs.maxpar) }}
       matrix:
         include: ${{ fromJson(needs.plan.outputs.matrix) }}
     steps:

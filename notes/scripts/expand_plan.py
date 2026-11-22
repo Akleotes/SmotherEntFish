@@ -80,6 +80,7 @@ if len(jobs) > 256:
 # Maia opponents ("opponent": "maia-1500") need lc0 and those networks.
 maia = sorted({j["opp"].split("-")[1] for j in jobs if j["opp"].startswith("maia-")})
 print("exp=" + plan["exp"])
+print("maxpar=" + str(int(plan.get("max_parallel", 18))))
 print("maia=" + " ".join(maia))
 # Maia-3 opponents ("opponent": "maia3-1500"): the CSSLab maia3 package (5M
 # model on CPU, PyTorch), installed by each match job that needs it.
