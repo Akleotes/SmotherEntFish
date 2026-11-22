@@ -1006,3 +1006,12 @@ old workflow files, because the forks cannot take workflow changes until
 they press "Sync fork"). smotherfish is fast-forwarded only after both pass;
 then every helper presses "Sync fork" once. Compare grid35 with grid23
 (1.1: Hybrid totals 53.1 / 43.8 / 38.3, Elo 3000 12.6).
+
+1.2 validation passed: SPRT v12_vs_v11 (10+0.1, [-5, 0]) H1 after 4000
+games, +2.4 Elo (95% -0.1 to +5.0). grid35 (defaults, 5+0.05, sharded over
+four helper forks) matches 1.1: Hybrid totals 54.3 / 42.9 / 40.0 at Elo
+1500/2000/2500 (1.1: 53.1 / 43.8 / 38.3), Elo 3000 12.8 (12.6). Two losses
+in 3500 games, both on a near-empty clock at 5+0.05 (one time forfeit at
++17, one blitz loss at +3/+4), the known low-clock issue. smotherfish
+fast-forwarded to 1.2; helpers press "Sync fork" once (workflow files
+changed: Android bench check, sharded SPRT support).
