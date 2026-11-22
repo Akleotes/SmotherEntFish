@@ -1068,3 +1068,11 @@ ended near), never 67.4%. recall3 (3+2, Elo 2500, 203): full 6.9%, missed
 grid37 (SmotherFullExtra; Elo 1500, 1500 games): 3: 7.9 (57.6), 6: 9.0
 (54.1), 12: 7.8 (54.5); Elo 2500 (600): 3: 4.5, 12: 4.3. Not the cause.
 grid38 tests SmotherFullFirst 0 / 30 / 60 (true smother first, then near).
+
+Rule (Nov 22): always distribute experiments over our account and every
+helper fork for faster feedback. notes/scripts/distribute.sh PLAN.json
+builds the seven shard branches (each fork's base version is listed in the
+script; update it after that fork presses "Sync fork"). Forks poll about
+hourly; the user can press Run workflow on Helper poll for a quick start.
+One fork (dc665d) has no working schedule; the enterprise fork's poll can be
+dispatched from this session.
