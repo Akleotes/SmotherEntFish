@@ -99,6 +99,22 @@ Stockfish base: in direct games against version 1 it scored 0.517 (about
 (a median of about 120 half-moves instead of about 53), because it delays the
 mate to build the smother.
 
+### Strength against Stockfish
+
+Smotherfish 1.2 with its default settings (smother hunting on) against the
+unmodified Stockfish it is built on (upstream commit 3e8fde75), both at full
+strength: 10 seconds plus 0.1 per move, 1 thread, 16 MB hash, openings from
+Stockfish's own 8moves_v3 book with both colours per opening, played with
+fastchess as in Stockfish's own testing.
+
+| Games | Score | Elo | 95% range | Game pairs (0, 0.5, 1, 1.5, 2 points) |
+| ----- | ----- | --- | --------- | ------------------------------------- |
+| 43,200 | 49.95% | -0.3 | -1.1 to +0.4 | 5, 1097, 19435, 1061, 2 |
+
+The two engines are equal within the margin of error: hunting smothered mates
+costs no measurable strength. The match ran on GitHub Actions, split over six
+accounts; the per-chunk results are in `notes/results/sprt/`.
+
 ## Using it
 
 Smother hunting is on out of the box (brutal mode with the Hybrid goal), so no

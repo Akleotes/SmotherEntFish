@@ -1023,3 +1023,9 @@ seed_offset 0..500000), ~43,000 games. Ours: actions-exp/sprt-official;
 helpers: helper-exp/<id>/sprt-official -> actions-exp/sprt-official in each
 fork, results notes/results/sprt/official_vs_stockfish_s<i>/. Add up the
 pentanomial counts of all six (sprt_stats.py) for the published result.
+
+Official comparison result (Nov 22, 16:36 JST): Smotherfish 1.2 defaults vs
+unmodified Stockfish 3e8fde75, 10+0.1, 43,200 games (108 chunks over six
+accounts, incl. re-runs of the 16 chunks that crashed from the fastchess
+-march=native build, fixed in 185ee255): -0.3 Elo, 95% -1.1 to +0.4,
+pentanomial [5, 1097, 19435, 1061, 2]. Equal within noise. Added to README.
