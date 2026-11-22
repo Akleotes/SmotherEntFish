@@ -988,3 +988,7 @@ smother (vs a 1768 bot) and 7 near; 15 of 23 wins were plain mates (lower
 rate than the Stockfish/Maia grids; the bot plays 2 games at once with 1
 thread each, and the 1500-2400 Lichess bots are other engines). Both
 sessions: 63 games, 0 losses.
+
+grid34 (fourth helper fork; Near goal at 3+2 vs Elo 1500, 240 games, all
+won): 71.7 total, 4.2 full per 100 (Hybrid at 3+2: 69.1 / 11.8). Near
+passes 70 but at the cost of most true smothers; Hybrid stays the default.
