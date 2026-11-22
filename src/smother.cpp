@@ -651,8 +651,10 @@ static int build_score_v2(const Position& pos, Color us) {
 BuildWeights buildWeights;
 
 void set_build_weights(const std::string& s) {
-    BuildWeights       w;
-    std::istringstream is(s);
+    BuildWeights w;
+    std::string  t = s;  // commas or spaces between the numbers
+    std::replace(t.begin(), t.end(), ',', ' ');
+    std::istringstream is(t);
     int*               f[] = {&w.boxed, &w.hole, &w.corner, &w.edge, &w.knight, &w.queen};
     for (int* p : f)
         if (!(is >> *p))

@@ -80,7 +80,7 @@ int shape(const Position& pos, Color us);
 // (its own pieces around it, a corner or edge, its pieces kept alive, our
 // queen and knights close). Measured: 77% of delivered smothers were in a
 // corner, blocked mostly by the defender's own pawns, rooks and bishops.
-// Hand-set build_score weights (SmotherBuildWeights): boxed, hole, corner,
+// Hand-set build_score weights (SmotherBuildWeights, comma separated): boxed, hole, corner,
 // edge, knight nearness, queen nearness. Set once per move before the
 // search threads start.
 struct BuildWeights {
