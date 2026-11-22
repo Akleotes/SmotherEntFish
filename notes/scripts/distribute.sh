@@ -22,6 +22,9 @@ targets=(
   "d32e35:origin/smotherfish"  # enterprise account
   "own:origin/smotherfish"     # this repository
 )
+# The enterprise fork still runs ~6 jobs at a time (support ticket open):
+# give it one shard of SLOW_SHARE (default 4) times as many, so it finishes
+# with the others. Shards are counted with it as one small slot.
 n=${#targets[@]}
 exp=$(python3 -c 'import json,sys;print(json.load(open(sys.argv[1]))["exp"])' "$plan")
 tmp=$(mktemp); cp "$plan" "$tmp"

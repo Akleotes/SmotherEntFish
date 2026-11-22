@@ -1091,3 +1091,20 @@ non-strict proofs and overstates what is convertible; the escape problem is
 the one already measured (grid27b: robust 13.0 vs 12.1, strict 12.2, n.s.).
 Next: recall with a strict oracle (every reply smothered) for the real
 headroom.
+
+recall4 (strict oracle, 600 won games, Elo 1500, 5+0.05): full 8.8%,
+missed 0.0%, unconverted 0.3%, never 90.8%. A truly forced (strict) smother
+appeared in 9.2% of won games and was delivered in 53 of 55. Conversion is
+solved; recall1's "available" was mostly escapable proofs.
+
+grid39 (Lmr 2048 retest, 7 shards): Elo 1500 (3500 each) control 8.8, L2
+8.4; Elo 2500 (1400) control 2.7, L2 4.6 (z 2.7, but grid36 had the
+opposite). L2 had 1 loss (0.14 s clock) and more games ending on time. Not
+adopted.
+
+grid40 (phase 2 build-score terms, 7 shards; full per 100, z vs control):
+Elo 1500 (2000 each): control 8.3; OwnKeep 10 8.2; KeepNear 10 7.5 (-1.0);
+Escape 6 9.2 (+1.0); KnightSafe 8 8.5; all four 8.0. Elo 2500 (800):
+control 4.1; OwnKeep 4.6; KeepNear 2.4 (-2.0); Escape 4.0; KnightSafe 2.5
+(-1.8); all 5.0. No term helps; KeepNear and KnightSafe hurt at 2500.
+Hand-tuned build-score terms look exhausted.
