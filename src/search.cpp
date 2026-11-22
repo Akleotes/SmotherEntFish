@@ -401,15 +401,18 @@ void Search::Worker::start_smother_prover() {
 
     const Smother::Style fullStyle =
       options["SmotherClassic"] ? Smother::Style::Classic : Smother::Style::AnyPiece;
-    auto job = [&mgr, sl, fullStyle, allowed = std::move(allowed)](Position& pos) {
+    // After a near proof, how many moves longer a true smother may be
+    // (SmotherFullExtra) for the prover to look for it and prefer it.
+    const int fullExtra = int(options["SmotherFullExtra"]);
+    auto job = [&mgr, sl, fullStyle, fullExtra, allowed = std::move(allowed)](Position& pos) {
         Smother::Result r = Smother::prove(pos, sl, mgr.smotherStop);
         // A near ("all but one") proof found: with the budget left, look for
-        // a true smother at most three moves longer, and prefer it.
+        // a true smother at most SmotherFullExtra (3) moves longer, and prefer it.
         if (r.found && sl.style == Smother::Style::Partial && !mgr.smotherStop)
         {
             Smother::Limits full = sl;
             full.style           = fullStyle;
-            full.maxMoves        = std::min(sl.maxMoves, r.mateIn + 3);
+            full.maxMoves        = std::min(sl.maxMoves, r.mateIn + fullExtra);
             full.robust          = false;
             Smother::Result t    = Smother::prove(pos, full, mgr.smotherStop);
             if (t.found && !t.pv.empty())

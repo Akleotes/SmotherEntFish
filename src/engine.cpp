@@ -232,6 +232,9 @@ Engine::Engine(std::optional<std::filesystem::path> path) :
     // moves have been played in the game (0 = never; 80 = after the default
     // construction budget is used up). SmotherPartial counts them always.
     options.add("SmotherPartialAfter", Option(0, 0, 200));
+    // Near ("all but one") proof found: look for a true smother at most this
+    // many moves longer and prefer it (bounded by the prover's move limit).
+    options.add("SmotherFullExtra", Option(3, 0, 20));
     // One switch for the smother goal in brutal mode, for GUIs (DroidFish):
     // Full   = only true smothers count (the options above decide),
     // Hybrid = (default) true smothers first, "all but one" ones after 40 construction
