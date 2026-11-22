@@ -16,10 +16,13 @@ inside a Stockfish-style search.
 - Brutal mode (on by default): when clearly winning, the engine prefers
   delivering a smother over a faster ordinary mate, within time/plies budgets.
 - Construction mode: once the eval is above a threshold (+8 pawns, with a
-  +6 pawn floor that is never given up), the root move choice adds a
-  "smother build score": enemy king boxed in by its own pieces, our knight
-  routes to the mating squares, enemy pieces kept alive near their king
-  ("keep" weight 8 per enemy piece). This was the one big breakthrough
+  +6 pawn floor that is never given up), the static evaluation at EVERY node
+  of the normal search (not only the root) changes: advantage above the floor
+  counts only 1/8, plus a "smother build score": enemy king boxed in by its
+  own pieces, our knight routes to the mating squares, enemy pieces kept
+  alive near their king ("keep" weight 8 per enemy piece). Search control
+  (LMR, extensions, null move, history, pruning) is unchanged Stockfish.
+  This was the one big breakthrough
   (true smothers went from about 1-2 to about 12 per 100 games vs Elo 1500).
 - "Hybrid" goal: after 40 moves of construction without success it also
   accepts a "near" smother (all but one flight square blocked by own pieces).
