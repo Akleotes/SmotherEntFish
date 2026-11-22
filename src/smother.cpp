@@ -10,6 +10,7 @@
 #include <cstdlib>
 #include <deque>
 #include <limits>
+#include <sstream>
 #include <vector>
 
 #include "attacks.h"
@@ -647,6 +648,18 @@ static int build_score_v2(const Position& pos, Color us) {
     return score;
 }
 
+BuildWeights buildWeights;
+
+void set_build_weights(const std::string& s) {
+    BuildWeights       w;
+    std::istringstream is(s);
+    int*               f[] = {&w.boxed, &w.hole, &w.corner, &w.edge, &w.knight, &w.queen};
+    for (int* p : f)
+        if (!(is >> *p))
+            break;
+    buildWeights = w;
+}
+
 int build_score(const Position& pos, Color us, int survive, int cap, int version, int keep, int keepNear, int starve, int starveAt, int ownKeep, int escape, int knightSafe) {
     if (version == 2)
         return build_score_v2(pos, us);
@@ -661,7 +674,8 @@ int build_score(const Position& pos, Color us, int survive, int cap, int version
     const bool corner = (f == 0 || f == 7) && (r == 0 || r == 7);
     const bool edge   = f == 0 || f == 7 || r == 0 || r == 7;
 
-    int score = 12 * boxed - 10 * holes + (corner ? 25 : edge ? 10 : 0);
+    const BuildWeights& W = buildWeights;
+    int score = W.boxed * boxed - W.hole * holes + (corner ? W.corner : edge ? W.edge : 0);
 
     // Every enemy piece is a possible blocker: keep them, especially near
     // their king.
@@ -714,10 +728,10 @@ int build_score(const Position& pos, Color us, int survive, int cap, int version
     // The finishers: knights and the queen near the king.
     Bitboard knights = pos.pieces(us, KNIGHT);
     while (knights)
-        score += 4 * std::max(0, 4 - sq_distance(pop_lsb(knights), ksq));
+        score += W.knight * std::max(0, 4 - sq_distance(pop_lsb(knights), ksq));
     Bitboard queens = pos.pieces(us, QUEEN);
     while (queens)
-        score += 3 * std::max(0, 4 - sq_distance(pop_lsb(queens), ksq));
+        score += W.queen * std::max(0, 4 - sq_distance(pop_lsb(queens), ksq));
 
     // Blocker survivability, a bit mask (SmotherBuildSurvive): 1 pinned
     // bonus, 2 defended bonus, 4 knight-wins-it penalty, 8 pawn-push penalty.

@@ -280,6 +280,9 @@ Engine::Engine(std::optional<std::filesystem::path> path) :
     // none of its pieces and that we do not attack; KnightSafe per knight of
     // ours near the king that is attacked and not defended.
     options.add("SmotherBuildOwnKeep", Option(0, 0, 50));
+    // build_score weights, space separated: boxed hole corner edge knight
+    // queen (for tuning; the default is the hand-set score).
+    options.add("SmotherBuildWeights", Option("12 10 25 10 4 3"));
     options.add("SmotherBuildEscape", Option(0, 0, 50));
     options.add("SmotherBuildKnightSafe", Option(0, 0, 50));
 
