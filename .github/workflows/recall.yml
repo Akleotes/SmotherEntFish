@@ -1,0 +1,118 @@
+# Opportunity recall (notes/plan_ideas.md, phase 0): replays won games and
+# checks, with a large prover budget, where a forced true smother existed.
+# Triggered by a push to a branch named analysis/<anything> that changes
+# notes/exp/recall.json:
+#   {"name": "recall1", "input": "notes/data/games.jsonl.gz",
+#    "shards": 20, "args": "--games 40"}
+# "args" go to notes/scripts/recall.py (per shard). Results are committed to
+# the branch under notes/results/<name>/.
+name: Smother recall
+
+on:
+  push:
+    branches: ["analysis/**"]
+    paths: ["notes/exp/recall.json"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  ARCH: x86-64-avx2
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    outputs:
+      name: ${{ steps.p.outputs.name }}
+      shards: ${{ steps.p.outputs.shards }}
+      n: ${{ steps.p.outputs.n }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: p
+        run: |
+          python3 - >> "$GITHUB_OUTPUT" <<'EOF'
+          import json
+          p = json.load(open("notes/exp/recall.json"))
+          n = int(p["shards"])
+          print("name=" + p["name"])
+          print("n=" + str(n))
+          print("shards=" + json.dumps(list(range(n))))
+          EOF
+
+  build:
+    needs: plan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build Smotherfish
+        run: |
+          cd src
+          make -j"$(nproc)" net
+          make -j"$(nproc)" build ARCH=$ARCH
+          ./stockfish bench 2>&1 | grep "Nodes searched"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: engine
+          path: src/stockfish
+          retention-days: 3
+
+  shard:
+    needs: [plan, build]
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: ${{ fromJSON(needs.plan.outputs.shards) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: engine
+          path: eng
+      - run: pip install -q chess
+      - name: Recall shard ${{ matrix.shard }}
+        run: |
+          chmod +x eng/stockfish
+          in=$(python3 -c 'import json;print(json.load(open("notes/exp/recall.json"))["input"])')
+          args=$(python3 -c 'import json;print(json.load(open("notes/exp/recall.json")).get("args",""))')
+          case "$in" in *.gz) gunzip -c "$in" > games.jsonl ;; *) cp "$in" games.jsonl ;; esac
+          mkdir -p out
+          python3 -I notes/scripts/recall.py eng/stockfish games.jsonl \
+            out/shard-${{ matrix.shard }}.jsonl --workers "$(nproc)" \
+            --shard ${{ matrix.shard }}/${{ needs.plan.outputs.n }} $args
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: rec-${{ matrix.shard }}
+          path: out/
+          retention-days: 3
+
+  collect:
+    needs: [plan, shard]
+    if: always() && needs.plan.result == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: rec-*
+          path: out
+          merge-multiple: true
+      - name: Merge and summarise
+        run: |
+          name=${{ needs.plan.outputs.name }}
+          mkdir -p notes/results/$name
+          cat out/*.jsonl > notes/results/$name/recall.jsonl
+          { echo '```'; python3 -I notes/scripts/recall_summary.py notes/results/$name/recall.jsonl; echo '```'; } \
+            | tee notes/results/$name/SUMMARY.md >> "$GITHUB_STEP_SUMMARY"
+      - name: Commit results
+        run: |
+          git config user.name "smother-exp bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add notes/results
+          git commit -m "results: ${{ needs.plan.outputs.name }} [skip ci]" && git push || echo "nothing to commit"
