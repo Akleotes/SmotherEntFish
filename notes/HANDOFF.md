@@ -1015,3 +1015,11 @@ in 3500 games, both on a near-empty clock at 5+0.05 (one time forfeit at
 +17, one blitz loss at +3/+4), the known low-clock issue. smotherfish
 fast-forwarded to 1.2; helpers press "Sync fork" once (workflow files
 changed: Android bench check, sharded SPRT support).
+
+Official comparison (Nov 22, 14:35 JST): Smotherfish 1.2 with defaults vs
+unmodified Stockfish 3e8fde75 at full strength, 10+0.1, 8moves_v3, as a
+sharded SPRT: six accounts x 18 runners x 400 games (one wave each,
+seed_offset 0..500000), ~43,000 games. Ours: actions-exp/sprt-official;
+helpers: helper-exp/<id>/sprt-official -> actions-exp/sprt-official in each
+fork, results notes/results/sprt/official_vs_stockfish_s<i>/. Add up the
+pentanomial counts of all six (sprt_stats.py) for the published result.
