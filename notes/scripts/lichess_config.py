@@ -2,7 +2,9 @@
 """Write lichess-bot's config.yml for Smotherfish from lichess-bot's own
 config.yml.default (so every other setting keeps lichess-bot's default).
 
-usage: lichess_config.py config.yml.default config.yml [THREADS] [HASH_MB] [GAMES]
+usage: lichess_config.py config.yml.default config.yml [THREADS] [HASH_MB] [GAMES] [OPTS]
+
+OPTS: extra engine options, "Name=Value;Name=Value" (e.g. "SmotherGoal=Near").
 
 GAMES games are played at once (each engine runs THREADS search threads
 plus one smother-prover thread).
@@ -17,6 +19,7 @@ src, dst = sys.argv[1], sys.argv[2]
 threads = int(sys.argv[3]) if len(sys.argv) > 3 else 3
 hash_mb = int(sys.argv[4]) if len(sys.argv) > 4 else 2048
 games = int(sys.argv[5]) if len(sys.argv) > 5 else 1
+extra = dict(kv.split("=", 1) for kv in sys.argv[6].split(";") if "=" in kv) if len(sys.argv) > 6 else {}
 c = yaml.safe_load(open(src))
 
 e = c["engine"]
@@ -25,7 +28,7 @@ e["name"] = "smotherfish"
 e["protocol"] = "uci"
 e["ponder"] = True
 # Threads: one core is left for the smother prover's own thread.
-e["uci_options"] = {"Threads": threads, "Hash": hash_mb, "Move Overhead": 150}
+e["uci_options"] = {"Threads": threads, "Hash": hash_mb, "Move Overhead": 150, **extra}
 e["polyglot"]["enabled"] = False
 
 ch = c["challenge"]

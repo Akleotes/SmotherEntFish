@@ -17,12 +17,18 @@ on:
       hours:
         description: "Hours to play (max 5)"
         default: "5"
+      bot:
+        description: "Which bot account: 1 (secret LICHESS_BOT_TOKEN) or 2 (LICHESS_BOT_TOKEN2)"
+        default: "1"
+      options:
+        description: "Extra engine options, Name=Value;Name=Value (empty = defaults)"
+        default: ""
 
 permissions:
   contents: write
 
 concurrency:
-  group: lichess-bot  # one account: one session at a time
+  group: lichess-bot-${{ inputs.bot || '1' }}  # one session per bot account
   cancel-in-progress: false
 
 env:
@@ -53,10 +59,12 @@ jobs:
           cp src/stockfish /tmp/lb/engines/smotherfish
           # Two games at once (about 60-75 per 5 hours), each engine 1 search
           # thread + 1 prover thread: 4 threads on the runner's 4 cores.
-          python notes/scripts/lichess_config.py /tmp/lb/config.yml.default /tmp/lb/config.yml 1 1024 2
+          python notes/scripts/lichess_config.py /tmp/lb/config.yml.default /tmp/lb/config.yml 1 1024 2 "$OPTS"
+        env:
+          OPTS: ${{ inputs.options || '' }}
       - name: Play
         env:
-          LICHESS_BOT_TOKEN: ${{ secrets.LICHESS_BOT_TOKEN }}
+          LICHESS_BOT_TOKEN: ${{ inputs.bot == '2' && secrets.LICHESS_BOT_TOKEN2 || secrets.LICHESS_BOT_TOKEN }}
           HOURS: ${{ inputs.hours || '5' }}
         run: |
           h=$HOURS; [ "$h" -gt 5 ] 2>/dev/null && h=5
@@ -67,7 +75,7 @@ jobs:
       - name: Commit the games
         if: always()
         run: |
-          run="$(date -u +%Y%m%d-%H%M)-${GITHUB_RUN_ID}"
+          run="bot${BOT}-$(date -u +%Y%m%d-%H%M)-${GITHUB_RUN_ID}"
           mkdir -p /tmp/out/games/$run
           cp /tmp/lb/game_records/*.pgn /tmp/out/games/$run/ 2>/dev/null || true
           n=$(ls /tmp/out/games/$run | wc -l)
@@ -86,6 +94,12 @@ jobs:
           fi
           mkdir -p games && cp -r /tmp/out/games/$run games/
           git add games
-          git commit -q -m "lichess games: $run ($n games)" && git push -q origin lichess-games
+          git commit -q -m "lichess games: $run ($n games)"
+          # Two bots can finish together: retry on top of the other's push.
+          for i in 1 2 3 4; do
+            git push -q origin lichess-games && break
+            sleep $((i * 5)); git pull -q --rebase origin lichess-games
+          done
         env:
-          T: ${{ secrets.LICHESS_BOT_TOKEN }}
+          T: ${{ inputs.bot == '2' && secrets.LICHESS_BOT_TOKEN2 || secrets.LICHESS_BOT_TOKEN }}
+          BOT: ${{ inputs.bot || '1' }}
