@@ -130,6 +130,10 @@ costs no measurable strength. The match ran on GitHub Actions, split over six
 accounts; the per-chunk results are in `notes/results/sprt/`. Version 1.3 measured
 +1.3 Elo against 1.2 (above), so it is at least as strong.
 
+At a longer time control, 60 seconds plus 0.6 per move, Smotherfish 1.3
+against the same Stockfish: 7,320 games, +0.5 Elo (95% range -0.6 to +1.7),
+game pairs 0, 73, 3503, 84, 0. Equal at blitz and at longer games.
+
 ## Using it
 
 Smother hunting is on out of the box (brutal mode with the Hybrid goal), so no

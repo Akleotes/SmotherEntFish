@@ -1170,3 +1170,10 @@ All forks synced to 33bbe361 (Nov 23): distribute.sh builds every shard on
 33bbe361 and sets max_parallel 20 (full free-account concurrency). When a
 later smotherfish commit changes workflow files, the forks must sync again
 before their base here is moved (their token cannot push workflow changes).
+
+sprt-ltc (1.3 vs Stockfish 3e8fde75, 60+0.6, seven accounts, 60 games per
+runner): 7,320 games, +0.5 Elo (95% -0.6 to +1.7), pentanomial [0, 73, 3503,
+84, 0], H1 for [-5, 0]. README updated.
+Release workflow: GCC profile-guided builds fail at random ("corrupted
+profile info", the prover thread races the counters); Linux and Windows use
+plain builds, Android (clang) keeps PGO.
