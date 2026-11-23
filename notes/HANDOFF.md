@@ -1137,3 +1137,18 @@ sprt-m03 final (m03 weights vs defaults, 10+0.1, six accounts x 18 x 200):
 21,600 games, +1.3 Elo (95% +0.2 to +2.4), pentanomial [4, 518, 9676,
 596, 6], H1 for [-3, 0]. No strength cost. tc180m03 checks the smother
 gain at 3+2 (defaults vs m03, 300 games each vs Elo 1500 / 2000 / 2500).
+
+tc180m03 (3+2, 5 of 6 shards, ~250 games per row; full / full or near per
+100): Elo 1500 defaults 12.9 / 59.8, m03 12.4 / 71.6 (z +2.8 on full or
+near); Elo 2000 12.0 / 62.0 vs 10.8 / 65.8; Elo 2500 8.0 / 49.2 vs 7.3 /
+60.9 (z +2.6). No losses.
+
+### Smotherfish 1.3 (Nov 23)
+
+m03 is the default: SmotherBuildWeights 13,8,23,8,2,4, SmotherBuildKeep 11,
+SmotherBuildKeepNear 2, SmotherBuildEscape 4. Bench unchanged (1210779,
+brutal off). README and docs/SMOTHERFISH.md ("Tuning") updated; Android
+build on android-build/v13; smotherfish fast-forwarded. Helper forks can
+press "Sync fork" when convenient (distribute.sh bases stay as listed until
+they do). Lichess bots pick up 1.3 from their next session (bot 4 already
+ran m03).

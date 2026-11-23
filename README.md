@@ -42,7 +42,7 @@ Smotherfish plays as ordinary Stockfish.
 
 Like Stockfish, Smotherfish does not include a graphical user interface. Use it
 with any UCI chess GUI, such as DroidFish on Android. It identifies itself as
-"Smotherfish 1.2 (Stockfish dev-20261122-3e8fde75)".
+"Smotherfish 1.3 (Stockfish dev-20261122-3e8fde75)".
 
 ## What it does
 
@@ -59,8 +59,8 @@ with any UCI chess GUI, such as DroidFish on Android. It identifies itself as
   first, near ones later in the game), Full (only true smothers), or Near
   (also "all but one" smothers, where one square next to the king is empty
   but covered). A true smother up to three moves longer is always preferred
-  to a near one. Near ends about 46-73 of every 100 games against Elo
-  1320-2500 opponents with a full or near smother, Hybrid about 38-53.
+  to a near one. With the Hybrid goal, 61-72 of every 100 games at 3+2
+  against Elo 1500-2500 opponents end in a full or near smother (version 1.3).
 - **With brutal mode off** it plays Stockfish's moves except when a smother
   is proven.
 
@@ -91,6 +91,20 @@ in a full or near ("all but one") smother, brutal mode, 1000 games per row:
 | Maia 1100 | 44 | 49 |
 | Stockfish, Elo 3000 | 13 | - |
 
+Version 1.3 tuned the construction weights on game results (details in
+docs/SMOTHERFISH.md, "Tuning"). At 3 minutes plus 2 seconds per move, 250
+games per row, Hybrid goal (the default):
+
+| Opponent | Full smother | Full or near smother | Score |
+| -------- | ------------ | -------------------- | ----- |
+| Stockfish, Elo 1500 | 12.4 | 71.6 | 1.000 |
+| Stockfish, Elo 2000 | 10.8 | 65.8 | 1.000 |
+| Stockfish, Elo 2500 | 7.3 | 60.9 | 0.998 |
+
+(1.2 defaults in the same games: 59.8 / 62.0 / 49.2 full or near.) The tuning
+costs no strength: +1.3 Elo against 1.2 over 21,600 games at 10+0.1 (95%
+range +0.2 to +2.4).
+
 Losses are rare (none at Elo 1500 or 2500, 1 in 1000 games at Elo 2000: an
 ordinary blitz loss before any smother hunting started), and a full-strength strength test
 (SPRT, 6400 games) found no cost: +2 Elo against the default engine. Version 1.1 moved to the newer
@@ -113,7 +127,8 @@ fastchess as in Stockfish's own testing.
 
 The two engines are equal within the margin of error: hunting smothered mates
 costs no measurable strength. The match ran on GitHub Actions, split over six
-accounts; the per-chunk results are in `notes/results/sprt/`.
+accounts; the per-chunk results are in `notes/results/sprt/`. Version 1.3 measured
++1.3 Elo against 1.2 (above), so it is at least as strong.
 
 ## Using it
 

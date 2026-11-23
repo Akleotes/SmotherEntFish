@@ -682,9 +682,9 @@ int build_score(const Position& pos, Color us, int survive, int cap, int version
     // Every enemy piece is a possible blocker: keep them, especially near
     // their king.
     Bitboard theirs = pos.pieces(them) & ~pos.pieces(KING);
-    score += keep * popcount(theirs);  // SmotherBuildKeep (8)
+    score += keep * popcount(theirs);  // SmotherBuildKeep (11)
     while (theirs)
-        score += sq_distance(pop_lsb(theirs), ksq) <= 2 ? keepNear : 0;  // SmotherBuildKeepNear (3)
+        score += sq_distance(pop_lsb(theirs), ksq) <= 2 ? keepNear : 0;  // SmotherBuildKeepNear (2)
 
     // Blocker reserve: enemy pieces minus open squares around their king.
     // Escaped smothers had a reserve of 2 at the first proof, delivered ones

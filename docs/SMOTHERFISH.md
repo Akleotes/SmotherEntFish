@@ -1,6 +1,6 @@
 # Smotherfish guide
 
-Smotherfish 1.2 is Stockfish (development version of 22 November 2026,
+Smotherfish 1.3 is Stockfish (development version of 22 November 2026,
 upstream commit 3e8fde75) with one extra goal: end the game with a
 smothered mate. This guide explains how it works, lists every option, and
 summarises what was measured. The day-by-day development log is in
@@ -119,8 +119,15 @@ All options are standard UCI options. Defaults are what was measured best.
 | `SmotherBuildFloor` | 600 | Advantage it never gives up while building. |
 | `SmotherBuildMoves` | 80 | Most moves per game spent building. |
 | `SmotherBuildWeight` | 8 | Centipawns per construction-score point. |
-| `SmotherBuildKeep` | 8 | Construction-score points per enemy piece kept on the board (possible blockers). 8 instead of 3: +2 to +5 full smothers and +17 in total per 100 games at Elo 1500 (grid19, grid22). |
-| `SmotherBuildKeepNear` | 3 | Extra points per enemy piece within two squares of its king. |
+| `SmotherBuildWeights` | 13,8,23,8,2,4 | Construction-score weights: enemy pieces next to their king, open squares there, king in a corner, on an edge, our knights near it, our queen near it. Tuned on game results in 1.3 (was 12,10,25,10,4,3; see "Tuning" below). |
+| `SmotherBuildKeep` | 11 | Construction-score points per enemy piece kept on the board (possible blockers). 3 until Nov 21, 8 in 1.2, 11 in 1.3. |
+| `SmotherBuildKeepNear` | 2 | Extra points per enemy piece within two squares of its king. |
+| `SmotherBuildEscape` | 4 | Points lost per square next to the enemy king that holds none of its pieces and that we do not attack (where a checked king steps out). |
+| `SmotherBuildOwnKeep` | 0 | Experimental: points per queen and knight of ours kept. Measured: no gain. |
+| `SmotherBuildKnightSafe` | 0 | Experimental: points lost per knight of ours near the king that is attacked and undefended. Measured: fewer smothers at Elo 2500. |
+| `SmotherBuildLmr` / `SmotherBuildDefLmr` / `SmotherBuildNmp` | 0 | Experimental search control in construction mode (less reduction for box-building moves / for the defender's moves next to its king; no null move when the box is tight). Measured: no reliable gain. |
+| `SmotherFullExtra` | 3 | After a near proof, how many moves longer a true smother may be and still be preferred. |
+| `SmotherFullFirst` | 0 | Experimental: percent of the prover budget spent on a true smother before the near-smother search. Measured: no gain. |
 | `SmotherBuildMaterialDiv` | 8 | Extra material above the floor counts 1/N. |
 | `SmotherBuildStarve` | 0 | Experimental: points lost per unit of blocker reserve (enemy pieces minus open king squares) below `SmotherBuildStarveAt` (4). Measured: no gain. |
 | `SmotherBuildTime` | 0 | Experimental: each construction move uses at least 1/N of the clock left. Measured: no gain. |
@@ -249,3 +256,33 @@ smother can be forced at all.
   the same plan files on 30 machines at once, on branches named
   `circle-exp/<name>`, for quick one-off tests. Its pipeline must be a native
   CircleCI pipeline, not one created from a GitHub Actions workflow.
+
+## Tuning (version 1.3)
+
+The construction-score weights were tuned on game results rather than on
+predictions (a logistic fit to predictions, `SmotherBuildVersion` 2, was
+better offline but worse in games). Batches of weight sets played 5+0.05
+games against Stockfish at Elo 1500 and 2500, split over several GitHub
+accounts; the best sets were re-tested with more games (notes/exp/tune*).
+
+The winner (now the default) against the old defaults:
+
+| Test | Old defaults | 1.3 defaults |
+| ---- | ------------ | ------------ |
+| 5+0.05, Elo 1500, 4000 games: full / full or near per 100 | 7.8 / 53.6 | 8.1 / 58.1 |
+| 5+0.05, Elo 2500, 1500 games | 3.9 / 37.2 | 4.9 / 43.6 |
+| 3+2, Elo 1500, 250 games | 12.9 / 59.8 | 12.4 / 71.6 |
+| 3+2, Elo 2000, 250 games | 12.0 / 62.0 | 10.8 / 65.8 |
+| 3+2, Elo 2500, 250 games | 8.0 / 49.2 | 7.3 / 60.9 |
+| Strength, 10+0.1, 21,600 games (SPRT) | - | +1.3 Elo (95% +0.2 to +2.4) |
+
+True smothers alone are unchanged; games ending in a full or near smother
+rise by 4-12 per 100. No losses in these tests beyond 1 per 5500 games.
+
+Measured and not adopted (notes/HANDOFF.md, grids 36-40): search-control
+changes in construction mode, a true-smother-first prover, longer limits for
+preferring a true smother, keeping our own mating pieces, knight safety and
+holding back captures near the king. An analysis of 1000 won games
+(notes/scripts/recall.py) showed why: the engine already delivers 53 of every
+55 smothers that are forced against every defence; most of the rest are
+proofs the defender escapes into a quicker ordinary mate.
