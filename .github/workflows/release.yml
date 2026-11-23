@@ -1,0 +1,129 @@
+# Builds Smotherfish for Android, Linux and Windows and publishes a GitHub
+# Release with the binaries. Triggered by pushing a tag v<version> (e.g. v1.3);
+# the notes come from notes/release/<tag>.md. Every binary is checked with the
+# bench signature first. Release files are named
+# smotherfish-<version>-<os>-<cpu>[.exe] (never "stockfish": DroidFish treats
+# that name specially).
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+env:
+  BENCH: "1210779"
+
+jobs:
+  android:
+    name: "Android ${{ matrix.arch }}"
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { arch: armv8-dotprod, name: android-arm64-dotprod }
+          - { arch: armv8, name: android-arm64 }
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install qemu and NDK
+        run: |
+          sudo apt-get update -q && sudo apt-get install -y -q qemu-user >/dev/null
+          NDKV="27.2.12479018"
+          SDK=/usr/local/lib/android/sdk
+          echo "y" | $SDK/cmdline-tools/latest/bin/sdkmanager "ndk;$NDKV" >/dev/null
+          echo "NDK_BIN=$SDK/ndk/$NDKV/toolchains/llvm/prebuilt/linux-x86_64/bin" >> $GITHUB_ENV
+      - name: Build (profile-guided under qemu) and check bench
+        working-directory: src
+        run: |
+          make net
+          export PATH=$NDK_BIN:$PATH
+          export LDFLAGS="-static -Wno-unused-command-line-argument"
+          make -j4 profile-build ARCH=${{ matrix.arch }} COMP=ndk RUN_PREFIX=qemu-aarch64
+          make strip ARCH=${{ matrix.arch }} COMP=ndk
+          test "$(qemu-aarch64 ./stockfish bench 2>&1 | grep 'Nodes searched' | awk '{print $4}')" = "$BENCH"
+          v=${GITHUB_REF_NAME#v}; mkdir -p ../out
+          mv stockfish ../out/smotherfish-$v-${{ matrix.name }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bin-${{ matrix.name }}
+          path: out/
+
+  linux:
+    name: "Linux ${{ matrix.arch }}"
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { arch: x86-64-avx2, name: linux-x86-64-avx2 }
+          - { arch: x86-64, name: linux-x86-64 }
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and check bench
+        working-directory: src
+        run: |
+          make net
+          make -j"$(nproc)" profile-build ARCH=${{ matrix.arch }}
+          make strip ARCH=${{ matrix.arch }}
+          test "$(./stockfish bench 2>&1 | grep 'Nodes searched' | awk '{print $4}')" = "$BENCH"
+          v=${GITHUB_REF_NAME#v}; mkdir -p ../out
+          mv stockfish ../out/smotherfish-$v-${{ matrix.name }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bin-${{ matrix.name }}
+          path: out/
+
+  windows:
+    name: "Windows ${{ matrix.arch }}"
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { arch: x86-64-avx2, name: windows-x86-64-avx2 }
+          - { arch: x86-64, name: windows-x86-64 }
+    defaults:
+      run:
+        shell: msys2 {0}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          install: mingw-w64-x86_64-gcc make git curl
+      - name: Build and check bench
+        working-directory: src
+        run: |
+          make net
+          make -j"$(nproc)" profile-build ARCH=${{ matrix.arch }} COMP=mingw
+          make strip ARCH=${{ matrix.arch }} COMP=mingw
+          test "$(./stockfish.exe bench 2>&1 | grep 'Nodes searched' | awk '{print $4}')" = "$BENCH"
+          v=${GITHUB_REF_NAME#v}; mkdir -p ../out
+          mv stockfish.exe ../out/smotherfish-$v-${{ matrix.name }}.exe
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bin-${{ matrix.name }}
+          path: out/
+
+  release:
+    needs: [android, linux, windows]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: bin-*
+          path: out
+          merge-multiple: true
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          ls -la out
+          notes=notes/release/${GITHUB_REF_NAME}.md
+          [ -f "$notes" ] || notes=/dev/null
+          gh release create "$GITHUB_REF_NAME" out/* \
+            --title "Smotherfish ${GITHUB_REF_NAME#v}" --notes-file "$notes"
