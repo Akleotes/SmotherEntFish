@@ -38,6 +38,10 @@ ch["only_bot"] = False
 ch["time_controls"] = ["bullet", "blitz", "rapid"]
 ch["modes"] = ["casual", "rated"]
 ch["variants"] = ["standard"]
+# Our own bots never play each other (that would look like rating
+# manipulation): declined as challengers, never challenged.
+OWN_BOTS = [f"SmotherfishBot{i}" for i in range(1, 9)]
+ch["block_list"] = OWN_BOTS
 
 mm = c["matchmaking"]
 mm["allow_matchmaking"] = True
@@ -49,6 +53,8 @@ mm["challenge_mode"] = "rated"
 mm["opponent_rating_difference"] = 400
 # Do not keep re-challenging bots that decline (slowed the first session).
 mm["challenge_filter"] = "coarse"
+mm["block_list"] = OWN_BOTS
+mm["include_challenge_block_list"] = True
 # Two thirds of challenges go to weaker bots, where smothers happen
 # (lichess-bot picks the base settings or one override at random).
 mm["overrides"] = {
