@@ -1157,3 +1157,6 @@ human1 (HumanBlunder with UCI_Elo 1320 vs Maia-3 1300, 5+0.05, 300 games
 each): HB 0 0.725, 5 0.325, 10 0.295, 15 0.238, 25 0.128, 40 0.072. The plain
 limiter plays like ~1470 against Maia-3; ~1350 should be HB ~2. human2
 refines with HB 1/2/3 vs Maia-3 1300 and 1500.
+human2 (vs Maia-3, 300 games each): 1300: HB1 0.442, HB2 0.402, HB3 0.392;
+1500: HB1 0.370, HB2 0.323, HB3 0.280. About 1330 / 1300 / 1280. HumanBlunder 1
+with Skill Level 0 ~ 1350. Documented in docs/SMOTHERFISH.md.
