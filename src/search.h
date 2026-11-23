@@ -264,7 +264,8 @@ struct Skill {
     Move pick_best(const RootMoves&, usize multiPV);
 
     double level;
-    Move   best = Move::none();
+    int    blunder = 0;  // HumanBlunder: percent of moves picked from the wider list
+    Move   best    = Move::none();
 };
 
 // SearchManager manages the search from the main thread. It is responsible for
@@ -413,8 +414,8 @@ class Worker {
     Value buildFloor     = VALUE_ZERO;
     int   buildSurvive   = 0;      // SmotherBuildSurvive
     int   buildCap       = 12;     // SmotherBuildSurviveCap
-    int   buildKeep      = 8;      // SmotherBuildKeep
-    int   buildKeepNear  = 3;      // SmotherBuildKeepNear
+    int   buildKeep      = 11;     // SmotherBuildKeep
+    int   buildKeepNear  = 2;      // SmotherBuildKeepNear
     int   buildMatDiv    = 8;      // SmotherBuildMaterialDiv
     int   buildStarve    = 0;      // SmotherBuildStarve
     int   buildStarveAt  = 4;      // SmotherBuildStarveAt
@@ -422,7 +423,7 @@ class Worker {
     int   buildDefLmr    = 0;      // SmotherBuildDefLmr
     int   buildNmp       = 0;      // SmotherBuildNmp
     int   buildOwnKeep   = 0;      // SmotherBuildOwnKeep
-    int   buildEscape    = 0;      // SmotherBuildEscape
+    int   buildEscape    = 4;      // SmotherBuildEscape
     int   buildKnightSafe = 0;     // SmotherBuildKnightSafe
     int   buildVersion   = 1;      // SmotherBuildVersion
     bool  smotherPartial = false;  // SmotherPartial: "all but one" counts

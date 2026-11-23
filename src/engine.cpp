@@ -119,6 +119,11 @@ Engine::Engine(std::optional<std::filesystem::path> path) :
     // Analysis strength (see Engine::go): 0 = full strength, else the Elo
     // whose search depth analysis ("go infinite") is capped at. Not named
     // UCI_*, so GUIs that hide those options (DroidFish) show it.
+    // Human mode: with a strength limit (UCI_LimitStrength / Skill Level), the
+    // percent of moves picked at random from the top 8 candidates, including
+    // real mistakes (Skill alone never loses more than about a pawn per move).
+    options.add("HumanBlunder", Option(0, 0, 100));
+
     options.add("Analysis Elo", Option(0, 0, Stockfish::Search::Skill::HighestElo));
 
     options.add("UCI_ShowWDL", Option(false));
@@ -255,9 +260,9 @@ Engine::Engine(std::optional<std::filesystem::path> path) :
     // floor (8 = it counts 1/8). Measured: in games where a proven smother
     // escaped, we captured ~7 enemy units after the game was decided and the
     // opponent ended with 3 pieces, against 4 and 6 in delivered smothers.
-    options.add("SmotherBuildKeep", Option(8, 0, 50));
+    options.add("SmotherBuildKeep", Option(11, 0, 50));
     // Extra points for each enemy piece within two squares of its king.
-    options.add("SmotherBuildKeepNear", Option(3, 0, 50));
+    options.add("SmotherBuildKeepNear", Option(2, 0, 50));
     options.add("SmotherBuildMaterialDiv", Option(8, 1, 64));
     // Blocker reserve guard: build-score points lost per unit of reserve
     // (enemy pieces minus open king-ring squares) below StarveAt. 0 = off.
@@ -283,8 +288,8 @@ Engine::Engine(std::optional<std::filesystem::path> path) :
     // build_score weights, space separated: boxed hole corner edge knight
     // queen, separated by commas (for tuning; the default is the hand-set
     // score).
-    options.add("SmotherBuildWeights", Option("12,10,25,10,4,3"));
-    options.add("SmotherBuildEscape", Option(0, 0, 50));
+    options.add("SmotherBuildWeights", Option("13,8,23,8,2,4"));
+    options.add("SmotherBuildEscape", Option(4, 0, 50));
     options.add("SmotherBuildKnightSafe", Option(0, 0, 50));
 
     // While pondering, let the parallel prover search deep and unbounded on
