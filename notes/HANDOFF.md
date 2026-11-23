@@ -1108,3 +1108,27 @@ Escape 6 9.2 (+1.0); KnightSafe 8 8.5; all four 8.0. Elo 2500 (800):
 control 4.1; OwnKeep 4.6; KeepNear 2.4 (-2.0); Escape 4.0; KnightSafe 2.5
 (-1.8); all 5.0. No term helps; KeepNear and KnightSafe hurt at 2500.
 Hand-tuned build-score terms look exhausted.
+
+### Phase 3: tuning build_score weights on game results (Nov 23)
+
+SmotherBuildWeights (boxed, hole, corner, edge, knight, queen; default
+12,10,25,10,4,3) plus Keep / KeepNear / Escape, tuned by batches of random
+sets played in games (5+0.05, sharded over our account and five forks).
+tune1b: 17 sets x 900 games, 4.6-8.7 full per 100; mostly noise (the
+winner fell back in tune2). tune2: top 4 + 8 near them. tune3 showdown
+(4000 games vs Elo 1500, 1500 vs 2500 each):
+
+```
+set  weights / keep, near, escape        full 1500  near 1500  full 2500  near 2500
+c00  12,10,25,10,4,3 / 8,3,0               7.75      45.8       3.87      33.3
+m03  13,8,23,8,2,4 / 11,2,4                8.12      50.0       4.87      38.7
+v03  14,11,35,5,2,4 / 9,4,9                8.07      45.7       4.33      30.1
+m01  17,8,21,10,1,2 / 10,3,4               7.97      48.0       3.27      35.7
+m07  14,10,34,10,3,3 / 7,4,5               7.75      44.2       4.20      30.4
+```
+
+Full smothers: no set separates from the defaults (m03 +0.4 / +1.0, z
+0.6 / 1.3). Full or near: m03 58.1 vs 53.6 at 1500 (z ~4) and 43.6 vs 37.2
+at 2500 (z ~3.5), a clear gain on the README's full-or-near metric. No
+losses beyond 1 per set. SPRT sprt-m03 (m03 vs defaults, 10+0.1, [-3, 0],
+six accounts x 18 runners x 200 games) checks strength before a default.
