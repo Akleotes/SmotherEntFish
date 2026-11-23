@@ -1132,3 +1132,8 @@ Full smothers: no set separates from the defaults (m03 +0.4 / +1.0, z
 at 2500 (z ~3.5), a clear gain on the README's full-or-near metric. No
 losses beyond 1 per set. SPRT sprt-m03 (m03 vs defaults, 10+0.1, [-3, 0],
 six accounts x 18 runners x 200 games) checks strength before a default.
+
+sprt-m03 final (m03 weights vs defaults, 10+0.1, six accounts x 18 x 200):
+21,600 games, +1.3 Elo (95% +0.2 to +2.4), pentanomial [4, 518, 9676,
+596, 6], H1 for [-3, 0]. No strength cost. tc180m03 checks the smother
+gain at 3+2 (defaults vs m03, 300 games each vs Elo 1500 / 2000 / 2500).
