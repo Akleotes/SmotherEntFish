@@ -221,10 +221,13 @@ Skill make_skill(const OptionsMap& options) {
     if (const int h = int(options["HumanElo"]))
     {
         // rating, UCI_Elo, blunders per mille
-        constexpr int map[][3] = {{1050, 1320, 156}, {1270, 1320, 80}, {1580, 1320, 40},
-                                  {1700, 1320, 20},  {1735, 1320, 10}, {1780, 1320, 5},
-                                  {1815, 1320, 2},   {1860, 1320, 0},  {2150, 1600, 0},
-                                  {2300, 1900, 0},   {2500, 2200, 0}};
+        // human6 checked it: 1600 played 1595; 1350 (70 per mille) played
+        // ~1480; the limiter at 1455 played ~2420 (Maia-3's top levels are
+        // compressed, so the scale ends there).
+        constexpr int map[][3] = {{1050, 1320, 156}, {1270, 1320, 80}, {1480, 1320, 70},
+                                  {1580, 1320, 40},  {1700, 1320, 20}, {1735, 1320, 10},
+                                  {1780, 1320, 5},   {1815, 1320, 2},  {1880, 1320, 0},
+                                  {2420, 1455, 0}};
         constexpr int n = int(std::size(map));
         const int     r = std::clamp(h, map[0][0], map[n - 1][0]);
         int           i = 0;
@@ -343,9 +346,26 @@ void Search::Worker::start_smother_prover() {
         int        after      = int(options["SmotherPartialAfter"]);
         if (after == 0 && goalHybrid)
             after = 40;
+        // SmotherNearHold: past the switch point, keep holding out for a full
+        // smother for up to this many more construction moves while the box
+        // is promising (at most one open square next to the enemy king, or two
+        // with the king in a corner): there a full smother came within 10
+        // moves 16-29% of the time, against 0.6-3% elsewhere (funnel
+        // diagnostic, notes/HANDOFF.md). Elsewhere the near one is taken.
+        bool hold = false;
+        if (const int holdFor = int(options["SmotherNearHold"]);
+            holdFor > 0 && mgr.smotherBuilds < after + holdFor)
+        {
+            const Color    them  = ~rootPos.side_to_move();
+            const Square   ksq   = rootPos.square<KING>(them);
+            const int      holes = popcount(Attacks::attacks_bb(KING, ksq) & ~rootPos.pieces(them));
+            const int      f = file_of(ksq), r = rank_of(ksq);
+            const bool     corner = (f == 0 || f == 7) && (r == 0 || r == 7);
+            hold = holes <= 1 || (corner && holes <= 2);
+        }
         mgr.smotherPartialNow =
           bool(options["SmotherPartial"]) || goalNear
-          || (after > 0 && mgr.smotherBrutal && mgr.smotherBuilds >= after);
+          || (after > 0 && mgr.smotherBrutal && mgr.smotherBuilds >= after && !hold);
     }
 
     if (!options["SmotherMate"] || rootMoves.empty())

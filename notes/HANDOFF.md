@@ -1240,3 +1240,22 @@ notes/scripts/smother_feats.py.
 grid15 (older version): Full goal 12.1 full vs Hybrid-40 7.3. grid41
 (5+0.05; Elo 1500 1000 games, Elo 2500 400 per arm): default, Full 80,
 Full 160 build moves, Hybrid at 80 with 160, classic Full 160.
+
+human6 (HumanElo vs Maia-3, 300 each): 1350: 0.643 vs 1100, 0.492 vs 1500
+(~1480, too strong); 1600: 0.632 vs 1300, 0.453 vs 1700 (~1595); 2000
+(limiter 1455): 0.768 vs 1700, 0.663 vs 2100 (~2400+; Maia-3's top levels
+are compressed). Map: added (1480, 70 per mille), top point (2420, limiter
+1455), HumanElo max 2400. human7 checks 1350 / 1800 / 2200.
+
+grid41 + grid41b (5+0.05; full / classic / near / full+near per 100; draws):
+Elo 1500 (1000 each): default 8.7 / 0.5 / 50.8 / 59.5, 1 draw, 1 loss;
+Hybrid at 80, 160 build moves 13.3 / 1.2 / 42.2 / 55.5, 1; Hybrid at 120,
+200 moves 19.4 / 1.4 / 25.3 / 44.7, 25 draws; Full 80 15.1 / 1.3 / 2.2;
+Full 160 19.9 / 1.3 / 2.0, 4 draws; classic Full 160 1.7 / 1.6 / 6.5.
+Elo 2500 (400): default 4.2 / 36.5 near / 40.8; Hybrid 80/160 8.2 / 31.5 /
+39.8; Full 160 14.8 / 0.8. Holding out longer trades near for full nearly
+1:1 except Hybrid 80/160: +4.6 full (z 3.3) for -4.0 full+near (z -1.8) at
+1500, +4.0 full for -1.0 at 2500. Classic-only barely raises knight
+smothers. SmotherNearHold (new, off): after the switch, keep holding out
+while the box has <= 1 open square (or <= 2 with the king in a corner).
+grid42 tests it vs Hybrid 80/160 and the default, also vs Maia-3 1500.

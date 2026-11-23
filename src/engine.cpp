@@ -122,9 +122,9 @@ Engine::Engine(std::optional<std::filesystem::path> path) :
     options.add("HumanBlunder", Option(0, 0, 100));
     // The same in tenths of a percent, for finer steps (the larger applies).
     options.add("HumanBlunderPermille", Option(0, 0, 1000));
-    // Play like a human of this rating (1050-2500, human-like Maia-3 scale);
+    // Play like a human of this rating (1050-2400, human-like Maia-3 scale);
     // sets the strength limit and blunders itself. 0 = off.
-    options.add("HumanElo", Option(0, 0, 2500));
+    options.add("HumanElo", Option(0, 0, 2400));
 
     // Analysis strength (see Engine::go): 0 = full strength, else the Elo
     // whose search depth analysis ("go infinite") is capped at. Not named
@@ -242,6 +242,9 @@ Engine::Engine(std::optional<std::filesystem::path> path) :
     // moves have been played in the game (0 = never; 80 = after the default
     // construction budget is used up). SmotherPartial counts them always.
     options.add("SmotherPartialAfter", Option(0, 0, 200));
+    // Hybrid: after the switch, hold out for a full smother up to this many
+    // more construction moves while the enemy king's box is nearly closed.
+    options.add("SmotherNearHold", Option(0, 0, 200));
     // Near ("all but one") proof found: look for a true smother at most this
     // many moves longer and prefer it (bounded by the prover's move limit).
     options.add("SmotherFullExtra", Option(3, 0, 20));
