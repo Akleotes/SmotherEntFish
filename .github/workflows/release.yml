@@ -100,7 +100,9 @@ jobs:
         working-directory: src
         run: |
           make net
-          make -j"$(nproc)" profile-build ARCH=${{ matrix.arch }} COMP=mingw
+          # Plain build: MinGW's profile-guided build fails ("corrupted profile
+          # info") because the smother prover's thread races the counters.
+          make -j"$(nproc)" build ARCH=${{ matrix.arch }} COMP=mingw
           make strip ARCH=${{ matrix.arch }} COMP=mingw
           test "$(./stockfish.exe bench 2>&1 | grep 'Nodes searched' | awk '{print $4}')" = "$BENCH"
           v=${TAG#release/v}; mkdir -p ../out
