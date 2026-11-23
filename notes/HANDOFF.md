@@ -1274,3 +1274,29 @@ human7 (300 each): HumanElo 1350: 0.575 vs 1100, 0.500 vs 1500 (~1500;
 with human6 ~1490, still too strong); 1800: 0.633 / 0.458 vs 1500 / 1900
 (~1805); 2200: 0.595 / 0.420 vs 1900 / 2300 (~2115). human8 measures 90 /
 110 / 130 per mille directly vs 1100 and 1500 for the low end.
+
+### Outside review round 2: GLM (Nov 24)
+
+Brief: notes/review_brief2.md. GLM's review (saved by the user) proposed:
+ready-square score (1), lazier defender in the eval (2), wider prover
+quiet moves after an oracle check (3), checks whose answers close the box
+(4), step-shaped ring score (5), time on closed boxes (6); a fitted hold
+table; knight-graph distance for classic smothers; a resigning opponent
+in the harness; long shot: a small box pull between +2 and +8 (SPRT).
+It corrected us: near lost per full gained is ~2 (not 1:1); the objective
+(value of full vs near) must be stated.
+Offline checks on 4,494 default wins (conc360 + grid41 + grid42 controls):
+- Ready squares (queen reaches in one, protected by another piece): full
+  within 10 moves with 1 open ring square: ready 0 8.9%, 1 30.2%, 2+ 73%
+  (n 6558 / 1536 / 134); with 2 open: 2.3 / 5.4 / 5.5%. Strong signal
+  beyond the open count.
+- Defender's last move before our full smother: answered a check 269,
+  free move 101, capture 20 (forced closings dominate).
+- State at the decisive point: 1 open + corner + queen 27.6% full (n 105)
+  vs 7-10% typical; per-opening dispersion 1.16x noise (openings matter
+  little).
+- grid41b Hybrid 120/200 draws: 24 of 25 were the harness's 400-ply cap
+  (games still building), not real draws.
+- Lichess record: 271 bot games, 1 human; resignation rate not measurable.
+New options (off): SmotherBuildReady, SmotherBuildDefRing,
+SmotherBuildRingTable. grid43 tests them on top of Hybrid 80 / 160 moves.

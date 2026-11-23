@@ -296,6 +296,13 @@ Engine::Engine(std::optional<std::filesystem::path> path) :
     options.add("SmotherBuildWeights", Option("13,8,23,8,2,4"));
     options.add("SmotherBuildEscape", Option(4, 0, 50));
     options.add("SmotherBuildKnightSafe", Option(0, 0, 50));
+    // Outside review round 2 (off by default; see Smother::BuildWeights):
+    // Ready: points per ready mating square; DefRing: percent of the ring
+    // score when the defender is to move; RingTable: points by open ring
+    // squares 0..5+, comma separated, replacing the linear ring terms.
+    options.add("SmotherBuildReady", Option(0, 0, 200));
+    options.add("SmotherBuildDefRing", Option(100, 0, 100));
+    options.add("SmotherBuildRingTable", Option(""));
 
     // While pondering, let the parallel prover search deep and unbounded on
     // the opponent's time.

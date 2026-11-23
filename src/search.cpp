@@ -934,6 +934,9 @@ bool Search::Worker::iterative_deepening() {
             buildNmp       = int(options["SmotherBuildNmp"]);
             buildOwnKeep   = int(options["SmotherBuildOwnKeep"]);
             Smother::set_build_weights(std::string(options["SmotherBuildWeights"]));
+            Smother::set_build_extras(int(options["SmotherBuildReady"]),
+                                      int(options["SmotherBuildDefRing"]),
+                                      std::string(options["SmotherBuildRingTable"]));
             buildEscape    = int(options["SmotherBuildEscape"]);
             buildKnightSafe = int(options["SmotherBuildKnightSafe"]);
             shapeWeight    = 0;
