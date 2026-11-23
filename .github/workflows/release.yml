@@ -1,6 +1,7 @@
 # Builds Smotherfish for Android, Linux and Windows and publishes a GitHub
-# Release with the binaries. Triggered by pushing a tag v<version> (e.g. v1.3);
-# the notes come from notes/release/<tag>.md. Every binary is checked with the
+# Release with the binaries. Triggered by pushing a branch release/v<version>
+# (e.g. release/v1.3); the release creates the tag v<version> on that commit.
+# The notes come from notes/release/v<version>.md. Every binary is checked with the
 # bench signature first. Release files are named
 # smotherfish-<version>-<os>-<cpu>[.exe] (never "stockfish": DroidFish treats
 # that name specially).
@@ -8,13 +9,14 @@ name: Release
 
 on:
   push:
-    tags: ["v*"]
+    branches: ["release/v*"]
 
 permissions:
   contents: write
 
 env:
   BENCH: "1210779"
+  TAG: ${{ github.ref_name }}
 
 jobs:
   android:
@@ -44,7 +46,7 @@ jobs:
           make -j4 profile-build ARCH=${{ matrix.arch }} COMP=ndk RUN_PREFIX=qemu-aarch64
           make strip ARCH=${{ matrix.arch }} COMP=ndk
           test "$(qemu-aarch64 ./stockfish bench 2>&1 | grep 'Nodes searched' | awk '{print $4}')" = "$BENCH"
-          v=${GITHUB_REF_NAME#v}; mkdir -p ../out
+          v=${TAG#release/v}; mkdir -p ../out
           mv stockfish ../out/smotherfish-$v-${{ matrix.name }}
       - uses: actions/upload-artifact@v4
         with:
@@ -69,7 +71,7 @@ jobs:
           make -j"$(nproc)" profile-build ARCH=${{ matrix.arch }}
           make strip ARCH=${{ matrix.arch }}
           test "$(./stockfish bench 2>&1 | grep 'Nodes searched' | awk '{print $4}')" = "$BENCH"
-          v=${GITHUB_REF_NAME#v}; mkdir -p ../out
+          v=${TAG#release/v}; mkdir -p ../out
           mv stockfish ../out/smotherfish-$v-${{ matrix.name }}
       - uses: actions/upload-artifact@v4
         with:
@@ -101,7 +103,7 @@ jobs:
           make -j"$(nproc)" profile-build ARCH=${{ matrix.arch }} COMP=mingw
           make strip ARCH=${{ matrix.arch }} COMP=mingw
           test "$(./stockfish.exe bench 2>&1 | grep 'Nodes searched' | awk '{print $4}')" = "$BENCH"
-          v=${GITHUB_REF_NAME#v}; mkdir -p ../out
+          v=${TAG#release/v}; mkdir -p ../out
           mv stockfish.exe ../out/smotherfish-$v-${{ matrix.name }}.exe
       - uses: actions/upload-artifact@v4
         with:
@@ -123,7 +125,8 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           ls -la out
-          notes=notes/release/${GITHUB_REF_NAME}.md
+          tag=${TAG#release/}
+          notes=notes/release/$tag.md
           [ -f "$notes" ] || notes=/dev/null
-          gh release create "$GITHUB_REF_NAME" out/* \
-            --title "Smotherfish ${GITHUB_REF_NAME#v}" --notes-file "$notes"
+          gh release create "$tag" out/* --target "$GITHUB_SHA" \
+            --title "Smotherfish ${tag#v}" --notes-file "$notes"
