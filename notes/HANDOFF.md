@@ -1165,3 +1165,8 @@ Enterprise fork (Nov 23): GitHub Support raised the limit to 360 standard
 jobs; a new-account safeguard raises the real concurrency in steps until
 ~Nov 29. conc360 probe (250 short jobs): ~20 running at once. Back in
 distribute.sh with an equal share (base 4450b466, its synced version).
+
+All forks synced to 33bbe361 (Nov 23): distribute.sh builds every shard on
+33bbe361 and sets max_parallel 20 (full free-account concurrency). When a
+later smotherfish commit changes workflow files, the forks must sync again
+before their base here is moved (their token cannot push workflow changes).

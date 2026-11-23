@@ -14,15 +14,15 @@ set -euo pipefail
 plan=$1; src=${2:-$(git rev-parse --abbrev-ref HEAD)}
 # id:base (base = the version the fork is on; update after a "Sync fork")
 targets=(
-  "8e9ce5:185ee255"
-  "acf111:185ee255"
-  "7a213a:185ee255"
-  "0f17ee:185ee255"
-  "dc665d:185ee255"   # no working schedule: Run workflow by hand
-  "d32e35:4450b466"   # enterprise account: limit 360, ramping up until ~Nov 29
+  "8e9ce5:33bbe361"
+  "acf111:33bbe361"
+  "7a213a:33bbe361"
+  "0f17ee:33bbe361"
+  "dc665d:33bbe361"   # no working schedule: Run workflow by hand
+  "d32e35:33bbe361"   # enterprise account: limit 360, ramping up until ~Nov 29
                       # (about 20 jobs at once on Nov 23); its poll can be
                       # dispatched from the session
-  "own:origin/smotherfish"     # this repository
+  "own:33bbe361"     # this repository
 )
 n=${#targets[@]}
 exp=$(python3 -c 'import json,sys;print(json.load(open(sys.argv[1]))["exp"])' "$plan")
@@ -37,6 +37,7 @@ for i in "${!targets[@]}"; do
   python3 - "$tmp" "$i" "$n" > notes/exp/plan.json <<'EOF'
 import json, sys
 p = json.load(open(sys.argv[1])); p["shard"] = [int(sys.argv[2]), int(sys.argv[3])]
+p.setdefault("max_parallel", 20)  # a free account's full 20 (all forks synced)
 print(json.dumps(p, indent=1))
 EOF
   git add src notes/exp/plan.json
