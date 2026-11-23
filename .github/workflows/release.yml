@@ -68,7 +68,9 @@ jobs:
         working-directory: src
         run: |
           make net
-          make -j"$(nproc)" profile-build ARCH=${{ matrix.arch }}
+          # Plain build: GCC's profile-guided build is flaky here ("corrupted
+          # profile info": the smother prover's thread races the counters).
+          make -j"$(nproc)" build ARCH=${{ matrix.arch }}
           make strip ARCH=${{ matrix.arch }}
           test "$(./stockfish bench 2>&1 | grep 'Nodes searched' | awk '{print $4}')" = "$BENCH"
           v=${TAG#release/v}; mkdir -p ../out
