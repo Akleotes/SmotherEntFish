@@ -242,9 +242,6 @@ Engine::Engine(std::optional<std::filesystem::path> path) :
     // moves have been played in the game (0 = never; 80 = after the default
     // construction budget is used up). SmotherPartial counts them always.
     options.add("SmotherPartialAfter", Option(0, 0, 200));
-    // Hybrid: after the switch, hold out for a full smother up to this many
-    // more construction moves while the enemy king's box is nearly closed.
-    options.add("SmotherNearHold", Option(0, 0, 200));
     // Near ("all but one") proof found: look for a true smother at most this
     // many moves longer and prefer it (bounded by the prover's move limit).
     options.add("SmotherFullExtra", Option(3, 0, 20));

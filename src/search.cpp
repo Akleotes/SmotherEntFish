@@ -346,26 +346,9 @@ void Search::Worker::start_smother_prover() {
         int        after      = int(options["SmotherPartialAfter"]);
         if (after == 0 && goalHybrid)
             after = 40;
-        // SmotherNearHold: past the switch point, keep holding out for a full
-        // smother for up to this many more construction moves while the box
-        // is promising (at most one open square next to the enemy king, or two
-        // with the king in a corner): there a full smother came within 10
-        // moves 16-29% of the time, against 0.6-3% elsewhere (funnel
-        // diagnostic, notes/HANDOFF.md). Elsewhere the near one is taken.
-        bool hold = false;
-        if (const int holdFor = int(options["SmotherNearHold"]);
-            holdFor > 0 && mgr.smotherBuilds < after + holdFor)
-        {
-            const Color    them  = ~rootPos.side_to_move();
-            const Square   ksq   = rootPos.square<KING>(them);
-            const int      holes = popcount(Attacks::attacks_bb(KING, ksq) & ~rootPos.pieces(them));
-            const int      f = file_of(ksq), r = rank_of(ksq);
-            const bool     corner = (f == 0 || f == 7) && (r == 0 || r == 7);
-            hold = holes <= 1 || (corner && holes <= 2);
-        }
         mgr.smotherPartialNow =
           bool(options["SmotherPartial"]) || goalNear
-          || (after > 0 && mgr.smotherBrutal && mgr.smotherBuilds >= after && !hold);
+          || (after > 0 && mgr.smotherBrutal && mgr.smotherBuilds >= after);
     }
 
     if (!options["SmotherMate"] || rootMoves.empty())

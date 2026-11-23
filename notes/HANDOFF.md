@@ -1259,3 +1259,18 @@ Elo 2500 (400): default 4.2 / 36.5 near / 40.8; Hybrid 80/160 8.2 / 31.5 /
 smothers. SmotherNearHold (new, off): after the switch, keep holding out
 while the box has <= 1 open square (or <= 2 with the king in a corner).
 grid42 tests it vs Hybrid 80/160 and the default, also vs Maia-3 1500.
+
+grid42 (5+0.05; full / near / full+near per 100; z vs default D):
+Elo 1500 (1000): D 7.6 / 52.1 / 59.7; Hybrid 80 + 160 build moves 14.4 /
+43.7 / 58.1 (z full +4.9, f+n -0.7); NearHold arms 12.3-17.2 full but
+f+n 34-41 (z -8 to -11). Elo 2500 (400): D 3.5 / 37.0 / 40.5; 80/160 9.2 /
+35.2 / 44.5. Maia-3 1500 (400): D 9.5 / 42.8 / 52.2; 80/160 14.2 / 28.8 /
+43.0 (z full +2.1, f+n -2.6). NearHold failed by design: a near smother
+needs the nearly closed box, so holding out there removed the near ones.
+Removed. 80/160 with grid41 at Elo 1500 (2000 games): 13.9 vs 8.2 full,
+56.8 vs 59.6 full+near. tc180h80 checks it at 3+2 (SF 1500 / 2500,
+Maia-3 1500, 300 each).
+human7 (300 each): HumanElo 1350: 0.575 vs 1100, 0.500 vs 1500 (~1500;
+with human6 ~1490, still too strong); 1800: 0.633 / 0.458 vs 1500 / 1900
+(~1805); 2200: 0.595 / 0.420 vs 1900 / 2300 (~2115). human8 measures 90 /
+110 / 130 per mille directly vs 1100 and 1500 for the low end.
