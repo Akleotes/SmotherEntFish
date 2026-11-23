@@ -289,7 +289,7 @@ proofs the defender escapes into a quicker ordinary mate.
 
 ## Human mode (HumanElo)
 
-`HumanElo` N (default 0 = off, 1050 to 2500) makes the engine play like a
+`HumanElo` N (default 0 = off, 1020 to 2400) makes the engine play like a
 human of rating N. It sets the strength limit itself: below about 1860 the
 lowest `UCI_Elo` limiter plus real mistakes (a share of moves picked at
 random from the 8 best candidates; the limiter alone never loses more than
@@ -300,21 +300,22 @@ ignored while it is on.
 Ratings are on the scale of the human-like Maia-3 network: N is the Maia-3
 level the engine scores 50% against. Maia-3's levels are compressed (a
 setting that scores 72% against level 1300 still scores 48% against 1900),
-so the levels in between are fitted, about +-50. Measured at 5+0.05, 300
+so the levels in between are fitted, about +-50 (+-100 near the ends). Measured at 5+0.05, 300
 games per row:
 
-| HumanElo | Limiter | Blunders | Scores |
+| HumanElo | Limiter | Blunders | Measured (300 games each) |
 | -------- | ------- | -------- | ------ |
-| 1050 | 1320 | 15.6% | 62.7% vs 900, 44.2% vs 1100 |
-| 1270 | 1320 | 8% | 60.8% vs 1100, 48.3% vs 1300 |
+| 1020 | 1320 | 13% | 47.3% vs 1100, 33.5% vs 1500 |
+| 1255 | 1320 | 11% | 56.3% vs 1100, 40.0% vs 1500 |
+| 1400 | 1320 | 9% | 62.0% vs 1100, 46.0% vs 1500 |
+| 1490 | 1320 | 7.2% | 60.9% vs 1100, 49.6% vs 1500 (600 each) |
 | 1580 | 1320 | 4% | 69.5% vs 1100, 62.5% vs 1300 |
-| 1700 | 1320 | 2% | 64.8% vs 1300, 60.7% vs 1500 |
+| 1600 | (interpolated) | | 63.2% vs 1300, 45.3% vs 1700 |
 | 1735 | 1320 | 1% | 68.8% vs 1300, 59.8% vs 1500 |
-| 1780 | 1320 | 0.5% | 64.2% vs 1500, 51.0% vs 1700 |
-| 1860 | 1320 | 0 | 68.2% vs 1500, 47.8% vs 1900 |
-| 2150 | 1600 | 0 | 82.3% vs 1900 |
-| 2300 | 1900 | 0 | 92.2% vs 1900 |
-| 2500 | 2200 | 0 | 97.0% vs 1900 |
+| 1800 | (interpolated) | | 63.3% vs 1500, 45.8% vs 1900 |
+| 1880 | 1320 | 0 | 68.2% vs 1500, 47.8% vs 1900 |
+| 2200 | (interpolated) | | 59.5% vs 1900, 42.0% vs 2300 (plays ~2115) |
+| 2420 | 1455 | 0 | 76.8% vs 1700, 66.3% vs 2100 |
 
 Values in between are interpolated. For a club player of about 1350, use
 `HumanElo 1350`.

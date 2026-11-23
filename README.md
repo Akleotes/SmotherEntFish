@@ -63,7 +63,7 @@ with any UCI chess GUI, such as DroidFish on Android. It identifies itself as
   against Elo 1500-2500 opponents end in a full or near smother (version 1.3).
 - **With brutal mode off** it plays Stockfish's moves except when a smother
   is proven.
-- **Human mode:** `HumanElo` N plays like a human of rating N (1050-2500,
+- **Human mode:** `HumanElo` N plays like a human of rating N (1020-2400,
   measured against the human-like Maia-3 network); 0 = off. See
   docs/SMOTHERFISH.md.
 

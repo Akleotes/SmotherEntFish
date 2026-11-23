@@ -122,7 +122,7 @@ Engine::Engine(std::optional<std::filesystem::path> path) :
     options.add("HumanBlunder", Option(0, 0, 100));
     // The same in tenths of a percent, for finer steps (the larger applies).
     options.add("HumanBlunderPermille", Option(0, 0, 1000));
-    // Play like a human of this rating (1050-2400, human-like Maia-3 scale);
+    // Play like a human of this rating (1020-2400, human-like Maia-3 scale);
     // sets the strength limit and blunders itself. 0 = off.
     options.add("HumanElo", Option(0, 0, 2400));
 

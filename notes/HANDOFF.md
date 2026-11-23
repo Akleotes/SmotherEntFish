@@ -1300,3 +1300,21 @@ Offline checks on 4,494 default wins (conc360 + grid41 + grid42 controls):
 - Lichess record: 271 bot games, 1 human; resignation rate not measurable.
 New options (off): SmotherBuildReady, SmotherBuildDefRing,
 SmotherBuildRingTable. grid43 tests them on top of Hybrid 80 / 160 moves.
+
+grid43 (5 of 7 shards; base Hybrid 80 / 160 build moves; full / near /
+full+near per 100, z vs base B): Elo 1500 (712 each): B 13.3 / 45.2 / 58.6;
+Ready 20 16.4 / 36.1 / 52.5 (z +1.6 / -2.3); Ready 60 13.8 / 36.5 / 50.3;
+RingTable 60,50,0,-10,-15 15.3 / 46.1 / 61.4 (z +1.1 / +1.1); DefRing 30
+12.9 / 43.1 / 56.0; DefRing 0 12.2 / 40.0 / 52.2. Elo 2500 (~290): B 8.6 /
+24.7 / 33.2; RingTable 8.3 / 33.3 / 41.7 (z f+n +2.1); Ready and DefRing
+no gain. Ready trades near for full; RingTable is the only arm not worse
+on either count.
+tc180h80 (3+2, ~290 each; full / near / full+near): SF 1500 D 11.0 / 63.7
+/ 74.7, 80/160 16.0 / 49.0 / 65.0 (z +1.8 / -2.6); SF 2500 D 6.1 / 55.4 /
+61.4, 80/160 10.4 / 34.4 / 44.8 (z +1.8 / -3.9); Maia-3 1500 D 15.0 / 55.7
+/ 70.7, 80/160 16.0 / 48.0 / 64.0. At 3+2 the near smothers after move 40
+are easier, so 80/160 costs 2-4 near per full gained. No losses.
+human8 (UCI_Elo 1320 + per mille vs Maia-3 1100 / 1500, 300 each): 90:
+0.620 / 0.460 (~1400); 110: 0.563 / 0.400 (~1255); 130: 0.473 / 0.335
+(~1020). human5's 80 per mille ~1270 was off. HumanElo map low end now
+(1020, 130), (1255, 110), (1400, 90), (1490, 72); range 1020-2400.

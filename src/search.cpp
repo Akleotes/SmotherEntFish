@@ -221,13 +221,14 @@ Skill make_skill(const OptionsMap& options) {
     if (const int h = int(options["HumanElo"]))
     {
         // rating, UCI_Elo, blunders per mille
-        // human6 checked it: 1600 played 1595; 1350 (70 per mille) played
-        // ~1480; the limiter at 1455 played ~2420 (Maia-3's top levels are
-        // compressed, so the scale ends there).
-        constexpr int map[][3] = {{1050, 1320, 156}, {1270, 1320, 80}, {1480, 1320, 70},
-                                  {1580, 1320, 40},  {1700, 1320, 20}, {1735, 1320, 10},
-                                  {1780, 1320, 5},   {1815, 1320, 2},  {1880, 1320, 0},
-                                  {2420, 1455, 0}};
+        // human6-8 checked it: 1600 played 1595, 1800 ~1805, 2200 ~2115;
+        // direct low-end rates (human8): 90 per mille ~1400, 110 ~1255, 130
+        // ~1020; 72 ~1490. The limiter at 1455 played ~2420 (Maia-3's top
+        // levels are compressed, so the scale ends there).
+        constexpr int map[][3] = {{1020, 1320, 130}, {1255, 1320, 110}, {1400, 1320, 90},
+                                  {1490, 1320, 72},  {1580, 1320, 40},  {1700, 1320, 20},
+                                  {1735, 1320, 10},  {1780, 1320, 5},   {1815, 1320, 2},
+                                  {1880, 1320, 0},   {2420, 1455, 0}};
         constexpr int n = int(std::size(map));
         const int     r = std::clamp(h, map[0][0], map[n - 1][0]);
         int           i = 0;
