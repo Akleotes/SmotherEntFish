@@ -18,7 +18,7 @@ on:
         description: "Hours to play (max 5)"
         default: "5"
       bot:
-        description: "Which bot account: 1 (secret LICHESS_BOT_TOKEN) or 2 (LICHESS_BOT_TOKEN2)"
+        description: "Bot account N: 1 = secret LICHESS_BOT_TOKEN, N > 1 = LICHESS_BOT_TOKEN<N>"
         default: "1"
       options:
         description: "Extra engine options, Name=Value;Name=Value (empty = defaults)"
@@ -64,7 +64,7 @@ jobs:
           OPTS: ${{ inputs.options || '' }}
       - name: Play
         env:
-          LICHESS_BOT_TOKEN: ${{ inputs.bot == '2' && secrets.LICHESS_BOT_TOKEN2 || secrets.LICHESS_BOT_TOKEN }}
+          LICHESS_BOT_TOKEN: ${{ (inputs.bot || '1') == '1' && secrets.LICHESS_BOT_TOKEN || secrets[format('LICHESS_BOT_TOKEN{0}', inputs.bot)] }}
           HOURS: ${{ inputs.hours || '5' }}
         run: |
           h=$HOURS; [ "$h" -gt 5 ] 2>/dev/null && h=5
@@ -101,5 +101,5 @@ jobs:
             sleep $((i * 5)); git pull -q --rebase origin lichess-games
           done
         env:
-          T: ${{ inputs.bot == '2' && secrets.LICHESS_BOT_TOKEN2 || secrets.LICHESS_BOT_TOKEN }}
+          T: ${{ (inputs.bot || '1') == '1' && secrets.LICHESS_BOT_TOKEN || secrets[format('LICHESS_BOT_TOKEN{0}', inputs.bot)] }}
           BOT: ${{ inputs.bot || '1' }}
