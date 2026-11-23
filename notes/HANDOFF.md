@@ -1177,3 +1177,12 @@ runner): 7,320 games, +0.5 Elo (95% -0.6 to +1.7), pentanomial [0, 73, 3503,
 Release workflow: GCC profile-guided builds fail at random ("corrupted
 profile info", the prover thread races the counters); Linux and Windows use
 plain builds, Android (clang) keeps PGO.
+
+human3 (vs Maia-3; score): HB0 0.682 vs 1500, 0.478 vs 1900; HB1 0.330 vs
+1500; HB2 0.500 vs 1100, 0.383 vs 1500; HB4 0.480 vs 1100, 0.310 vs 1500;
+HB8 0.412 vs 1100; HB16 0.268 vs 1100; UCI_Elo 1320/1600/1900/2200 vs 1900:
+0.478 / 0.823 / 0.922 / 0.970. Maia-3's levels are compressed (HB0 is 72%
+vs 1300 but 48% vs 1900), so human ratings are defined on the Maia scale:
+the Maia-3 level that scores 50%. HB0 ~1900, HB1 ~1250, HB2 ~1100-1150,
+HB4 ~1080, HB8 ~1000, HB16 ~900. HumanBlunderPermille added for the gap
+1250-1900; human4 measures 1/2/4/6 per mille vs Maia-3 1500 and 1700.
