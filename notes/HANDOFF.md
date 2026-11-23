@@ -1207,3 +1207,36 @@ pm20 ~1700, pm10 ~1735, pm5 ~1780, pm2 ~1815. About +-50 each.
 HumanElo added (0 = off, 1050-2500): piecewise-linear rating -> (UCI_Elo,
 per mille) over these points plus UCI_Elo 1600 ~2150, 1900 ~2300, 2200
 ~2500 (make_skill in search.cpp). Docs table replaced. Bench unchanged.
+
+### Deep diagnostic: where smothers come from (Nov 23 evening)
+
+conc360 games (1.3 defaults vs Elo 1500, 5+0.05, 2500 games, every move
+recorded, no adjudication). Scripts: notes/scripts/funnel.py,
+notes/scripts/smother_feats.py.
+
+- Definition: the harness and engine count "full" as any piece mating a
+  king whose every neighbour square holds its own pieces (SmotherClassic
+  off). Of 227 full smothers, 22 were knight (classic) smothers; most are
+  queen mates. README numbers are any-piece smothers.
+- Ending by our moves after the decisive point (+5 material): full median
+  26 (classic 14), near 46 (Hybrid accepts near after 40 build moves),
+  plain 80 (51% at the 80-move construction cap; only 19% of plain games
+  ever had a proof).
+- Hazard of a full smother per 10 of our win-phase moves: 0.4 (0-10), 2.3,
+  2.8, 2.5 (10-40), then 1.4 (40-50) and 0.1-0.4 after, as near smothers
+  take 28% in 40-50. Construction yields full smothers at a steady rate
+  (~0.25% per move) until the near switch.
+- Defender material at the decisive point does not differ by ending
+  (median 26). Box breaks come mostly from the defender's own moves (a box
+  piece leaves, a pawn moves), rarely from our captures.
+- States predicting a full smother within 10 moves (base 2.2%): king in a
+  corner 5.5% (edge 1.3, centre 0.8); open squares 0: 29%, 1: 16%, 2:
+  3.2%; our queen on the board 2.7% (none 0.6%). Our knights do not
+  predict any-piece smothers. These match the build score's terms, so a
+  learned score would mostly re-find them.
+- Literature: no prior work on steering an engine to one mate pattern
+  beyond this project; composition technique (decoy sacrifice into the last
+  hole, Philidor) is within the prover's checks.
+grid15 (older version): Full goal 12.1 full vs Hybrid-40 7.3. grid41
+(5+0.05; Elo 1500 1000 games, Elo 2500 400 per arm): default, Full 80,
+Full 160 build moves, Hybrid at 80 with 160, classic Full 160.
