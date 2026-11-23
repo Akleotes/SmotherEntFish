@@ -1195,3 +1195,15 @@ every move. Fixed (choice among 4, blunders among 8; bench unchanged). The
 HumanBlunder ratings above (human1-3) were measured with the bug and are
 too low. human5 recalibrates: per mille 2/5/10/20/40/80/160, each vs two
 Maia-3 levels; then HumanElo.
+
+human5 (after the fix; UCI_Elo 1320 + per mille vs Maia-3, 300 games each):
+pm2 0.620 vs 1500, 0.567 vs 1700; pm5 0.642 / 0.510 (1500/1700); pm10
+0.688 / 0.598 (1300/1500); pm20 0.648 / 0.607 (1300/1500); pm40 0.695 /
+0.625 (1100/1300); pm80 0.608 / 0.483 (1100/1300); pm160 0.627 / 0.442
+(900/1100). Maia-scale rating (level scoring 50%): bracketed rates
+interpolated (pm80 ~1270, pm160 ~1040); the others extrapolated with the
+slope of the HB0 points (logit 0.18 per 100 levels; HB0 ~1860): pm40 ~1580,
+pm20 ~1700, pm10 ~1735, pm5 ~1780, pm2 ~1815. About +-50 each.
+HumanElo added (0 = off, 1050-2500): piecewise-linear rating -> (UCI_Elo,
+per mille) over these points plus UCI_Elo 1600 ~2150, 1900 ~2300, 2200
+~2500 (make_skill in search.cpp). Docs table replaced. Bench unchanged.

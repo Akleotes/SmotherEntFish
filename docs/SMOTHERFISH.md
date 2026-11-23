@@ -287,23 +287,43 @@ holding back captures near the king. An analysis of 1000 won games
 55 smothers that are forced against every defence; most of the rest are
 proofs the defender escapes into a quicker ordinary mate.
 
-## Human mode (HumanBlunder)
+## Human mode (HumanElo)
 
-Stockfish's strength limit (`UCI_LimitStrength` / `UCI_Elo`, or `Skill
-Level`) never loses more than about a pawn per move, so even at its lowest
-setting (Elo 1320 = Skill Level 0) it plays like a human of about 1450-1500.
-`HumanBlunder` N (default 0) adds real mistakes on top: N percent of moves
-are picked at random from the 8 best candidates. Measured against the
-human-like Maia-3 network, 300 games per row at 5+0.05:
+`HumanElo` N (default 0 = off, 1050 to 2500) makes the engine play like a
+human of rating N. It sets the strength limit itself: below about 1860 the
+lowest `UCI_Elo` limiter plus real mistakes (a share of moves picked at
+random from the 8 best candidates; the limiter alone never loses more than
+about a pawn per move), above it the `UCI_Elo` limiter alone. No other
+option is needed; `UCI_LimitStrength`, `UCI_Elo` and `Skill Level` are
+ignored while it is on.
 
-| Setting (with Skill Level 0) | vs Maia-3 1300 | vs Maia-3 1500 | About |
-| ---------------------------- | -------------- | -------------- | ----- |
-| HumanBlunder 0 | 72.5% | - | 1470 |
-| HumanBlunder 1 | 44.2% | 37.0% | 1330 |
-| HumanBlunder 2 | 40.2% | 32.3% | 1300 |
-| HumanBlunder 3 | 39.2% | 28.0% | 1280 |
-| HumanBlunder 5 | 32.5% | - | 1170 |
-| HumanBlunder 15 | 23.8% | - | 1100 |
-| HumanBlunder 40 | 7.2% | - | 860 |
+Ratings are on the scale of the human-like Maia-3 network: N is the Maia-3
+level the engine scores 50% against. Maia-3's levels are compressed (a
+setting that scores 72% against level 1300 still scores 48% against 1900),
+so the levels in between are fitted, about +-50. Measured at 5+0.05, 300
+games per row:
+
+| HumanElo | Limiter | Blunders | Scores |
+| -------- | ------- | -------- | ------ |
+| 1050 | 1320 | 15.6% | 62.7% vs 900, 44.2% vs 1100 |
+| 1270 | 1320 | 8% | 60.8% vs 1100, 48.3% vs 1300 |
+| 1580 | 1320 | 4% | 69.5% vs 1100, 62.5% vs 1300 |
+| 1700 | 1320 | 2% | 64.8% vs 1300, 60.7% vs 1500 |
+| 1735 | 1320 | 1% | 68.8% vs 1300, 59.8% vs 1500 |
+| 1780 | 1320 | 0.5% | 64.2% vs 1500, 51.0% vs 1700 |
+| 1860 | 1320 | 0 | 68.2% vs 1500, 47.8% vs 1900 |
+| 2150 | 1600 | 0 | 82.3% vs 1900 |
+| 2300 | 1900 | 0 | 92.2% vs 1900 |
+| 2500 | 2200 | 0 | 97.0% vs 1900 |
+
+Values in between are interpolated. For a club player of about 1350, use
+`HumanElo 1350`.
+
+The underlying options stay available: `HumanBlunder` N (percent) or
+`HumanBlunderPermille` N (per mille) add the mistakes to whatever
+`UCI_Elo` / `Skill Level` is set. Ratings measured for them before
+November 23 were too low (any blunder rate also widened the ordinary choice
+from 4 to 8 candidates; fixed): `HumanBlunder 1` plays at about 1735, not
+1350.
 
 Proven smothered mates are still played in full.

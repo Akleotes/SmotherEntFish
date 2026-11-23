@@ -212,6 +212,41 @@ bool is_shuffling(Move move, Stack* const ss, const Position& pos) {
         && (ss - 2)->currentMove.from_sq() == (ss - 4)->currentMove.to_sq();
 }
 
+// Strength settings from the options. HumanElo (0 = off) sets them from a
+// rating on the human-like Maia-3 scale (the Maia-3 level it scores 50%
+// against at 5+0.05; human5, notes/HANDOFF.md): blunders at the bottom of
+// the range, then the UCI_Elo limiter alone. Otherwise Skill Level /
+// UCI_LimitStrength with HumanBlunder / HumanBlunderPermille.
+Skill make_skill(const OptionsMap& options) {
+    if (const int h = int(options["HumanElo"]))
+    {
+        // rating, UCI_Elo, blunders per mille
+        constexpr int map[][3] = {{1050, 1320, 156}, {1270, 1320, 80}, {1580, 1320, 40},
+                                  {1700, 1320, 20},  {1735, 1320, 10}, {1780, 1320, 5},
+                                  {1815, 1320, 2},   {1860, 1320, 0},  {2150, 1600, 0},
+                                  {2300, 1900, 0},   {2500, 2200, 0}};
+        constexpr int n = int(std::size(map));
+        const int     r = std::clamp(h, map[0][0], map[n - 1][0]);
+        int           i = 0;
+        while (i < n - 2 && r > map[i + 1][0])
+            ++i;
+        const int lo = map[i][0], span = map[i + 1][0] - lo;
+        auto      lerp = [&](int k) { return map[i][k] + (map[i + 1][k] - map[i][k]) * (r - lo) / span; };
+        Skill     skill(20, lerp(1));
+        skill.blunder = lerp(2);
+        return skill;
+    }
+    Skill skill(options["Skill Level"], options["UCI_LimitStrength"] ? int(options["UCI_Elo"]) : 0);
+    // Human mode (HumanBlunder, with a strength limit): a share of moves is
+    // picked at random from a wider candidate list without Skill's cap of
+    // one pawn per mistake, so the engine can really drop material, as
+    // weak human players do.
+    skill.blunder = skill.enabled() ? std::max(10 * int(options["HumanBlunder"]),
+                                               int(options["HumanBlunderPermille"]))
+                                    : 0;
+    return skill;
+}
+
 }  // namespace
 
 Search::Worker::Worker(SharedState&                   sharedState,
@@ -619,8 +654,7 @@ void Search::Worker::start_searching() {
                                               - limits.inc[rootPos.side_to_move()]);
 
     Worker* bestThread = this;
-    Skill   skill =
-      Skill(options["Skill Level"], options["UCI_LimitStrength"] ? int(options["UCI_Elo"]) : 0);
+    Skill   skill      = make_skill(options);
 
     const int steer = int(options["SmotherSteer"]);
 
@@ -933,17 +967,11 @@ bool Search::Worker::iterative_deepening() {
     }
 
     usize multiPV = usize(options["MultiPV"]);
-    Skill skill(options["Skill Level"], options["UCI_LimitStrength"] ? int(options["UCI_Elo"]) : 0);
+    Skill skill = make_skill(options);
 
     // When playing with strength handicap enable MultiPV search that we will
-    // use behind-the-scenes to retrieve a set of possible moves.
-    // Human mode (HumanBlunder, with a strength limit): a share of moves is
-    // picked at random from a wider candidate list without Skill's cap of
-    // one pawn per mistake, so the engine can really drop material, as
-    // weak human players do.
-    skill.blunder = skill.enabled() ? std::max(10 * int(options["HumanBlunder"]),
-                                               int(options["HumanBlunderPermille"]))
-                                    : 0;
+    // use behind-the-scenes to retrieve a set of possible moves (8 with
+    // blunders, which are picked among all of them).
     if (skill.enabled())
         multiPV = std::max(multiPV, usize(skill.blunder ? 8 : 4));
 
