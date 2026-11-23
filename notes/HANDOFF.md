@@ -1152,3 +1152,8 @@ build on android-build/v13; smotherfish fast-forwarded. Helper forks can
 press "Sync fork" when convenient (distribute.sh bases stay as listed until
 they do). Lichess bots pick up 1.3 from their next session (bot 4 already
 ran m03).
+
+human1 (HumanBlunder with UCI_Elo 1320 vs Maia-3 1300, 5+0.05, 300 games
+each): HB 0 0.725, 5 0.325, 10 0.295, 15 0.238, 25 0.128, 40 0.072. The plain
+limiter plays like ~1470 against Maia-3; ~1350 should be HB ~2. human2
+refines with HB 1/2/3 vs Maia-3 1300 and 1500.
