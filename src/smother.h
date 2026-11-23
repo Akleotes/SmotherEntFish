@@ -84,12 +84,12 @@ int shape(const Position& pos, Color us);
 // edge, knight nearness, queen nearness. Set once per move before the
 // search threads start.
 struct BuildWeights {
-    int boxed = 12, hole = 10, corner = 25, edge = 10, knight = 4, queen = 3;
+    int boxed = 13, hole = 8, corner = 23, edge = 8, knight = 2, queen = 4;
 };
 extern BuildWeights buildWeights;
 void set_build_weights(const std::string& s);
 
-int build_score(const Position& pos, Color us, int survive = 0, int cap = 12, int version = 1, int keep = 8, int keepNear = 3, int starve = 0, int starveAt = 4, int ownKeep = 0, int escape = 0, int knightSafe = 0);
+int build_score(const Position& pos, Color us, int survive = 0, int cap = 12, int version = 1, int keep = 11, int keepNear = 2, int starve = 0, int starveAt = 4, int ownKeep = 0, int escape = 4, int knightSafe = 0);
 
 // Smother traps: pos has the DEFENDER to move (we just played our candidate).
 // For every legal reply, try to prove a forced smother for us with perReply
