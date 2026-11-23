@@ -19,9 +19,9 @@ targets=(
   "7a213a:185ee255"
   "0f17ee:185ee255"
   "dc665d:185ee255"   # no working schedule: Run workflow by hand
-  # "d32e35:origin/smotherfish"  # enterprise account: off while it runs only
-  #   ~6 jobs at a time (support ticket open); an equal shard made it the
-  #   last to finish by ~10 min. Re-enable when its limit is raised.
+  "d32e35:4450b466"   # enterprise account: limit 360, ramping up until ~Nov 29
+                      # (about 20 jobs at once on Nov 23); its poll can be
+                      # dispatched from the session
   "own:origin/smotherfish"     # this repository
 )
 n=${#targets[@]}

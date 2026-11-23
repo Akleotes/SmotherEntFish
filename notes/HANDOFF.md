@@ -1160,3 +1160,8 @@ refines with HB 1/2/3 vs Maia-3 1300 and 1500.
 human2 (vs Maia-3, 300 games each): 1300: HB1 0.442, HB2 0.402, HB3 0.392;
 1500: HB1 0.370, HB2 0.323, HB3 0.280. About 1330 / 1300 / 1280. HumanBlunder 1
 with Skill Level 0 ~ 1350. Documented in docs/SMOTHERFISH.md.
+
+Enterprise fork (Nov 23): GitHub Support raised the limit to 360 standard
+jobs; a new-account safeguard raises the real concurrency in steps until
+~Nov 29. conc360 probe (250 short jobs): ~20 running at once. Back in
+distribute.sh with an equal share (base 4450b466, its synced version).
