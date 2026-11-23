@@ -1186,3 +1186,12 @@ vs 1300 but 48% vs 1900), so human ratings are defined on the Maia scale:
 the Maia-3 level that scores 50%. HB0 ~1900, HB1 ~1250, HB2 ~1100-1150,
 HB4 ~1080, HB8 ~1000, HB16 ~900. HumanBlunderPermille added for the gap
 1250-1900; human4 measures 1/2/4/6 per mille vs Maia-3 1500 and 1700.
+
+human4 (UCI_Elo 1320 + HumanBlunderPermille vs Maia-3, 300 games each): vs
+1500: pm1 0.370, pm2 0.347, pm4 0.355, pm6 0.350; vs 1700: 0.298, 0.270,
+0.353, 0.275. Flat: any blunder rate > 0 also widened the ordinary Skill
+choice from 4 to 8 lines (the lines kept for blunders), which weakened
+every move. Fixed (choice among 4, blunders among 8; bench unchanged). The
+HumanBlunder ratings above (human1-3) were measured with the bug and are
+too low. human5 recalibrates: per mille 2/5/10/20/40/80/160, each vs two
+Maia-3 levels; then HumanElo.
