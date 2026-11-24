@@ -1522,3 +1522,11 @@ draws); + KnightCheck 8 4.0 (75, z +6.5, 5 draws); + RingTable
 goal nearly all full smothers are classic; near and queen smothers mostly
 vanish. grid47 tunes KnightCheck 4 / 8 / 16 / 24 and 16 + BuildCp 500 /
 Floor 350 (all SmotherClassic).
+
+grid47 (6 of 8 shares; all SmotherClassic; classic per 100): Elo 1500
+(~1870): KnightCheck 4 3.5, 8 2.4, 16 3.0, 24 3.2, 16 + BuildCp 500/350
+4.8 (14 draws, 2 losses); Maia-3 1500 (~450): 3.1 / 1.8 / 5.5 / 4.2 / 4.4;
+Elo 2500 (304): 2.0 / 1.0 / 1.3 / 1.0 / 2.3. Weights 4-24 plateau at ~3
+per 100 vs 0.7 for 1.5; earlier construction loses games vs engines.
+Candidate 1.6: SmotherClassic + KnightCheck 16. sprt-k16 (10+0.1, [-3,0],
+vs 1.5.1) and tc180k16 (3+2, 400 each vs SF 1500 / 2500, Maia-3 1500).
