@@ -1468,3 +1468,12 @@ The humans' trap moves cost about a pawn and barely beat the engine even in
 games selected because the trap worked: trap-setting dropped. (Three engine
 exits were the script passing Maia's "0000" after a mating move; Stockfish
 exits on an illegal move in "position". Fixed in the script.)
+
+resign2 (7 of 8 shares; Maia-3 resigning on the measured Lichess blitz
+curve; true / near / true+near / resigned per 100): Maia-3 1500 (1,308
+each): 1.5 5.4 / 3.1 / 8.5 / 84; switch 40 5.4 / 12.1 / 17.5 / 76 (f+n z
++6.9); switch 40 + Hold 25 4.4 / 12.8 / 17.1 / 76. Maia-3 1900 (528): 1.5
+4.4 / 3.8 / 8.1 / 82; switch 40 4.4 / 10.4 / 14.8 / 78 (z +3.4); + Hold
+4.5 / 9.5 / 14.0. Against resigning humans the 40-move switch keeps every
+true smother and doubles the total; SmotherHold adds nothing. Proposal:
+use switch 40 automatically when UCI_Opponent says the opponent is human.
