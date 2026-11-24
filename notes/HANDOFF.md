@@ -1530,3 +1530,9 @@ Elo 2500 (304): 2.0 / 1.0 / 1.3 / 1.0 / 2.3. Weights 4-24 plateau at ~3
 per 100 vs 0.7 for 1.5; earlier construction loses games vs engines.
 Candidate 1.6: SmotherClassic + KnightCheck 16. sprt-k16 (10+0.1, [-3,0],
 vs 1.5.1) and tc180k16 (3+2, 400 each vs SF 1500 / 2500, Maia-3 1500).
+
+sprt-k16 (4 of 7 shards, 18,000 games, 10+0.1): SmotherClassic +
+KnightCheck 16 vs 1.5.1: +0.7 Elo [-0.5, +1.8], pentanomial [3, 458, 8046,
+488, 5], H1 for [-3, 0]. tc180k16 partial (3+2; knight per 100): SF 1500
+1.4 (2/139) vs 3.8 (5/130); SF 2500 0 vs 0.9; Maia-3 1500 2.0 (3/150) vs
+6.0 (9/150); together 5 vs 15; no draws or losses.
