@@ -23,7 +23,8 @@ E = {}
 
 
 class Eng:
-    def __init__(self, cmd, opts):
+    def __init__(self, cmd, opts, name=""):
+        self.name = name
         self.p = subprocess.Popen([cmd], stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                                   stderr=subprocess.DEVNULL, text=True, bufsize=1)
         self.send("uci")
@@ -37,23 +38,29 @@ class Eng:
         self.p.stdin.write(s + "\n")
 
     def go(self, moves, cmd):
+        self.last = "position startpos" + (" moves " + " ".join(moves) if moves else "") + " | " + cmd
         self.send("position startpos" + (" moves " + " ".join(moves) if moves else ""))
         self.send(cmd); lines = []
         while True:
             l = self.p.stdout.readline()
             if not l:
-                raise RuntimeError("engine died")
+                raise RuntimeError(f"{self.name} died at: {self.last}")
             lines.append(l)
             if l.startswith("bestmove"):
                 return lines
 
 
 def init():
-    E["real"] = Eng(A.engine, {"Threads": 1, "Hash": 16})
-    E["eval"] = Eng(A.engine, {"Threads": 1, "Hash": 16, "SmotherBrutal": "false", "SmotherMate": "false"})
+    for e in E.values():
+        try:
+            e.p.kill()
+        except Exception:
+            pass
+    E["real"] = Eng(A.engine, {"Threads": 1, "Hash": 16}, "real")
+    E["eval"] = Eng(A.engine, {"Threads": 1, "Hash": 16, "SmotherBrutal": "false", "SmotherMate": "false"}, "eval")
     E["oracle"] = Eng(A.engine, {"Threads": 1, "Hash": 16, "SmotherParallel": "false", "SmotherGoal": "Full",
-                                 "SmotherMaxMoves": 12, "SmotherQuietMoves": 2, "SmotherNodes": A.nodes})
-    E["maia"] = Eng(A.maia, {"MultiPV": 1})
+                                 "SmotherMaxMoves": 12, "SmotherQuietMoves": 2, "SmotherNodes": A.nodes}, "oracle")
+    E["maia"] = Eng(A.maia, {"MultiPV": 1}, "maia")
 
 
 def proven(lines):
@@ -82,6 +89,14 @@ def trap_rate(moves, def_elo):
 
 
 def run(item):
+    try:
+        return run1(item)
+    except RuntimeError as ex:
+        init()
+        return {"site": item[0]["site"], "k": item[1], "error": str(ex)}
+
+
+def run1(item):
     g, k = item
     mv = g["moves"].split(); p = len(mv) - (2 * k - 1); pre = mv[:p]
     attacker_white = p % 2 == 0
