@@ -1,0 +1,20 @@
+{
+ "exp": "conc360c",
+ "tc": "5+0.05",
+ "chunk": 2,
+ "max_parallel": 256,
+ "shard": [
+  0,
+  1
+ ],
+ "runs": [
+  {
+   "name": "probe",
+   "elo": 1500,
+   "games": 500,
+   "seed": 29000,
+   "chunk": 2,
+   "opts": []
+  }
+ ]
+}
