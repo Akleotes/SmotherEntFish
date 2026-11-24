@@ -1394,3 +1394,15 @@ side was 8+ down end: bullet resign 19%, mate 20%, time/other 57%, draw
 4%; blitz 42 / 24 / 29 / 5; rapid 45 / 32 / 17 / 6. So resign1's 5% arm
 matches blitz/rapid, 2% bullet; 10% is a worst case. At most a quarter to
 a third of lost human games reach any mate.
+
+Lichess database pipeline (Nov 24, user asked for much more data):
+notes/scripts/lichess_db.py streams a monthly dump (no full download;
+~1,500 games/s on 4 cores) and keeps human games only: resignation and
+game-ending counts (stats.json), every game ending in a full or near
+smothered mate (smothers.jsonl.zst: site, Elo, time control, UCI moves,
+kind), and a sample (1 in 50 decided games, 1 in 500 others). Workflow
+.github/workflows/lichess-db.yml (push notes/exp/lichess.json to data/**)
+runs one job per month on our account and attaches the files to the
+release "lichess-data". First run data/lichess1: 12 months (2025-11 to
+2026-10) x 3M games = 36M games. Test on 40,000 games (Oct 2026): 1,148
+near, 56 full, 25 classic smothered mates.

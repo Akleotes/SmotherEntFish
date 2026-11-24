@@ -1,0 +1,63 @@
+# Process Lichess monthly game databases into compact research data
+# (notes/scripts/lichess_db.py). Push notes/exp/lichess.json to a branch
+# named data/<anything>:
+#   {"months": ["2026-10", "2026-09"], "games": 3000000}
+# Each month runs as one job (the first "games" games of the month are
+# streamed; nothing else is downloaded). The files are attached to the
+# release "lichess-data" as lichess-<month>-stats.json,
+# lichess-<month>-smothers.jsonl.zst and lichess-<month>-sample.jsonl.zst.
+name: Lichess database
+
+on:
+  push:
+    branches: ["data/**"]
+    paths: ["notes/exp/lichess.json"]
+
+permissions:
+  contents: write
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    outputs:
+      months: ${{ steps.p.outputs.months }}
+      games: ${{ steps.p.outputs.games }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: p
+        run: |
+          python3 -c 'import json;p=json.load(open("notes/exp/lichess.json"));print("months="+json.dumps(p["months"]));print("games="+str(p.get("games",3000000)))' >> "$GITHUB_OUTPUT"
+      - name: Make sure the release exists
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view lichess-data >/dev/null 2>&1 || gh release create lichess-data \
+            --target "$GITHUB_SHA" --title "Lichess research data" --prerelease \
+            --notes "Compact data from the Lichess game database (database.lichess.org, CC0), made by notes/scripts/lichess_db.py: per month, human games only. stats.json: resignation and game-ending counts; smothers.jsonl.zst: every game ending in a full or near smothered mate; sample.jsonl.zst: 1 in 50 games where one side was 8+ points down, 1 in 500 others."
+
+  month:
+    needs: plan
+    runs-on: ubuntu-latest
+    timeout-minutes: 330
+    strategy:
+      fail-fast: false
+      max-parallel: 20
+      matrix:
+        month: ${{ fromJson(needs.plan.outputs.months) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -q chess zstandard
+      - name: Stream and process ${{ matrix.month }}
+        run: |
+          set -o pipefail
+          curl -sSf --retry 3 "https://database.lichess.org/standard/lichess_db_standard_rated_${{ matrix.month }}.pgn.zst" \
+            | python3 -I notes/scripts/lichess_db.py ${{ needs.plan.outputs.games }} out || [ -f out/stats.json ]
+          for f in out/*; do mv "$f" "lichess-${{ matrix.month }}-$(basename "$f")"; done
+          ls -la lichess-*
+      - name: Upload to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload lichess-data lichess-${{ matrix.month }}-* --clobber
