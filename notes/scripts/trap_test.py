@@ -83,6 +83,8 @@ def trap_rate(moves, def_elo):
     replies = C.Counter(E["maia"].go(moves, "go nodes 1")[-1].split()[1] for _ in range(A.samples))
     hit = 0
     for r, c in replies.items():
+        if r in ("0000", "(none)"):  # our move already mated: no reply
+            continue
         if proven(E["oracle"].go(moves + [r], "go depth 1")):
             hit += c
     return hit / A.samples, len(replies)
