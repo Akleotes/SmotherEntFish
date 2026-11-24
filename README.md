@@ -42,7 +42,7 @@ Smotherfish plays as ordinary Stockfish.
 
 Like Stockfish, Smotherfish does not include a graphical user interface. Use it
 with any UCI chess GUI, such as DroidFish on Android. It identifies itself as
-"Smotherfish 1.5 (Stockfish dev-20261122-3e8fde75)".
+"Smotherfish 1.5.1 (Stockfish dev-20261122-3e8fde75)".
 
 ## What it does
 
@@ -60,7 +60,9 @@ with any UCI chess GUI, such as DroidFish on Android. It identifies itself as
   (also "all but one" smothers, where one square next to the king is empty
   but covered). A true smother up to three moves longer is always preferred
   to a near one. Since 1.5, Hybrid holds out for a true smother for 80
-  construction moves (of up to 160) before it accepts a near one.
+  construction moves (of up to 160) before it accepts a near one; against a
+  human opponent (1.5.1, from the GUI's `UCI_Opponent`, e.g. lichess-bot)
+  after 40, because people resign lost games before a long build ends.
 - **With brutal mode off** it plays Stockfish's moves except when a smother
   is proven.
 - **Human mode:** `HumanElo` N plays like a human of rating N (1020-2400,

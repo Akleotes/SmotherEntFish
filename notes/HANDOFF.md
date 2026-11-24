@@ -1477,3 +1477,7 @@ each): 1.5 5.4 / 3.1 / 8.5 / 84; switch 40 5.4 / 12.1 / 17.5 / 76 (f+n z
 4.5 / 9.5 / 14.0. Against resigning humans the 40-move switch keeps every
 true smother and doubles the total; SmotherHold adds nothing. Proposal:
 use switch 40 automatically when UCI_Opponent says the opponent is human.
+
+Release 1.5.1 (user approved): UCI_Opponent declared; when its third word
+is "human", Hybrid's near switch is SmotherHumanAfter (40) instead of 80.
+Verified python-chess (lichess-bot) accepts it and the switch fires.

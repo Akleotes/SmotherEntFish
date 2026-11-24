@@ -242,6 +242,12 @@ Engine::Engine(std::optional<std::filesystem::path> path) :
     // moves have been played in the game (0 = never; 80 = after the default
     // construction budget is used up). SmotherPartial counts them always.
     options.add("SmotherPartialAfter", Option(0, 0, 200));
+    // Hybrid against a human opponent (UCI_Opponent): near smothers count
+    // after this many construction moves instead of 80 (0 = no difference).
+    options.add("SmotherHumanAfter", Option(40, 0, 200));
+    // Standard UCI: "[title|none] [rating|none] [computer|human] name", sent
+    // by lichess-bot and other GUIs; only the computer/human word is used.
+    options.add("UCI_Opponent", Option(""));
     // Hybrid: after the switch, hold out for a full smother for up to this many
     // consecutive moves where one is very likely (0 = off; see search.cpp).
     options.add("SmotherHold", Option(0, 0, 50));

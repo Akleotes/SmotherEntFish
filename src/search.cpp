@@ -31,6 +31,7 @@
 #include <iostream>
 #include <memory>
 #include <ratio>
+#include <sstream>
 #include <string>
 #include <thread>
 #include <utility>
@@ -346,7 +347,21 @@ void Search::Worker::start_smother_prover() {
         const bool goalHybrid = options["SmotherGoal"] == "Hybrid";
         int        after      = int(options["SmotherPartialAfter"]);
         if (after == 0 && goalHybrid)
+        {
             after = 80;  // 1.5 (grid41-44, tc180c15): was 40
+            // Against a human (UCI_Opponent "title rating human name", as
+            // lichess-bot sends it): people resign lost games, so take near
+            // smothers sooner. resign2 (Maia-3 resigning on the measured
+            // Lichess blitz curve): switch 40 kept every true smother and
+            // doubled true + near (17.5 vs 8.5 per 100 games).
+            if (const int human = int(options["SmotherHumanAfter"]); human > 0)
+            {
+                std::istringstream opp{std::string(options["UCI_Opponent"])};
+                std::string        title, rating, kind;
+                if (opp >> title >> rating >> kind && kind == "human")
+                    after = human;
+            }
+        }
         // SmotherHold: past the switch, keep holding out for a full smother
         // for up to N consecutive moves in the positions where one most
         // often follows: at most one open square next to the enemy king, a

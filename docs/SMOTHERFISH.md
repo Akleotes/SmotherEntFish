@@ -1,6 +1,6 @@
 # Smotherfish guide
 
-Smotherfish 1.5 is Stockfish (development version of 22 November 2026,
+Smotherfish 1.5.1 is Stockfish (development version of 22 November 2026,
 upstream commit 3e8fde75) with one extra goal: end the game with a
 smothered mate. This guide explains how it works, lists every option, and
 summarises what was measured. The day-by-day development log is in
@@ -136,6 +136,8 @@ All options are standard UCI options. Defaults are what was measured best.
 | `SmotherBuildVersion` | 1 | 2 = construction-score weights fitted to game data (`notes/fit/`); better at predicting, not better in games. |
 | `SmotherPartial` | false | "All but one" smothers always count (the same as `SmotherGoal` Near). |
 | `SmotherPartialAfter` | 0 | "All but one" smothers count after this many construction moves (0 = never; `SmotherGoal` Hybrid uses 80, 40 before 1.5). |
+| `SmotherHumanAfter` | 40 | Hybrid against a human opponent (`UCI_Opponent`): near smothers count after this many construction moves (0 = same as against computers). |
+| `UCI_Opponent` | (empty) | Standard UCI opponent info from the GUI; only "human" / "computer" is used. |
 
 ### Other
 
@@ -281,6 +283,21 @@ each): 1.4 defaults 8.2 / 59.6; 1.5 15.0 / 61.7. Elo 2500: 3.5-4.2 / 40;
 lost positions, longer building means some games end by resignation before
 the mate; set `SmotherPartialAfter 40` and `SmotherBuildMoves 80` for the
 old, quicker behaviour.
+
+## Version 1.5.1: humans resign
+
+Real players resign lost games: on Lichess (33 million human games,
+Nov 2025 - Oct 2026, notes/scripts/lichess_db.py), a blitz player 9-14
+points down resigns on about 6% of their moves, and only 23% of blitz games
+where one side was 8+ points down end in mate. Against an opponent that
+resigns on that measured curve (Maia-3 1500, 1,308 games per row; true /
+near smothers per 100 games), 1.5 got 5.4 / 3.1; accepting near smothers
+after 40 construction moves got 5.4 / 12.1: the same true smothers and
+twice as many in total. So when the GUI says the opponent is human
+(`UCI_Opponent` "title rating human name", sent by lichess-bot), Hybrid
+switches after `SmotherHumanAfter` (40) moves; against computers and when
+no opponent is given it stays at 80. Set `SmotherHumanAfter` 0 to turn this
+off. Strength is unaffected (construction only acts in decided games).
 
 ## Tuning (version 1.3)
 
