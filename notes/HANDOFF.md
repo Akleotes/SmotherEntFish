@@ -1457,3 +1457,14 @@ full 6%. Conclusion: detection is solved on real games; human smothers
 mostly come from defender errors, so trap-setting against humans (in
 construction mode only) is the remaining lever. Next check: in unforced
 positions, how often does a Maia-3 defence walk into the smother?
+
+Trap test (notes/scripts/trap_test.py; 1,497 positions 3 or 5 moves before
+real human smothers where none was forced yet; Maia-3 at the defender's
+rating replies 16 times; oracle checks for a forced smother after each
+reply). Walk-in chance after the human's move vs Smotherfish's move: 3
+moves out 6.3% vs 5.7% (eval after +1.7 vs +2.7), 5 moves out 3.8% vs 2.7%
+(+0.6 vs +1.3); in construction territory (eval >= +8) 14.7% vs 13.4%.
+The humans' trap moves cost about a pawn and barely beat the engine even in
+games selected because the trap worked: trap-setting dropped. (Three engine
+exits were the script passing Maia's "0000" after a mating move; Stockfish
+exits on an illegal move in "position". Fixed in the script.)
