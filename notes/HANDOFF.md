@@ -1444,3 +1444,16 @@ declare it: a per-opponent profile can live in the engine.
 human_smother_test.py (pilot, 60 games from Oct 2026): forced smother
 (oracle) 1 move before mate 100%, 3 moves 17%, 5 moves 7%, 10 moves 0%;
 the engine proved every forced one; full run 2,000 games in progress.
+
+Human smother test, full run (2,000 real full/classic smothers from all 12
+months, 7,225 positions; notes/scripts/human_smother_test.py, summary
+human_smother_summary.py; real engine 1.5 at 800 ms after a warm-up;
+oracle 12 moves / 2 quiet / 5M nodes). Forced smother existed 1 / 3 / 5 /
+10 moves before mate: 100 / 14.8 / 3.5 / 0.1%; the engine proved 100 /
+99.3 / 98.5 / 100% of those (3 misses of 365, mates in 8-11). Engine's
+move = human's move: 96.8 / 47.7 / 42.0 / 38.8% (at 1 move the other 3%
+were different proven smothers). Forced share 3 moves out: classic 30%,
+full 6%. Conclusion: detection is solved on real games; human smothers
+mostly come from defender errors, so trap-setting against humans (in
+construction mode only) is the remaining lever. Next check: in unforced
+positions, how often does a Maia-3 defence walk into the smother?
