@@ -231,7 +231,7 @@ Engine::Engine(std::optional<std::filesystem::path> path) :
     options.add("SmotherBuild", Option(true));
     options.add("SmotherBuildCp", Option(800, 0, 10000));
     options.add("SmotherBuildFloor", Option(600, 0, 10000));
-    options.add("SmotherBuildMoves", Option(80, 0, 200));
+    options.add("SmotherBuildMoves", Option(160, 0, 200));
     options.add("SmotherBuildWeight", Option(8, 0, 100));
     // 1 = hand-set build_score weights, 2 = weights fitted to game data.
     options.add("SmotherBuildVersion", Option(1, 1, 2));
@@ -250,8 +250,8 @@ Engine::Engine(std::optional<std::filesystem::path> path) :
     options.add("SmotherFullFirst", Option(0, 0, 100));
     // One switch for the smother goal in brutal mode, for GUIs (DroidFish):
     // Full   = only true smothers count (the options above decide),
-    // Hybrid = (default) true smothers first, "all but one" ones after 40 construction
-    //          moves (as SmotherPartialAfter 40; an explicit value there wins),
+    // Hybrid = (default) true smothers first, "all but one" ones after 80 construction
+    //          moves (as SmotherPartialAfter 80; an explicit value there wins),
     // Near   = "all but one" smothers always count (as SmotherPartial).
     options.add("SmotherGoal", Option("Hybrid var Full var Hybrid var Near", "Hybrid"));
     // Blocker survivability in the build score, a bit mask: 1 pinned
@@ -302,7 +302,7 @@ Engine::Engine(std::optional<std::filesystem::path> path) :
     // squares 0..5+, comma separated, replacing the linear ring terms.
     options.add("SmotherBuildReady", Option(0, 0, 200));
     options.add("SmotherBuildDefRing", Option(100, 0, 100));
-    options.add("SmotherBuildRingTable", Option(""));
+    options.add("SmotherBuildRingTable", Option("60,50,0,-10,-15"));
     // Exit: points lost per safe way off the ring for a defender ring piece.
     options.add("SmotherBuildExit", Option(0, 0, 50));
 

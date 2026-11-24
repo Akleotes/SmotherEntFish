@@ -1359,3 +1359,14 @@ full+near ~61.7 vs 57.7: more near fallbacks, full not hurt.
 Candidate 1.5 = SmotherPartialAfter 80 + SmotherBuildMoves 160 +
 SmotherBuildRingTable 60,50,0,-10,-15. tc180c15 (3+2 vs 1.4.1 defaults)
 and sprt-c15 (10+0.1, [-3, 0], 7 accounts x 18 x 200) check it.
+
+tc180c15 (3+2, 6 of 7 shards; Aurazur did not run; true / near / true+near
+per 100): SF 1500: 1.4.1 12.3 / 58.1 / 70.4 (260), C15 13.2 / 50.5 / 63.6
+(220); SF 2500: 6.9 / 51.4 / 58.3 (259), C15 8.8 / 42.9 / 51.8 (170, 2
+draws); Maia-3 1500: 8.8 / 58.0 / 66.8 (250), C15 17.3 / 45.0 / 62.3 (260,
+z true +2.8). sprt-c15 (5 of 7 shards): 18,000 games, -1.0 Elo [-2.2,
++0.1], pentanomial [3, 483, 8080, 432, 2], H1 for [-3, 0].
+Akleotes concurrency (Nov 24, 18:39 JST): 42 jobs at once (SPRT 18 + 3+2
+20 + probe 4), up from ~20-24 on Nov 23.
+Release 1.5 (user approved): Hybrid switch 80 (was 40), SmotherBuildMoves
+160 (was 80), SmotherBuildRingTable 60,50,0,-10,-15. Bench unchanged.

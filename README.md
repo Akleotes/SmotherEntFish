@@ -42,7 +42,7 @@ Smotherfish plays as ordinary Stockfish.
 
 Like Stockfish, Smotherfish does not include a graphical user interface. Use it
 with any UCI chess GUI, such as DroidFish on Android. It identifies itself as
-"Smotherfish 1.4.1 (Stockfish dev-20261122-3e8fde75)".
+"Smotherfish 1.5 (Stockfish dev-20261122-3e8fde75)".
 
 ## What it does
 
@@ -59,8 +59,8 @@ with any UCI chess GUI, such as DroidFish on Android. It identifies itself as
   first, near ones later in the game), Full (only true smothers), or Near
   (also "all but one" smothers, where one square next to the king is empty
   but covered). A true smother up to three moves longer is always preferred
-  to a near one. With the Hybrid goal, 61-72 of every 100 games at 3+2
-  against Elo 1500-2500 opponents end in a full or near smother (version 1.3).
+  to a near one. Since 1.5, Hybrid holds out for a true smother for 80
+  construction moves (of up to 160) before it accepts a near one.
 - **With brutal mode off** it plays Stockfish's moves except when a smother
   is proven.
 - **Human mode:** `HumanElo` N plays like a human of rating N (1020-2400,
@@ -107,6 +107,23 @@ games per row, Hybrid goal (the default):
 (1.2 defaults in the same games: 59.8 / 62.0 / 49.2 full or near.) The tuning
 costs no strength: +1.3 Elo against 1.2 over 21,600 games at 10+0.1 (95%
 range +0.2 to +2.4).
+
+Version 1.5 builds longer for a true smother (near smothers accepted after
+80 construction moves instead of 40, up to 160 construction moves instead
+of 80) and scores the king's box in steps (`SmotherBuildRingTable`). At
+3+2 against 1.4.1 (170-260 games per row; smothers per 100 games):
+
+| Opponent | Full: 1.4.1 | Full: 1.5 | Full or near: 1.4.1 | Full or near: 1.5 |
+| -------- | ----------- | --------- | ------------------- | ----------------- |
+| Stockfish, Elo 1500 | 12.3 | 13.2 | 70.4 | 63.6 |
+| Stockfish, Elo 2500 | 6.9 | 8.8 | 58.3 | 51.8 |
+| Maia-3 1500 (human-like) | 8.8 | 17.3 | 66.8 | 62.3 |
+
+At 5+0.05 (1,000-2,500 games per row) true smothers roughly double
+against Stockfish Elo 1500-2500 (8 to 14-15 and 4 to 8-9 per 100). Strength
+against 1.4.1 at 10+0.1: -1.0 Elo over 18,000 games (95% -2.2 to +0.1),
+no measurable cost. The previous behaviour: `SmotherPartialAfter 40`,
+`SmotherBuildMoves 80`, `SmotherBuildRingTable` empty.
 
 Losses are rare (none at Elo 1500 or 2500, 1 in 1000 games at Elo 2000: an
 ordinary blitz loss before any smother hunting started), and a full-strength strength test

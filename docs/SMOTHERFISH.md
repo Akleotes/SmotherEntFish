@@ -1,6 +1,6 @@
 # Smotherfish guide
 
-Smotherfish 1.3 is Stockfish (development version of 22 November 2026,
+Smotherfish 1.5 is Stockfish (development version of 22 November 2026,
 upstream commit 3e8fde75) with one extra goal: end the game with a
 smothered mate. This guide explains how it works, lists every option, and
 summarises what was measured. The day-by-day development log is in
@@ -83,7 +83,7 @@ All options are standard UCI options. Defaults are what was measured best.
 | `SmotherMate` | true | Run the smother prover at all. |
 | `SmotherBrutal` | true | Brutal mode (see above). The main switch for smother hunting; on by default since November 2026 (full-strength SPRTs: no cost). |
 | `SmotherBuild` | true | Construction mode; only active with `SmotherBrutal`. |
-| `SmotherGoal` | Hybrid | What counts as a smother in brutal mode: **Hybrid** (default: true smothers first, "all but one" ones after 40 construction moves), **Full** (only true smothers), **Near** ("all but one" ones always). See "Full, hybrid or near" below. |
+| `SmotherGoal` | Hybrid | What counts as a smother in brutal mode: **Hybrid** (default: true smothers first, "all but one" ones after 80 construction moves), **Full** (only true smothers), **Near** ("all but one" ones always). See "Full, hybrid or near" below. |
 | `SmotherClassic` | false | Count only knight smothers. By default any piece may deliver the mate. |
 | `SmotherStrict` | false | Require a smother against every defence (no faster-mate escapes). Finds far fewer proofs. |
 
@@ -117,7 +117,7 @@ All options are standard UCI options. Defaults are what was measured best.
 | ------ | ------- | ------- |
 | `SmotherBuildCp` | 800 | Advantage (centipawns) at which construction starts. |
 | `SmotherBuildFloor` | 600 | Advantage it never gives up while building. |
-| `SmotherBuildMoves` | 80 | Most moves per game spent building. |
+| `SmotherBuildMoves` | 160 | Most moves per game spent building (80 before 1.5). |
 | `SmotherBuildWeight` | 8 | Centipawns per construction-score point. |
 | `SmotherBuildWeights` | 13,8,23,8,2,4 | Construction-score weights: enemy pieces next to their king, open squares there, king in a corner, on an edge, our knights near it, our queen near it. Tuned on game results in 1.3 (was 12,10,25,10,4,3; see "Tuning" below). |
 | `SmotherBuildKeep` | 11 | Construction-score points per enemy piece kept on the board (possible blockers). 3 until Nov 21, 8 in 1.2, 11 in 1.3. |
@@ -135,7 +135,7 @@ All options are standard UCI options. Defaults are what was measured best.
 | `SmotherBuildSurviveCap` | 12 | Cap on those terms, in score points. |
 | `SmotherBuildVersion` | 1 | 2 = construction-score weights fitted to game data (`notes/fit/`); better at predicting, not better in games. |
 | `SmotherPartial` | false | "All but one" smothers always count (the same as `SmotherGoal` Near). |
-| `SmotherPartialAfter` | 0 | "All but one" smothers count after this many construction moves (0 = never; `SmotherGoal` Hybrid uses 40). |
+| `SmotherPartialAfter` | 0 | "All but one" smothers count after this many construction moves (0 = never; `SmotherGoal` Hybrid uses 80, 40 before 1.5). |
 
 ### Other
 
@@ -256,6 +256,31 @@ smother can be forced at all.
   the same plan files on 30 machines at once, on branches named
   `circle-exp/<name>`, for quick one-off tests. Its pipeline must be a native
   CircleCI pipeline, not one created from a GitHub Actions workflow.
+
+## Version 1.5: build longer, score the box in steps
+
+A diagnostic of 2,500 recorded games (notes/HANDOFF.md, Nov 23-24) showed
+that while the engine builds, true smothers arrive at a steady rate (about
+2.5% of games per 10 moves) until Hybrid starts accepting near smothers,
+which then crowd them out; half of the plain-mate wins stopped at the
+80-move construction cap. Holding out for a true smother longer converts
+near smothers into true ones. Outside reviews (GLM, DeepSeek, ChatGPT)
+suggested further terms; only a step-shaped ring score helped, by keeping
+more near smothers as the fallback.
+
+| Option | Default | Effect |
+| ------ | ------- | ------ |
+| `SmotherPartialAfter` (via Hybrid) | 80 | Near smothers count after 80 construction moves (was 40). |
+| `SmotherBuildMoves` | 160 | Construction budget per game (was 80). |
+| `SmotherBuildRingTable` | 60,50,0,-10,-15 | Build-score points by open squares next to the enemy king (0, 1, 2, 3, 4+), replacing the linear boxed/hole terms. Empty = linear. |
+| `SmotherBuildReady`, `SmotherBuildDefRing`, `SmotherBuildExit` | off | Tested, no gain (ready squares trade near for true smothers; a lazier defender and a safe-exit penalty did nothing). |
+
+5+0.05, smothers per 100 games (true / true or near): Elo 1500 (2,500 games
+each): 1.4 defaults 8.2 / 59.6; 1.5 15.0 / 61.7. Elo 2500: 3.5-4.2 / 40;
+1.5 about 9 / 43. 3+2 results are in the README. Against humans who resign
+lost positions, longer building means some games end by resignation before
+the mate; set `SmotherPartialAfter 40` and `SmotherBuildMoves 80` for the
+old, quicker behaviour.
 
 ## Tuning (version 1.3)
 

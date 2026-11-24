@@ -346,7 +346,7 @@ void Search::Worker::start_smother_prover() {
         const bool goalHybrid = options["SmotherGoal"] == "Hybrid";
         int        after      = int(options["SmotherPartialAfter"]);
         if (after == 0 && goalHybrid)
-            after = 40;
+            after = 80;  // 1.5 (grid41-44, tc180c15): was 40
         mgr.smotherPartialNow =
           bool(options["SmotherPartial"]) || goalNear
           || (after > 0 && mgr.smotherBrutal && mgr.smotherBuilds >= after);
