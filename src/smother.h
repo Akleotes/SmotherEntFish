@@ -94,13 +94,16 @@ struct BuildWeights {
     //   the linear boxed/hole terms when set.
     // exit: points lost per way a defender ring piece can step off the ring
     //   to a square we do not attack (at most two open ring squares).
-    int  ready = 0, defRingPct = 100, exit = 0;
+    // knightCheck: points per knight of ours one knight move from a square
+    //   that checks the enemy king and that no enemy pawn guards (half for
+    //   two moves): the route a classic (knight) smother needs.
+    int  ready = 0, defRingPct = 100, exit = 0, knightCheck = 0;
     bool useTable = false;
     int  ringTable[6] = {};
 };
 extern BuildWeights buildWeights;
 void set_build_weights(const std::string& s);
-void set_build_extras(int ready, int defRingPct, const std::string& ringTable, int exit = 0);
+void set_build_extras(int ready, int defRingPct, const std::string& ringTable, int exit = 0, int knightCheck = 0);
 
 int build_score(const Position& pos, Color us, int survive = 0, int cap = 12, int version = 1, int keep = 11, int keepNear = 2, int starve = 0, int starveAt = 4, int ownKeep = 0, int escape = 4, int knightSafe = 0);
 

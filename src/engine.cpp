@@ -314,6 +314,9 @@ Engine::Engine(std::optional<std::filesystem::path> path) :
     options.add("SmotherBuildRingTable", Option("60,50,0,-10,-15"));
     // Exit: points lost per safe way off the ring for a defender ring piece.
     options.add("SmotherBuildExit", Option(0, 0, 50));
+    // KnightCheck: points per knight one knight move from a safe checking
+    // square (half for two moves); for classic (knight) smothers.
+    options.add("SmotherBuildKnightCheck", Option(0, 0, 100));
 
     // While pondering, let the parallel prover search deep and unbounded on
     // the opponent's time.

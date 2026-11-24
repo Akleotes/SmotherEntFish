@@ -994,7 +994,8 @@ bool Search::Worker::iterative_deepening() {
             Smother::set_build_extras(int(options["SmotherBuildReady"]),
                                       int(options["SmotherBuildDefRing"]),
                                       std::string(options["SmotherBuildRingTable"]),
-                                      int(options["SmotherBuildExit"]));
+                                      int(options["SmotherBuildExit"]),
+                                      int(options["SmotherBuildKnightCheck"]));
             buildEscape    = int(options["SmotherBuildEscape"]);
             buildKnightSafe = int(options["SmotherBuildKnightSafe"]);
             shapeWeight    = 0;

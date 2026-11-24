@@ -1492,3 +1492,12 @@ mate shapes (Qxf7# with the king boxed counts as AnyPiece full); average
 1.9. Opening steering would add < 1 per 100 games: not pursued. resign3:
 earlier construction against resigning humans (switch 40 base; BuildCp /
 Floor 600/450, 500/350, 400/250), Maia-3 1500 x1500 and 1900 x600.
+
+User (Nov 25): a smothered mate means a KNIGHT mate against a king fully
+boxed by its own pieces (classic). AnyPiece "full" (incl. Scholar's-mate
+shapes) and near smothers do not count. Earlier classic rates (per 100,
+5+0.05): Elo 1500 1.4 defaults ~0.4-0.5, 1.5 ~1.0-1.2, classic-only Full
+160 1.6 (grid41). New option SmotherBuildKnightCheck (points per knight one
+knight move from a checking square not guarded by an enemy pawn, half for
+two). grid46: 1.5 vs SmotherClassic vs + KnightCheck 8 vs + KnightCheck 8 +
+RingTable 90,40,0,-10,-15; Elo 1500 x2500, 2500 x400, Maia-3 1500 x400.

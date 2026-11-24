@@ -663,13 +663,15 @@ void set_build_weights(const std::string& s) {
     w.ready      = buildWeights.ready;
     w.defRingPct = buildWeights.defRingPct;
     w.exit       = buildWeights.exit;
+    w.knightCheck = buildWeights.knightCheck;
     w.useTable   = buildWeights.useTable;
     std::copy(std::begin(buildWeights.ringTable), std::end(buildWeights.ringTable), w.ringTable);
     buildWeights = w;
 }
 
-void set_build_extras(int ready, int defRingPct, const std::string& ringTable, int exit) {
+void set_build_extras(int ready, int defRingPct, const std::string& ringTable, int exit, int knightCheck) {
     buildWeights.ready      = ready;
+    buildWeights.knightCheck = knightCheck;
     buildWeights.exit       = exit;
     buildWeights.defRingPct = defRingPct;
     std::string t = ringTable;
@@ -735,6 +737,31 @@ int build_score(const Position& pos, Color us, int survive, int cap, int version
             exits += popcount(to & safe);
         }
         score -= W.exit * std::min(exits, 6);
+    }
+
+    // Knight routes to safe checking squares (classic smothers).
+    if (W.knightCheck)
+    {
+        Bitboard pawnGuard = 0, tp = pos.pieces(them, PAWN);
+        while (tp)
+            pawnGuard |= Attacks::attacks_bb(PAWN, pop_lsb(tp), them);
+        const Bitboard checkSqs = Attacks::attacks_bb(KNIGHT, ksq) & ~pos.pieces(us) & ~pawnGuard;
+        Bitboard       kn       = pos.pieces(us, KNIGHT);
+        while (kn)
+        {
+            const Square s   = pop_lsb(kn);
+            Bitboard     one = Attacks::attacks_bb(KNIGHT, s);
+            if (one & checkSqs)
+                score += W.knightCheck;
+            else
+            {
+                Bitboard two = 0;
+                while (one)
+                    two |= Attacks::attacks_bb(KNIGHT, pop_lsb(one));
+                if (two & checkSqs)
+                    score += W.knightCheck / 2;
+            }
+        }
     }
 
     // Ready squares: where a queen move would mate once the box is closed.
