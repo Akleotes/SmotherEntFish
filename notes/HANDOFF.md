@@ -1505,3 +1505,11 @@ RingTable 90,40,0,-10,-15; Elo 1500 x2500, 2500 x400, Maia-3 1500 x400.
 Lichess bots 1-4 started (Nov 25, ~03:50 JST, 5 h) on the enterprise fork
 from actions-exp/grid46 (1.5.1 code + KnightCheck off): bots 1, 2, 4 1.5.1
 defaults (human switch via UCI_Opponent); bot 3 SmotherClassic=true.
+
+resign3 (switch 40 base, Maia-3 resigning on the Lichess blitz curve;
+classic / any-piece full / near per 100): Maia-3 1500 (1500 each): base
+(BuildCp 800) 0.5 (8) / 5.3 / 12.5; 600/450 0.8 / 5.6 / 15.0; 500/350 1.6
+(24, z +2.8) / 5.8 / 15.5; 400/250 1.1 / 5.5 / 16.7. Maia-3 1900 (600):
+1.0 / 4.3 / 9.7 vs 1.0-1.3 / 2.5-4.8 / 14.7-17.0. No draws or losses.
+Earlier construction adds near smothers; the classic gain at 500 is too
+few events to act on. Combine with grid46's best knight setting later.
