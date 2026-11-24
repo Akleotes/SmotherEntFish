@@ -1384,3 +1384,13 @@ switch, hold out up to N consecutive moves where a full smother is very
 likely (<= 1 open ring square, a ready square, the king cannot step out;
 offline 43-55% within 10 moves). grid45: 1.5 vs Hold 10, Hold 25, switch
 40 + Hold 25; Elo 1500 x1500, 2500 x600, Maia-3 1500 x400.
+
+Human resignation, Lichess database (Oct 2026, first 60,000 human rated
+games streamed; notes/scripts/lichess_resign_stats.py): chance per own move
+of resigning by material deficit 3-5 / 6-8 / 9-11 / 12-14 / 15+: bullet
+0.7 / 1.5 / 2.4 / 2.6 / 2.1%; blitz 1.6 / 3.7 / 5.3 / 5.7 / 3.7%; rapid 1.8
+/ 3.6 / 4.5 / 4.4 / 3.1% (blitz 1600-1999: up to 8.2%). Games where one
+side was 8+ down end: bullet resign 19%, mate 20%, time/other 57%, draw
+4%; blitz 42 / 24 / 29 / 5; rapid 45 / 32 / 17 / 6. So resign1's 5% arm
+matches blitz/rapid, 2% bullet; 10% is a worst case. At most a quarter to
+a third of lost human games reach any mate.
