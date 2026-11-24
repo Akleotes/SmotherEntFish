@@ -662,13 +662,15 @@ void set_build_weights(const std::string& s) {
     // Keep the extras set by set_build_extras().
     w.ready      = buildWeights.ready;
     w.defRingPct = buildWeights.defRingPct;
+    w.exit       = buildWeights.exit;
     w.useTable   = buildWeights.useTable;
     std::copy(std::begin(buildWeights.ringTable), std::end(buildWeights.ringTable), w.ringTable);
     buildWeights = w;
 }
 
-void set_build_extras(int ready, int defRingPct, const std::string& ringTable) {
+void set_build_extras(int ready, int defRingPct, const std::string& ringTable, int exit) {
     buildWeights.ready      = ready;
+    buildWeights.exit       = exit;
     buildWeights.defRingPct = defRingPct;
     std::string t = ringTable;
     std::replace(t.begin(), t.end(), ',', ' ');
@@ -700,6 +702,40 @@ int build_score(const Position& pos, Color us, int survive, int cap, int version
     if (W.defRingPct != 100 && pos.side_to_move() != us)
         ringScore = ringScore * W.defRingPct / 100;
     int score = ringScore + (corner ? W.corner : edge ? W.edge : 0);
+
+    // Exits (ChatGPT review): ways a defender ring piece can step off the ring
+    // to a square we do not attack. Offline (2,343 games, <= 1 open square):
+    // full smother within 10 moves 25.5% / 18.6% / 10.5% with 0 / 1-2 / 3+.
+    if (W.exit && holes <= 2)
+    {
+        const Bitboard occ = pos.pieces();
+        Bitboard       ours = 0, p = pos.pieces(us);
+        while (p)
+        {
+            const Square    s  = pop_lsb(p);
+            const PieceType pt = type_of(pos.piece_on(s));
+            ours |= pt == PAWN ? Attacks::attacks_bb(PAWN, s, us) : Attacks::attacks_bb(pt, s, occ);
+        }
+        const Bitboard safe  = ~ring & ~ours & ~pos.pieces(them) & ~square_bb(ksq);
+        Bitboard       rp    = ring & pos.pieces(them) & ~pos.pieces(KING);
+        int            exits = 0;
+        while (rp)
+        {
+            const Square    s  = pop_lsb(rp);
+            const PieceType pt = type_of(pos.piece_on(s));
+            Bitboard        to;
+            if (pt == PAWN)
+            {
+                const Square fwd = s + pawn_push(them);
+                to = (is_ok(fwd) && pos.empty(fwd) ? square_bb(fwd) : Bitboard(0))
+                   | (Attacks::attacks_bb(PAWN, s, them) & pos.pieces(us));
+            }
+            else
+                to = Attacks::attacks_bb(pt, s, occ);
+            exits += popcount(to & safe);
+        }
+        score -= W.exit * std::min(exits, 6);
+    }
 
     // Ready squares: where a queen move would mate once the box is closed.
     if (W.ready && holes <= 2 && pos.pieces(us, QUEEN))

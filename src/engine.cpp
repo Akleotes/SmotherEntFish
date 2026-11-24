@@ -303,6 +303,8 @@ Engine::Engine(std::optional<std::filesystem::path> path) :
     options.add("SmotherBuildReady", Option(0, 0, 200));
     options.add("SmotherBuildDefRing", Option(100, 0, 100));
     options.add("SmotherBuildRingTable", Option(""));
+    // Exit: points lost per safe way off the ring for a defender ring piece.
+    options.add("SmotherBuildExit", Option(0, 0, 50));
 
     // While pondering, let the parallel prover search deep and unbounded on
     // the opponent's time.

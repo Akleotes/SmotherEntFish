@@ -92,13 +92,15 @@ struct BuildWeights {
     // defRingPct: percent of the ring score when the defender is to move.
     // ringTable: points by the number of open ring squares (0..5+), replacing
     //   the linear boxed/hole terms when set.
-    int  ready = 0, defRingPct = 100;
+    // exit: points lost per way a defender ring piece can step off the ring
+    //   to a square we do not attack (at most two open ring squares).
+    int  ready = 0, defRingPct = 100, exit = 0;
     bool useTable = false;
     int  ringTable[6] = {};
 };
 extern BuildWeights buildWeights;
 void set_build_weights(const std::string& s);
-void set_build_extras(int ready, int defRingPct, const std::string& ringTable);
+void set_build_extras(int ready, int defRingPct, const std::string& ringTable, int exit = 0);
 
 int build_score(const Position& pos, Color us, int survive = 0, int cap = 12, int version = 1, int keep = 11, int keepNear = 2, int starve = 0, int starveAt = 4, int ownKeep = 0, int escape = 4, int knightSafe = 0);
 

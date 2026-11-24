@@ -1318,3 +1318,26 @@ human8 (UCI_Elo 1320 + per mille vs Maia-3 1100 / 1500, 300 each): 90:
 0.620 / 0.460 (~1400); 110: 0.563 / 0.400 (~1255); 130: 0.473 / 0.335
 (~1020). human5's 80 per mille ~1270 was off. HumanElo map low end now
 (1020, 130), (1255, 110), (1400, 90), (1490, 72); range 1020-2400.
+
+grid43 complete (base 80/160; full / near / full+near, z vs B): Elo 1500
+(1000): B 14.0 / 45.6 / 59.6; RingTable 15.3 / 44.4 / 59.7 (z +0.8 / 0.0);
+Ready 20 15.3 / 36.7 / 52.0 (z +0.8 / -3.4); Ready 60 13.5 / 34.4 / 47.9;
+DefRing 30 12.3 / 45.2 / 57.5; DefRing 0 11.5 / 39.9 / 51.4 (-1.7 / -3.7).
+Elo 2500 (400): B 8.5 / 25.5 / 34.0; RingTable 7.8 / 35.5 / 43.2 (f+n z
++2.7); others within noise. Ready and DefRing dropped.
+
+Outside reviews: DeepSeek (ring-piece mobility, KeepFar, conditional hold,
+learned model) and ChatGPT (counterfactual blocker stability = safe ring
+exits, check funnel, step-shaped ring score, protected final-check
+squares, learned model, box-closure prover; method: game-clustered CIs,
+hazard denominators, decisive vs construction timeline, oracle as a lower
+bound). Offline (notes/scripts/review2_checks.py, review2_exits.py):
+raw ring-piece mobility: no signal; enemy pieces far from the king: no
+harm (no KeepFar); decisive threshold +4/+6/+8: same hazard shape; king
+able to move vs stuck (<= 1 open): ~6-10% vs ~19-29%. Safe exits (off
+the ring, not lost, no mate in one), game-clustered 95% CI, <= 1 open:
+0: 29.3% [25.6-33.7], 1-2: 18.6% [15.5-21.7], 3+: 6.1% [4.7-7.3]. Cheap
+proxy (to squares we do not attack): 25.5 / 18.6 / 10.5%. New option
+SmotherBuildExit (points per proxy exit, at most 6, when <= 2 open).
+grid44: base 80/160; B, Exit 6, Exit 15, RingTable, RingTable + Exit 6;
+Elo 1500 x1500, 2500 x600, Maia-3 1500 x400.
