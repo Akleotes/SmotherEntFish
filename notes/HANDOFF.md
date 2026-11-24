@@ -1501,3 +1501,7 @@ shapes) and near smothers do not count. Earlier classic rates (per 100,
 knight move from a checking square not guarded by an enemy pawn, half for
 two). grid46: 1.5 vs SmotherClassic vs + KnightCheck 8 vs + KnightCheck 8 +
 RingTable 90,40,0,-10,-15; Elo 1500 x2500, 2500 x400, Maia-3 1500 x400.
+
+Lichess bots 1-4 started (Nov 25, ~03:50 JST, 5 h) on the enterprise fork
+from actions-exp/grid46 (1.5.1 code + KnightCheck off): bots 1, 2, 4 1.5.1
+defaults (human switch via UCI_Opponent); bot 3 SmotherClassic=true.
