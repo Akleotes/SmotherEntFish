@@ -1346,3 +1346,16 @@ User (Nov 24): objective = full smothers first, near smothers as the
 fallback. Release 1.4.1: HumanElo recalibration only (bench unchanged).
 80/160 (SmotherPartialAfter 80, SmotherBuildMoves 160) is the candidate
 default for 1.5, after grid44 and a strength check.
+
+grid44 (base 80/160; full / near / full+near, z vs B): Elo 1500 (1500):
+B 14.1 / 42.3 / 56.4; RingTable 14.8 / 48.3 / 63.1 (z +0.6 / +3.7); Exit
+6 13.8 / 41.9 / 55.7; Exit 15 14.1 / 41.3 / 55.4; RingTable + Exit 6 14.5
+/ 43.0 / 57.5. Elo 2500 (600): B 8.3 / 32.2 / 40.5; RingTable 9.3 / 34.8
+/ 44.2; Exit arms within noise. Maia-3 1500 (400): B 12.0 / 32.0 / 44.0;
+RingTable 14.8 / 37.8 / 52.5 (f+n z +2.4). The exit penalty does nothing
+in games although it predicts well offline (a predictor, not a lever).
+RingTable with grid43 (Elo 1500, 2500 games each): full 15.0 vs 14.1,
+full+near ~61.7 vs 57.7: more near fallbacks, full not hurt.
+Candidate 1.5 = SmotherPartialAfter 80 + SmotherBuildMoves 160 +
+SmotherBuildRingTable 60,50,0,-10,-15. tc180c15 (3+2 vs 1.4.1 defaults)
+and sprt-c15 (10+0.1, [-3, 0], 7 accounts x 18 x 200) check it.
