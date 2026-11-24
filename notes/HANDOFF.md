@@ -1434,3 +1434,13 @@ mates: near 597,512 (27.9 per 1000 games), full 25,424 (1.19), classic
 All 12 months merged (2025-11 partial): 33,357,502 human games; rates
 unchanged from the 8-month merge. Human smothered mates: near 930,794
 (27.9 per 1000), full 39,941 (1.20), classic 22,524 (0.68).
+
+match.py: HarnessResign=curve:P1,..,P5 resigns with the measured Lichess
+chance per own move for deficits 3-5 / 6-8 / 9-11 / 12-14 / 15+ (blitz:
+1.7,3.8,5.6,6.0,4.0). resign2: Maia-3 1500 (1500 each) and 1900 (600 each)
+on the blitz curve; arms 1.5, switch 40, switch 40 + Hold 25. lichess-bot
+passes UCI_Opponent (title rating human/computer name) to engines that
+declare it: a per-opponent profile can live in the engine.
+human_smother_test.py (pilot, 60 games from Oct 2026): forced smother
+(oracle) 1 move before mate 100%, 3 moves 17%, 5 moves 7%, 10 moves 0%;
+the engine proved every forced one; full run 2,000 games in progress.
