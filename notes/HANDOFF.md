@@ -1513,3 +1513,12 @@ classic / any-piece full / near per 100): Maia-3 1500 (1500 each): base
 1.0 / 4.3 / 9.7 vs 1.0-1.3 / 2.5-4.8 / 14.7-17.0. No draws or losses.
 Earlier construction adds near smothers; the classic gain at 500 is too
 few events to act on. Combine with grid46's best knight setting later.
+
+grid46 (6 of 8 shares; CLASSIC knight smothers per 100, the user's goal):
+Elo 1500 (1876 each): 1.5 0.7 (14); SmotherClassic 2.5 (46, z +4.2, 12
+draws); + KnightCheck 8 4.0 (75, z +6.5, 5 draws); + RingTable
+90,40,0,-10,-15 3.3 (61). Maia-3 1500 (~300): 0.3 / 3.3 / 3.6 / 3.8. Elo
+2500 (~300): 1.0 / 1.6 / 1.0 / 0.7 (too few). No losses. Under the classic
+goal nearly all full smothers are classic; near and queen smothers mostly
+vanish. grid47 tunes KnightCheck 4 / 8 / 16 / 24 and 16 + BuildCp 500 /
+Floor 350 (all SmotherClassic).
