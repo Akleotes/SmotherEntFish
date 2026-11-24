@@ -1421,3 +1421,13 @@ no table) 8.8 / 25.5 / 34.2 / 37; switch 40 + Hold 25 8.5 / 32.0 / 40.5 /
 / 12.2 / 16.5 / 77. Against resigners 1.5 keeps the most true smothers
 (n.s.) but loses its near fallback; S40H25 is the candidate human (Lichess)
 profile.
+
+Lichess data, first merge (8 of 12 months finished, 2025-11 partial; 21.4M
+human games; notes/scripts/lichess_merge.py). Resign chance per own move by
+deficit 3-5 / 6-8 / 9-11 / 12-14 / 15+: bullet 0.8 / 1.6 / 2.6 / 2.5 / 1.8%;
+blitz 1.7 / 3.8 / 5.6 / 6.0 / 4.0%; rapid 1.8 / 3.8 / 5.4 / 5.6 / 3.7%;
+classical 1.8 / 3.5 / 4.6 / 4.6 / 3.1%. Games with one side 8+ down end:
+bullet resign 19.5% mate 21.3% time/other 55.5%; blitz 43.4 / 23.0 / 28.1;
+rapid 47.8 / 29.5 / 17.0; classical 46.6 / 32.4 / 14.6. Human smothered
+mates: near 597,512 (27.9 per 1000 games), full 25,424 (1.19), classic
+14,413 (0.67). Top ECO for full+classic: B00, A00, A40, C50, B01.
