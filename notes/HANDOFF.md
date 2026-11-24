@@ -1341,3 +1341,8 @@ proxy (to squares we do not attack): 25.5 / 18.6 / 10.5%. New option
 SmotherBuildExit (points per proxy exit, at most 6, when <= 2 open).
 grid44: base 80/160; B, Exit 6, Exit 15, RingTable, RingTable + Exit 6;
 Elo 1500 x1500, 2500 x600, Maia-3 1500 x400.
+
+User (Nov 24): objective = full smothers first, near smothers as the
+fallback. Release 1.4.1: HumanElo recalibration only (bench unchanged).
+80/160 (SmotherPartialAfter 80, SmotherBuildMoves 160) is the candidate
+default for 1.5, after grid44 and a strength check.

@@ -42,7 +42,7 @@ Smotherfish plays as ordinary Stockfish.
 
 Like Stockfish, Smotherfish does not include a graphical user interface. Use it
 with any UCI chess GUI, such as DroidFish on Android. It identifies itself as
-"Smotherfish 1.4 (Stockfish dev-20261122-3e8fde75)".
+"Smotherfish 1.4.1 (Stockfish dev-20261122-3e8fde75)".
 
 ## What it does
 
