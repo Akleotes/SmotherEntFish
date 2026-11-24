@@ -1431,3 +1431,6 @@ bullet resign 19.5% mate 21.3% time/other 55.5%; blitz 43.4 / 23.0 / 28.1;
 rapid 47.8 / 29.5 / 17.0; classical 46.6 / 32.4 / 14.6. Human smothered
 mates: near 597,512 (27.9 per 1000 games), full 25,424 (1.19), classic
 14,413 (0.67). Top ECO for full+classic: B00, A00, A40, C50, B01.
+All 12 months merged (2025-11 partial): 33,357,502 human games; rates
+unchanged from the 8-month merge. Human smothered mates: near 930,794
+(27.9 per 1000), full 39,941 (1.20), classic 22,524 (0.68).
