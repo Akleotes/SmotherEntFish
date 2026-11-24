@@ -1481,3 +1481,14 @@ use switch 40 automatically when UCI_Opponent says the opponent is human.
 Release 1.5.1 (user approved): UCI_Opponent declared; when its third word
 is "human", Hybrid's near switch is SmotherHumanAfter (40) instead of 80.
 Verified python-chess (lichess-bot) accepts it and the switch fires.
+
+Research round 3 (Nov 25 JST; communities: TalkChess personalities,
+Lc0 odds bots with search contempt and human-emulating training, trap
+articles; no smother-specialised project found). Lichess openings (11
+months; per-ECO base from the 1-in-500 sample): true smothers per 1000
+games by the mating side: C57 (Two Knights 4.Ng5 d5) Black 7.2 (classic
+mostly, 6.7 within 20 moves); B00/B02/B20 White 3.2-4.0, mostly Scholar's
+mate shapes (Qxf7# with the king boxed counts as AnyPiece full); average
+1.9. Opening steering would add < 1 per 100 games: not pursued. resign3:
+earlier construction against resigning humans (switch 40 base; BuildCp /
+Floor 600/450, 500/350, 400/250), Maia-3 1500 x1500 and 1900 x600.
