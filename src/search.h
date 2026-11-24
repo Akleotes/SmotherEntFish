@@ -323,6 +323,7 @@ class SearchManager {
     int               smotherExpectPly = 0;     // and its game ply
     int               smotherEscapeLeft = 0;    // moves left with the escape budget
     int               smotherBuilds   = 0;      // moves played in construction mode this game
+    int               smotherHoldRun  = 0;      // consecutive moves SmotherHold held out
     bool              smotherBuilding = false;  // construction mode on the last move
     bool              smotherSeekNow  = false;  // this move: seek mode (set before helpers start)
     bool              smotherBuildNow = false;  // this move: construction mode (likewise)

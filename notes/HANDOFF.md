@@ -1370,3 +1370,17 @@ Akleotes concurrency (Nov 24, 18:39 JST): 42 jobs at once (SPRT 18 + 3+2
 20 + probe 4), up from ~20-24 on Nov 23.
 Release 1.5 (user approved): Hybrid switch 80 (was 40), SmotherBuildMoves
 160 (was 80), SmotherBuildRingTable 60,50,0,-10,-15. Bench unchanged.
+
+Nov 24 evening (user approved): (1) distribute.sh: weighted shares; the
+enterprise fork takes 2 of 8 shards with max_parallel 40 (it ran 42 jobs
+at once); distribute.sh now also copies notes/scripts from the tested ref,
+and expand_plan.py accepts a list of shard indices. (2) match.py:
+HarnessResign=T,P pseudo-option: the opponent resigns before each of its
+moves with P% chance once T+ material points down. resign1: 1.5 vs the
+1.4 settings (PartialAfter 40, BuildMoves 80, no RingTable) vs SmotherHold
+25 with switch 40, against Maia-3 1500 resigning at 2/5/10% per move
+(threshold 8), 400 games each. (3) SmotherHold N (off): after the near
+switch, hold out up to N consecutive moves where a full smother is very
+likely (<= 1 open ring square, a ready square, the king cannot step out;
+offline 43-55% within 10 moves). grid45: 1.5 vs Hold 10, Hold 25, switch
+40 + Hold 25; Elo 1500 x1500, 2500 x600, Maia-3 1500 x400.

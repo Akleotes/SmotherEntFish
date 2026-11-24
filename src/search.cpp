@@ -347,9 +347,50 @@ void Search::Worker::start_smother_prover() {
         int        after      = int(options["SmotherPartialAfter"]);
         if (after == 0 && goalHybrid)
             after = 80;  // 1.5 (grid41-44, tc180c15): was 40
+        // SmotherHold: past the switch, keep holding out for a full smother
+        // for up to N consecutive moves in the positions where one most
+        // often follows: at most one open square next to the enemy king, a
+        // "ready" square (an open one our queen reaches in one move, with
+        // another of our pieces guarding it) and the king unable to step out
+        // (every open square covered). Measured (4,494 games): a full smother
+        // within 10 moves 43-55% of the time there, 2% on average. Elsewhere
+        // the near one is accepted at once.
+        bool hold = false;
+        if (const int holdMax = int(options["SmotherHold"]);
+            holdMax > 0 && after > 0 && mgr.smotherBuilds >= after && mgr.smotherHoldRun < holdMax)
+        {
+            const Color    us    = rootPos.side_to_move(), them = ~us;
+            const Square   ksq   = rootPos.square<KING>(them);
+            const Bitboard ring  = Attacks::attacks_bb(KING, ksq);
+            const Bitboard open  = ring & ~rootPos.pieces(them);
+            if (popcount(open) <= 1 && rootPos.pieces(us, QUEEN))
+            {
+                const Bitboard occ = rootPos.pieces();
+                Bitboard       qatt = 0, q = rootPos.pieces(us, QUEEN);
+                while (q)
+                    qatt |= Attacks::attacks_bb(QUEEN, pop_lsb(q), occ);
+                bool     ready = false, stuck = true;
+                Bitboard o     = open;
+                while (o)
+                {
+                    const Square   s  = pop_lsb(o);
+                    const Bitboard by = rootPos.attackers_to(s) & rootPos.pieces(us);
+                    stuck &= bool(by);
+                    ready |= (qatt & s) && (by & ~rootPos.pieces(QUEEN));
+                }
+                Bitboard c = ring & ~rootPos.pieces(us) & qatt;  // also enemy-held ring squares
+                while (c && !ready)
+                {
+                    const Square s = pop_lsb(c);
+                    ready = rootPos.attackers_to(s) & rootPos.pieces(us) & ~rootPos.pieces(QUEEN);
+                }
+                hold = ready && stuck;
+            }
+        }
+        mgr.smotherHoldRun = hold ? mgr.smotherHoldRun + 1 : 0;
         mgr.smotherPartialNow =
           bool(options["SmotherPartial"]) || goalNear
-          || (after > 0 && mgr.smotherBrutal && mgr.smotherBuilds >= after);
+          || (after > 0 && mgr.smotherBrutal && mgr.smotherBuilds >= after && !hold);
     }
 
     if (!options["SmotherMate"] || rootMoves.empty())
@@ -1390,7 +1431,8 @@ void Search::Worker::clear() {
     if (is_mainthread())
         main_manager()->smotherExpectKey = 0, main_manager()->smotherEscapeLeft = 0;
     if (is_mainthread())
-        main_manager()->smotherBuilds = 0, main_manager()->smotherBuilding = false;
+        main_manager()->smotherBuilds = 0, main_manager()->smotherBuilding = false,
+        main_manager()->smotherHoldRun = 0;
     if (is_mainthread())
         main_manager()->smotherSeeks = 0;
     mainHistory.fill(-5);
