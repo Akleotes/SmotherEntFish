@@ -1406,3 +1406,18 @@ runs one job per month on our account and attaches the files to the
 release "lichess-data". First run data/lichess1: 12 months (2025-11 to
 2026-10) x 3M games = 36M games. Test on 40,000 games (Oct 2026): 1,148
 near, 56 full, 25 classic smothered mates.
+
+grid45 (SmotherHold on 1.5; true / near / true+near, z vs 1.5): Elo 1500
+(1500): 1.5 13.1 / 46.9 / 60.0; Hold 10 11.6 / 45.3 / 56.9; Hold 25 16.1 /
+42.4 / 58.5 (z +2.3 / -0.9); switch 40 + Hold 25 8.9 / 60.3 / 69.1 (-3.7 /
++5.2). Elo 2500 (600) and Maia-3 1500 (400): Hold no gain; switch 40 +
+Hold 25 again fewer true, many more near. Akleotes' double share (2,472
+games) finished with the others.
+resign1 (Maia-3 1500 resigning once 8+ down; true / near / true+near /
+resigned per 100, 400 each): 2%: 1.5 11.0 / 12.2 / 23.2 / 54; old (40/80,
+no table) 8.8 / 25.5 / 34.2 / 37; switch 40 + Hold 25 8.5 / 32.0 / 40.5 /
+45. 5%: 1.5 8.0 / 4.0 / 12.0 / 76; old 5.0 / 13.8 / 18.8 / 66; S40H25 7.0
+/ 18.2 / 25.2 / 65. 10%: 5.2 / 2.5 / 7.8 / 85; 6.0 / 11.8 / 17.8 / 71; 4.2
+/ 12.2 / 16.5 / 77. Against resigners 1.5 keeps the most true smothers
+(n.s.) but loses its near fallback; S40H25 is the candidate human (Lichess)
+profile.
