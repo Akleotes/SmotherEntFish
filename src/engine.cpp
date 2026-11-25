@@ -322,6 +322,11 @@ Engine::Engine(std::optional<std::filesystem::path> path) :
     options.add("SmotherBuildKnightCheck", Option(0, 0, 100));
     // Decoy: points when a sacrifice can force the last blocker into the box.
     options.add("SmotherBuildDecoy", Option(0, 0, 200));
+    // Learned classic-smother model: points per log-odd (0 = off) and the 17
+    // coefficients (corner, edge, h0, h1, h2, corner*h0, corner*h1, kd1, kd2,
+    // corner*h1*kd1, corner*h0*kd1, decoy, queen, stuck, units, exits, knights).
+    options.add("SmotherBuildModelScale", Option(0, 0, 100));
+    options.add("SmotherBuildModel", Option("-1.28,-0.30,5.01,2.73,1.93,1.25,1.92,0.79,0.76,0.67,3.54,0.95,0.97,0.27,1.28,-0.29,0.85"));
 
     // While pondering, let the parallel prover search deep and unbounded on
     // the opponent's time.

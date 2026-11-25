@@ -1578,3 +1578,17 @@ grid49 (6 of 8 shares; knight per 100; base SmotherClassic + KnightCheck
 after the classic goal + knight routes (KnightCheck weight, Keep, Starve,
 Decoy, deeper prover, earlier construction) each moved < +30%: the
 defender's last blocker is the limit.
+
+User (Nov 25): 1.6 should be a big upgrade on both fronts: many more
+knight smothers and any real strength our own features can add (not
+Stockfish tuning). Learned classic model: notes/scripts/classic_feats.py
+on grid47-49 Elo 1500 classic-goal games (832k positions; label = knight
+smother within 10 of our moves); logistic fit, held-out games AUC 0.936 vs
+0.900 for the hand-style score. Coefficients (log-odds): h0 +5.01, corner*
+h0*kd1 +3.54, h1 +2.73, h2 +1.93, corner*h1 +1.92, units +1.28, corner
+-1.28, corner*h0 +1.25, queen +0.97, decoy +0.95, knights +0.85, kd1 +0.79,
+kd2 +0.76, corner*h1*kd1 +0.67, edge -0.30, exits -0.29, stuck +0.27.
+Engine option SmotherBuildModelScale (points per log-odd; replaces ring,
+corner/edge, nearness, knight-route and decoy terms) + SmotherBuildModel.
+grid50: hand score (KnightCheck 16) vs model scale 6 / 11 / 20, all with
+SmotherClassic + CrushQuiet 3 + CrushMoves 16.

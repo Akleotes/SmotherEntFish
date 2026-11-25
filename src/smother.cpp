@@ -665,13 +665,25 @@ void set_build_weights(const std::string& s) {
     w.exit       = buildWeights.exit;
     w.knightCheck = buildWeights.knightCheck;
     w.decoy       = buildWeights.decoy;
+    w.modelScale  = buildWeights.modelScale;
+    std::copy(std::begin(buildWeights.model), std::end(buildWeights.model), w.model);
     w.useTable   = buildWeights.useTable;
     std::copy(std::begin(buildWeights.ringTable), std::end(buildWeights.ringTable), w.ringTable);
     buildWeights = w;
 }
 
-void set_build_extras(int ready, int defRingPct, const std::string& ringTable, int exit, int knightCheck, int decoy) {
+void set_build_extras(int ready, int defRingPct, const std::string& ringTable, int exit, int knightCheck, int decoy,
+                      int modelScale, const std::string& model) {
     buildWeights.ready      = ready;
+    buildWeights.modelScale = modelScale;
+    {
+        std::string m = model;
+        std::replace(m.begin(), m.end(), ',', ' ');
+        std::istringstream ms(m);
+        double             c;
+        for (int i = 0; i < 17; ++i)
+            buildWeights.model[i] = (ms >> c) ? int(c * 100) : 0;  // hundredths
+    }
     buildWeights.decoy      = decoy;
     buildWeights.knightCheck = knightCheck;
     buildWeights.exit       = exit;
@@ -705,7 +717,69 @@ int build_score(const Position& pos, Color us, int survive, int cap, int version
     int ringScore = W.useTable ? W.ringTable[std::min(holes, 5)] : W.boxed * boxed - W.hole * holes;
     if (W.defRingPct != 100 && pos.side_to_move() != us)
         ringScore = ringScore * W.defRingPct / 100;
-    int score = ringScore + (corner ? W.corner : edge ? W.edge : 0);
+    int score = W.modelScale ? 0 : ringScore + (corner ? W.corner : edge ? W.edge : 0);
+
+    // Learned classic model: features as in notes/scripts (classic_feats.py).
+    if (W.modelScale)
+    {
+        const Bitboard occ  = pos.pieces();
+        Bitboard       pawnGuard = 0, tp = pos.pieces(them, PAWN);
+        while (tp)
+            pawnGuard |= Attacks::attacks_bb(PAWN, pop_lsb(tp), them);
+        const Bitboard checkSqs = Attacks::attacks_bb(KNIGHT, ksq) & ~pos.pieces(us) & ~pawnGuard;
+        int            kd       = 9;
+        Bitboard       kn       = pos.pieces(us, KNIGHT);
+        while (kn && kd > 1)
+        {
+            Bitboard one = Attacks::attacks_bb(KNIGHT, pop_lsb(kn));
+            if (one & checkSqs)
+                kd = 1;
+            else
+            {
+                Bitboard two = 0;
+                while (one)
+                    two |= Attacks::attacks_bb(KNIGHT, pop_lsb(one));
+                if (two & checkSqs)
+                    kd = 2;
+            }
+        }
+        Bitboard ours = 0, p = pos.pieces(us);
+        while (p)
+        {
+            const Square    s  = pop_lsb(p);
+            const PieceType pt = type_of(pos.piece_on(s));
+            ours |= pt == PAWN ? Attacks::attacks_bb(PAWN, s, us) : Attacks::attacks_bb(pt, s, occ);
+        }
+        const Bitboard openSq = ring & ~pos.pieces(them);
+        const bool     stuck  = !(openSq & ~ours);
+        bool           decoy  = false;
+        if (holes == 1 && corner)
+        {
+            const Square   s   = lsb(openSq);
+            const Bitboard att = pos.attackers_to(s);
+            decoy = (att & pos.pieces(them) & ~pos.pieces(KING)) && (att & pos.pieces(us, QUEEN, ROOK))
+                 && (att & pos.pieces(us) & ~pos.pieces(QUEEN));
+        }
+        int      exits = 0;
+        Bitboard rp    = ring & pos.pieces(them) & ~pos.pieces(KING);
+        const Bitboard safe = ~ring & ~ours & ~pos.pieces(them) & ~square_bb(ksq);
+        while (rp)
+        {
+            const Square    s  = pop_lsb(rp);
+            const PieceType pt = type_of(pos.piece_on(s));
+            if (pt != PAWN)  // pawn exits are not counted (as in the fit)
+                exits += popcount(Attacks::attacks_bb(pt, s, occ) & safe);
+        }
+        const int units   = std::min(popcount(pos.pieces(them) & ~pos.pieces(KING)), 8);
+        const int knights = std::min(popcount(pos.pieces(us, KNIGHT)), 2);
+        const int* c = W.model;  // hundredths of a log-odd; continuous features scaled as in the fit
+        int        z = c[0] * corner + c[1] * edge + c[2] * (holes == 0) + c[3] * (holes == 1) + c[4] * (holes == 2)
+               + c[5] * (corner && holes == 0) + c[6] * (corner && holes == 1) + c[7] * (kd == 1) + c[8] * (kd == 2)
+               + c[9] * (corner && holes == 1 && kd == 1) + c[10] * (corner && holes == 0 && kd == 1) + c[11] * decoy
+               + c[12] * bool(pos.pieces(us, QUEEN)) + c[13] * stuck + c[14] * units / 8
+               + c[15] * std::min(exits, 6) / 6 + c[16] * knights / 2;
+        score += W.modelScale * z / 100;
+    }
 
     // Exits (ChatGPT review): ways a defender ring piece can step off the ring
     // to a square we do not attack. Offline (2,343 games, <= 1 open square):
@@ -742,7 +816,7 @@ int build_score(const Position& pos, Color us, int survive, int cap, int version
     }
 
     // Decoy: the last open square can be filled by force.
-    if (W.decoy && holes == 1 && corner)
+    if (W.decoy && !W.modelScale && holes == 1 && corner)
     {
         const Square   s   = lsb(ring & ~pos.pieces(them));
         const Bitboard att = pos.attackers_to(s);
@@ -752,7 +826,7 @@ int build_score(const Position& pos, Color us, int survive, int cap, int version
     }
 
     // Knight routes to safe checking squares (classic smothers).
-    if (W.knightCheck)
+    if (W.knightCheck && !W.modelScale)
     {
         Bitboard pawnGuard = 0, tp = pos.pieces(them, PAWN);
         while (tp)
@@ -842,10 +916,10 @@ int build_score(const Position& pos, Color us, int survive, int cap, int version
     }
 
     // The finishers: knights and the queen near the king.
-    Bitboard knights = pos.pieces(us, KNIGHT);
+    Bitboard knights = W.modelScale ? Bitboard(0) : pos.pieces(us, KNIGHT);
     while (knights)
         score += W.knight * std::max(0, 4 - sq_distance(pop_lsb(knights), ksq));
-    Bitboard queens = pos.pieces(us, QUEEN);
+    Bitboard queens = W.modelScale ? Bitboard(0) : pos.pieces(us, QUEEN);
     while (queens)
         score += W.queen * std::max(0, 4 - sq_distance(pop_lsb(queens), ksq));
 

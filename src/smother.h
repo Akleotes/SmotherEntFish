@@ -102,12 +102,20 @@ struct BuildWeights {
     //   guarded by another piece (a sacrifice there forces the last blocker
     //   in: Philidor's pattern for the classic smother).
     int  ready = 0, defRingPct = 100, exit = 0, knightCheck = 0, decoy = 0;
+    // Learned classic-smother model (SmotherBuildModel, 17 coefficients in
+    // log-odds of a knight smother within 10 moves, fitted on 832k positions
+    // of our games; see notes/HANDOFF.md). modelScale = points per log-odd;
+    // when > 0 it replaces the ring, corner/edge, knight/queen nearness,
+    // knight-route and decoy terms.
+    int  modelScale = 0;
+    int  model[17]  = {};
     bool useTable = false;
     int  ringTable[6] = {};
 };
 extern BuildWeights buildWeights;
 void set_build_weights(const std::string& s);
-void set_build_extras(int ready, int defRingPct, const std::string& ringTable, int exit = 0, int knightCheck = 0, int decoy = 0);
+void set_build_extras(int ready, int defRingPct, const std::string& ringTable, int exit = 0, int knightCheck = 0, int decoy = 0,
+                      int modelScale = 0, const std::string& model = "");
 
 int build_score(const Position& pos, Color us, int survive = 0, int cap = 12, int version = 1, int keep = 11, int keepNear = 2, int starve = 0, int starveAt = 4, int ownKeep = 0, int escape = 4, int knightSafe = 0);
 
