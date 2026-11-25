@@ -26,6 +26,7 @@ targets=(
   "d32e35:33bbe361:2"   # enterprise account: 42 jobs at once on Nov 24
                         # (limit 360, ramping up until ~Nov 29); its poll
                         # can be dispatched from the session
+  "f2d74f:33bbe361:1"   # added Nov 25
   "own:33bbe361:1"      # this repository
 )
 n=0; for t in "${targets[@]}"; do n=$((n + ${t##*:})); done

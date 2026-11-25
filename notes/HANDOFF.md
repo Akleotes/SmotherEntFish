@@ -1776,3 +1776,8 @@ construction, so construction begins slightly earlier (watch draws).
 Bench unchanged. grid52: B (SmotherClassic + KnightCheck 16 + CrushQuiet 3
 + CrushMoves 16) vs P (PrepCp 400, 40/40/20/10) vs P2 (400, 80/80/40/20)
 vs P3 (300, 80/80/40/20); Elo 1500 x2500, Maia-3 1500 x600, Elo 2500 x400.
+
+New helper fork added (Nov 25, ID f2d74f, weight 1; distribute.sh now has
+9 shares). Its Actions must be enabled once in the fork's Actions tab; the
+session cannot dispatch its poll (no app access), so it runs on its own
+schedule or by Run workflow. Merge lists need its URL from now on.
