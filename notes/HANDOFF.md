@@ -1708,3 +1708,21 @@ the ring 34% (Philidor-type sacrifice), free choice 9%, moving an attacked
 piece 7%, few legal moves 1%; median 0 of our moves between closure and
 mate. Knight smothers come almost entirely from the final forced check
 sequence (prover territory), not from quiet closure.
+
+GLM round 3: arrival, not conversion, is the problem (at most ~5% of games
+reach box closed + corner + knight ready). Minimax gives a non-forced close
+zero value; the prover only certifies forced ones. Opponent model from
+upstream Skill code (UCI_Elo 1500 -> level ~1.5: depth-2 pick among
+MultiPV 4 with a random push; 2500 -> depth ~7); check our harness's
+opponent binary matches. Census D1 (trap availability: for our top moves,
+weight the modelled defender's 4 replies, strict-prove after those that
+fill a ring square; share of turns with expected hit >= 0.25) and D2
+(ingredients at +4 / +8: king castled corner, both front pawns home, a
+mobile defender piece able to reach the corner-adjacent square in 2, our
+knight and queen alive; smother rate ready vs not; who lost the
+ingredient). Ideas: trap finder vs modelled defender; prover move classes
+(pin/mate-threat forcing interposition, herding); +4..+8 band without
+compression plus readiness bonus; keep ingredients in normal play;
+closability-aware target and exit; net as action value over modelled
+replies, policy head, time-to-smother heads. Strength: +5 not credible.
+Note: the network scale WAS bracketed (grid51/51b: 20+ loses games).
