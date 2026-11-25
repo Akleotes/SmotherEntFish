@@ -1878,3 +1878,9 @@ construction): B 1.6 vs O1 (BuildCp 500, Floor 300, BuildMoves 200) vs O2
 (O1 + MaterialDiv 16) vs O3 (BuildCp 400, Floor 200, BuildMoves 200,
 MaterialDiv 16); Elo 1500 x2500, Maia-3 1500 x1200 (5+0.05), Elo 2600 x400
 at 10+0.1 (floor: >= 80%).
+
+Akleotes concurrency probe (conctest1, Nov 26 04:16 JST: 256 jobs of 6
+games, max_parallel 256): peak 84 jobs at once (82 running with 174 queued,
+then 84), up from ~42 on Nov 24. Weight raised to 4 (80 jobs). Its grid55
+share was cancelled and rerun uncapped as grid55-r1 (same 108 jobs and
+seeds; merged into grid55 by volunteers.py merge).
