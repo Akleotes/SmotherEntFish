@@ -1920,3 +1920,12 @@ Fork 2456cd (one of the two newest helpers) became unreachable on Nov 26
 (1,252 games) and grid56 (1,320) shares never arrived; refilled on Akleotes
 as grid55-r3 and grid56-r2 (with first_chunk). grid55-r2 (Akleotes's own
 share, corrected) delivered all 2,544 games.
+
+grid55 (Track B round 1, 92% in: all but 2456cd's share, refill grid55-r3
+pending; knight smothers per 100): Elo 1500 (2,308 each) B 3.6 (84) / O1
+4.0 (92, z +0.6) / O2 3.1 (71) / O3 3.2 (73); Maia-3 1500 (~1,110) B 4.2 /
+O1 3.5 / O2 3.8 / O3 3.6. Draws vs Elo 1500: 0.4% / 8.2% / 6.6% / 6.0%,
+nearly all the 400-ply game cap (building from +4/+5 for 200 moves makes
+games too long). Score vs Elo 2600 (10+0.1): 99.9 / 97.5 / 96.4 / 96.1%
+(2 losses in O3): all far above the 80% floor. Verdict: earlier and longer
+construction does not raise knight smothers; it only adds long draws.
