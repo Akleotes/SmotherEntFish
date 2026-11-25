@@ -1569,3 +1569,12 @@ covers the hole, our queen/rook can go there guarded) 7.6% vs 4.2% / 3.3%.
 New options: SmotherBuildDecoy, SmotherCrushMoves (12), SmotherCrushQuiet
 (2). grid49: base, CrushQuiet 3, + CrushMoves 16, Decoy 40, Decoy 40 +
 Quiet 3 (all SmotherClassic + KnightCheck 16).
+
+grid49 (6 of 8 shares; knight per 100; base SmotherClassic + KnightCheck
+16): Elo 1500 (~1875): base 3.1 (58), Decoy 40 3.6, CrushQuiet 3 3.7, Quiet
+3 + CrushMoves 16 4.0 (75, z +1.5), Decoy + Quiet 3 3.7; Elo 2500 (~300):
+1.3 / 2.5 / 2.6 / 2.6 / 1.6; Maia-3 1500 (~450): 2.6 / 2.5 / 4.8 / 3.3 /
+3.7. All +20-30%, none significant alone; no time losses. Levers tried
+after the classic goal + knight routes (KnightCheck weight, Keep, Starve,
+Decoy, deeper prover, earlier construction) each moved < +30%: the
+defender's last blocker is the limit.
