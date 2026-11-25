@@ -1,0 +1,72 @@
+# Housekeeping: deletes helper-exp/<id>/<name> branches (the per-fork copies
+# of experiment plans) once that fork has copied them to its own
+# actions-exp/<name> branch and they are older than KEEP_DAYS days. Recent
+# ones stay, because notes/scripts/volunteers.py reads their plans for
+# status, refill and merge. Results are never touched: they live on the
+# actions-exp/* branches of each account. Weekly, or by "Run workflow".
+name: Housekeeping
+
+on:
+  schedule:
+    - cron: "41 3 * * 1"
+  workflow_dispatch:
+    inputs:
+      keep_days:
+        description: "Keep copies younger than this many days"
+        default: "3"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: housekeeping
+
+jobs:
+  prune:
+    if: github.repository == 'Demonic1594/Smotherfish'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Delete old helper-exp copies the forks already have
+        env:
+          GH_TOKEN: ${{ github.token }}
+          KEEP_DAYS: ${{ inputs.keep_days || '3' }}
+        run: |
+          python3 - <<'PY'
+          import datetime, hashlib, json, os, subprocess, urllib.request
+          MAIN = "Demonic1594/Smotherfish"; TOKEN = os.environ["GH_TOKEN"]
+          keep_days = float(os.environ.get("KEEP_DAYS") or 3)
+          def api(path):
+              req = urllib.request.Request("https://api.github.com" + path, headers={
+                  "Authorization": "Bearer " + TOKEN, "Accept": "application/vnd.github+json", "User-Agent": "smotherfish-housekeeping"})
+              with urllib.request.urlopen(req, timeout=30) as r:
+                  return json.loads(r.read())
+          def heads(url, pat):
+              out = subprocess.run(["git", "ls-remote", url, pat], capture_output=True, text=True).stdout
+              return {l.split("\t")[1][len("refs/heads/"):]: l.split("\t")[0] for l in out.splitlines() if "\t" in l}
+          H = heads(f"https://github.com/{MAIN}", "refs/heads/helper-exp/*")
+          forks, page = [], 1
+          while True:
+              d = api(f"/repos/{MAIN}/forks?per_page=100&page={page}"); forks += d; page += 1
+              if len(d) < 100: break
+          ids = {hashlib.sha256(f["owner"]["login"].lower().encode()).hexdigest()[:6]: f["full_name"] for f in forks}
+          copied = {i: {b.split("/", 1)[1] for b in heads(f"https://github.com/{r}", "refs/heads/actions-exp/*")} for i, r in ids.items()}
+          now = datetime.datetime.now(datetime.timezone.utc); dates = {}
+          doomed = []
+          for b, sha in sorted(H.items()):
+              parts = b.split("/")
+              if len(parts) != 3: continue
+              _, i, name = parts
+              if i in ids and name not in copied[i]: continue          # not copied yet: keep
+              if sha not in dates:
+                  c = api(f"/repos/{MAIN}/commits/{sha}")
+                  dates[sha] = datetime.datetime.fromisoformat(c["commit"]["committer"]["date"].replace("Z", "+00:00"))
+              if (now - dates[sha]).total_seconds() < keep_days * 86400: continue
+              doomed.append(b)                                         # copied (or fork gone) and old
+          print(f"{len(H)} helper-exp branches; deleting {len(doomed)}")
+          url = f"https://x-access-token:{TOKEN}@github.com/{MAIN}.git"
+          for k in range(0, len(doomed), 40):
+              batch = doomed[k:k + 40]
+              r = subprocess.run(["git", "push", "-q", url] + [":refs/heads/" + b for b in batch], capture_output=True, text=True)
+              print(("deleted " if r.returncode == 0 else "FAILED ") + ", ".join(batch))
+          PY
