@@ -185,28 +185,9 @@ Engine::Engine(std::optional<std::filesystem::path> path) :
 
     options.add("SmotherWinSteerTime", Option(50, 0, 200));
 
-    // Won-mode eval shaping towards smother-friendly positions (0 = off).
-    options.add("SmotherShape", Option(0, 0, 64));
-
-    options.add("SmotherShapeCap", Option(100, 0, 1000));
-
-    options.add("SmotherShapeAlways", Option(false));
-
-    // Prep phase (0 = off): between +SmotherPrepCp and construction, bonuses
-    // in centipawns for our knight, our queen, each enemy non-pawn piece (up
-    // to 3) and each enemy pawn in front of its king (knight-smother
-    // ingredients; measured: games that reach +8 without our knight give
-    // 1.2 knight smothers per 100 instead of 4.9).
-    options.add("SmotherPrepCp", Option(0, 0, 10000));
-    options.add("SmotherPrepKnight", Option(40, 0, 1000));
-    options.add("SmotherPrepQueen", Option(40, 0, 1000));
-    options.add("SmotherPrepPiece", Option(20, 0, 1000));
-    options.add("SmotherPrepShield", Option(10, 0, 1000));
-
-    // Seek mode: in won mode, plain mates count below smothered ones, for at
-    // most SmotherSeek of our moves per game (0 = off), and only while the
-    // 50-move counter is below SmotherSeekRule50 half-moves.
-    options.add("SmotherSeek", Option(0, 0, 200));
+    // Seek mode (brutal mode: up to 200 of our moves per game): plain mates
+    // count below smothered ones while the 50-move counter is below
+    // SmotherSeekRule50 half-moves.
 
     options.add("SmotherSeekRule50", Option(60, 0, 99));
 
@@ -216,11 +197,6 @@ Engine::Engine(std::optional<std::filesystem::path> path) :
     // 1.1: full-strength SPRTs found no cost (+2.0 and +1.4 Elo). The bench
     // runs with it off, so the bench signature stays the upstream one.
     options.add("SmotherBrutal", Option(true));
-
-    // After a smother proof, compare up to 4 proven first moves and play the
-    // one whose likely replies stay in the smother line. Off by default: it
-    // rarely finds alternatives and can cost several times the proof's nodes.
-    options.add("SmotherRobust", Option(false));
 
     // Prover time in brutal mode, in percent of the move's optimum time
     // (capped at 60% of the maximum). Long smothers need ~1-3M prover nodes.
@@ -233,10 +209,6 @@ Engine::Engine(std::optional<std::filesystem::path> path) :
     // Brutal mode with a forced mate in hand: the prover may use this share
     // of the remaining clock per move (the result is no longer in doubt).
     options.add("SmotherMatePercent", Option(15, 0, 50));
-    // After the defender leaves a proven smother: for this many moves the
-    // prover may use SmotherEscapePercent of the clock left (0 = off).
-    options.add("SmotherEscapeMoves", Option(0, 0, 20));
-    options.add("SmotherEscapePercent", Option(20, 0, 50));
 
     // Brutal construction mode: once the game is decided (SmotherBuildCp,
     // centipawns, or a forced mate), build a smother instead of mating
@@ -248,14 +220,9 @@ Engine::Engine(std::optional<std::filesystem::path> path) :
     options.add("SmotherBuildFloor", Option(600, 0, 10000));
     options.add("SmotherBuildMoves", Option(160, 0, 200));
     options.add("SmotherBuildWeight", Option(8, 0, 100));
-    // 1 = hand-set build_score weights, 2 = weights fitted to game data.
-    options.add("SmotherBuildVersion", Option(1, 1, 2));
-    // Also count "all but one" smothers: one square next to the mated king
-    // may be empty, covered by the attacker (see Smother::Style::Partial).
-    options.add("SmotherPartial", Option(false));
     // Hybrid: "all but one" smothers also count once this many construction
     // moves have been played in the game (0 = never; 80 = after the default
-    // construction budget is used up). SmotherPartial counts them always.
+    // construction budget is used up).
     options.add("SmotherPartialAfter", Option(0, 0, 200));
     // Hybrid against a human opponent (UCI_Opponent): near smothers count
     // after this many construction moves instead of 80 (0 = no difference).
@@ -263,27 +230,15 @@ Engine::Engine(std::optional<std::filesystem::path> path) :
     // Standard UCI: "[title|none] [rating|none] [computer|human] name", sent
     // by lichess-bot and other GUIs; only the computer/human word is used.
     options.add("UCI_Opponent", Option(""));
-    // Hybrid: after the switch, hold out for a full smother for up to this many
-    // consecutive moves where one is very likely (0 = off; see search.cpp).
-    options.add("SmotherHold", Option(0, 0, 50));
     // Near ("all but one") proof found: look for a true smother at most this
     // many moves longer and prefer it (bounded by the prover's move limit).
     options.add("SmotherFullExtra", Option(3, 0, 20));
-    // Near smothers allowed: percent of the prover's budget spent first on a
-    // true smother only (0 = off: near first, then a true one if time is left).
-    options.add("SmotherFullFirst", Option(0, 0, 100));
     // One switch for the smother goal in brutal mode, for GUIs (DroidFish):
     // Full   = only true smothers count (the options above decide),
     // Hybrid = (default) true smothers first, "all but one" ones after 80 construction
     //          moves (as SmotherPartialAfter 80; an explicit value there wins),
-    // Near   = "all but one" smothers always count (as SmotherPartial).
+    // Near   = "all but one" smothers always count (as SmotherPartialAfter from the start).
     options.add("SmotherGoal", Option("Hybrid var Full var Hybrid var Near", "Hybrid"));
-    // Blocker survivability in the build score, a bit mask: 1 pinned
-    // blocker bonus, 2 defended blocker bonus, 4 penalty if our knight wins
-    // it (SEE), 8 penalty if a pawn blocker can step forward. 0 = off.
-    options.add("SmotherBuildSurvive", Option(0, 0, 15));
-    // Cap on the survivability total, in build-score points (+-).
-    options.add("SmotherBuildSurviveCap", Option(12, 0, 48));
     // Construction: build-score points per enemy piece kept on the board
     // (blockers for a smother), and the divisor for extra material above the
     // floor (8 = it counts 1/8). Measured: in games where a proven smother
@@ -293,42 +248,16 @@ Engine::Engine(std::optional<std::filesystem::path> path) :
     // Extra points for each enemy piece within two squares of its king.
     options.add("SmotherBuildKeepNear", Option(2, 0, 50));
     options.add("SmotherBuildMaterialDiv", Option(8, 1, 64));
-    // Blocker reserve guard: build-score points lost per unit of reserve
-    // (enemy pieces minus open king-ring squares) below StarveAt. 0 = off.
-    options.add("SmotherBuildStarve", Option(0, 0, 50));
-    // While building, use at least 1/N of the clock left per move (0 = off).
-    options.add("SmotherBuildTime", Option(0, 0, 200));
-    options.add("SmotherBuildStarveAt", Option(4, 0, 15));
-    // Search control in construction mode (all 0 = off, the search is then
-    // unchanged). Lmr: less late-move reduction (1/1024 plies) for our quiet
-    // moves that bring a knight closer to a square checking the enemy king or
-    // newly cover a free square next to it. DefLmr: the same for the
-    // defender's quiet moves that leave a square next to its own king (they
-    // can open a flight square). Nmp: no null move for our side while the
-    // enemy king has at most that many squares not held by its own pieces.
-    options.add("SmotherBuildLmr", Option(0, 0, 4096));
-    options.add("SmotherBuildDefLmr", Option(0, 0, 4096));
-    options.add("SmotherBuildNmp", Option(0, 0, 8));
-    // Build-score terms (points; 0 = off): OwnKeep per queen and knight of
-    // ours on the board; Escape per square next to the enemy king that holds
-    // none of its pieces and that we do not attack; KnightSafe per knight of
-    // ours near the king that is attacked and not defended.
-    options.add("SmotherBuildOwnKeep", Option(0, 0, 50));
+    // Escape: build-score points lost per square next to the enemy king that
+    // holds none of its pieces and that we do not attack.
     // build_score weights, space separated: boxed hole corner edge knight
     // queen, separated by commas (for tuning; the default is the hand-set
     // score).
     options.add("SmotherBuildWeights", Option("13,8,23,8,2,4"));
     options.add("SmotherBuildEscape", Option(4, 0, 50));
-    options.add("SmotherBuildKnightSafe", Option(0, 0, 50));
-    // Outside review round 2 (off by default; see Smother::BuildWeights):
-    // Ready: points per ready mating square; DefRing: percent of the ring
-    // score when the defender is to move; RingTable: points by open ring
-    // squares 0..5+, comma separated, replacing the linear ring terms.
-    options.add("SmotherBuildReady", Option(0, 0, 200));
-    options.add("SmotherBuildDefRing", Option(100, 0, 100));
+    // RingTable: build-score points by open ring squares 0..5+, comma
+    // separated, replacing the linear ring terms.
     options.add("SmotherBuildRingTable", Option("60,50,0,-10,-15"));
-    // Exit: points lost per safe way off the ring for a defender ring piece.
-    options.add("SmotherBuildExit", Option(0, 0, 50));
     // KnightCheck: points per knight one knight move from a safe checking
     // square (half for two moves); for classic (knight) smothers.
     options.add("SmotherBuildKnightCheck", Option(16, 0, 100));

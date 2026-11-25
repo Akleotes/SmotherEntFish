@@ -306,7 +306,7 @@ void Search::Worker::start_smother_prover() {
     {
         if (rootPos.game_ply() == mgr.smotherExpectPly && rootPos.key() != mgr.smotherExpectKey)
         {
-            mgr.smotherEscapeLeft = int(options["SmotherEscapeMoves"]);
+            mgr.smotherEscapeLeft = 0;
             sync_cout << "info string smother escape: the defender left the proven line"
                       << sync_endl;
         }
@@ -371,7 +371,7 @@ void Search::Worker::start_smother_prover() {
         // within 10 moves 43-55% of the time there, 2% on average. Elsewhere
         // the near one is accepted at once.
         bool hold = false;
-        if (const int holdMax = int(options["SmotherHold"]);
+        if (const int holdMax = 0;
             holdMax > 0 && after > 0 && mgr.smotherBuilds >= after && mgr.smotherHoldRun < holdMax)
         {
             const Color    us    = rootPos.side_to_move(), them = ~us;
@@ -404,7 +404,7 @@ void Search::Worker::start_smother_prover() {
         }
         mgr.smotherHoldRun = hold ? mgr.smotherHoldRun + 1 : 0;
         mgr.smotherPartialNow =
-          bool(options["SmotherPartial"]) || goalNear
+          false || goalNear
           || (after > 0 && mgr.smotherBrutal && mgr.smotherBuilds >= after && !hold);
     }
 
@@ -419,7 +419,7 @@ void Search::Worker::start_smother_prover() {
     sl.strict     = bool(options["SmotherStrict"]);
     sl.quietMoves = int(options["SmotherQuietMoves"]);
     sl.maxNodes   = std::uint64_t(int(options["SmotherNodes"]));
-    sl.robust     = bool(options["SmotherRobust"]);
+    sl.robust     = false;
     if (mgr.smotherCrush)
     {
         sl.maxMoves   = std::max(sl.maxMoves, int(options["SmotherCrushMoves"]));
@@ -466,7 +466,7 @@ void Search::Worker::start_smother_prover() {
             --mgr.smotherEscapeLeft;
             const TimePoint left =
               limits.time[rootPos.side_to_move()] - 2 * TimePoint(int(options["Move Overhead"]));
-            budget      = std::max(budget, left * int(options["SmotherEscapePercent"]) / 100);
+            budget      = std::max(budget, left * 20 / 100);
             sl.maxNodes = 0;
         }
         if (budget < 1)
@@ -503,7 +503,7 @@ void Search::Worker::start_smother_prover() {
     // budget (time or nodes) on a true smother only, then look for a near
     // one. 0 = off (near first, as before). Not used without any budget
     // (deep pondering), where the true-smother search would never end.
-    const int fullFirst = int(options["SmotherFullFirst"]);
+    const int fullFirst = 0;
     auto job = [&mgr, sl, fullStyle, fullExtra, fullFirst,
                 allowed = std::move(allowed)](Position& pos) {
         if (fullFirst > 0 && sl.style == Smother::Style::Partial && (sl.deadline || sl.maxNodes))
@@ -613,7 +613,7 @@ void Search::Worker::decide_smother_modes() {
     auto&       mgr = *main_manager();
     const Color us  = rootPos.side_to_move();
     const int   budget =
-      mgr.smotherBrutal ? std::max(int(options["SmotherSeek"]), 200) : int(options["SmotherSeek"]);
+      mgr.smotherBrutal ? std::max(0, 200) : 0;
     mgr.smotherSeekNow = (mgr.smotherWon || mgr.smotherBrutal) && budget > mgr.smotherSeeks
                       && rootPos.rule50_count() < int(options["SmotherSeekRule50"])
                       && popcount(rootPos.pieces(~us)) >= 4;
@@ -664,7 +664,7 @@ void Search::Worker::start_searching() {
     // 30, ~47 ms per move after it). SmotherBuildTime N: while building, use
     // at least 1/N of the clock left per move (maximum 1/(N/2), and never
     // more than a tenth of the clock).
-    if (int n = int(options["SmotherBuildTime"]);
+    if (int n = 0;
         n > 0 && main_manager()->smotherBuilding && limits.use_time_management())
     {
         const TimePoint left = limits.time[rootPos.side_to_move()]
@@ -958,22 +958,11 @@ bool Search::Worker::iterative_deepening() {
     Color  us = rootPos.side_to_move();
 
     // Shaping applies in won mode, or on every move with SmotherShapeAlways.
-    shapeWeight = threads.main_manager()->smotherWon || options["SmotherShapeAlways"]
-                  ? int(options["SmotherShape"])
+    shapeWeight = threads.main_manager()->smotherWon || false
+                  ? 0
                   : 0;
-    shapeCap    = int(options["SmotherShapeCap"]);
-    {
-        // Prep phase: won (>= SmotherPrepCp) but not yet constructing.
-        auto&       m   = *threads.main_manager();
-        const Value pv  = m.bestPreviousScore;
-        const int   cpk = std::max(1, UCIEngine::to_cp(Value(1000), rootPos));
-        prepOn = int(options["SmotherPrepCp"]) > 0 && m.smotherWon && !m.smotherBuildNow && pv != VALUE_INFINITE
-              && pv != -VALUE_INFINITE && !is_decisive(pv) && UCIEngine::to_cp(pv, rootPos) >= int(options["SmotherPrepCp"]);
-        prepKnight = int(options["SmotherPrepKnight"]) * 1000 / cpk;
-        prepQueen  = int(options["SmotherPrepQueen"]) * 1000 / cpk;
-        prepPiece  = int(options["SmotherPrepPiece"]) * 1000 / cpk;
-        prepShield = int(options["SmotherPrepShield"]) * 1000 / cpk;
-    }
+    shapeCap    = 100;
+    prepOn = false;  // prep phase removed in 1.6 (measured: no gain)
     shapeUs     = us;
     {
         // Seek and construction mode are decided once per move by the main
@@ -990,30 +979,30 @@ bool Search::Worker::iterative_deepening() {
             const int perK = std::max(1, UCIEngine::to_cp(Value(1000), rootPos));  // cp per 1000
             buildFloor     = Value(int(options["SmotherBuildFloor"]) * 1000 / perK);
             buildUnit      = std::max(1, int(options["SmotherBuildWeight"]) * 1000 / perK);
-            buildSurvive   = int(options["SmotherBuildSurvive"]);
-            buildCap       = int(options["SmotherBuildSurviveCap"]);
-            buildVersion   = int(options["SmotherBuildVersion"]);
+            buildSurvive   = 0;
+            buildCap       = 12;
+            buildVersion   = 1;
             buildKeep      = int(options["SmotherBuildKeep"]);
             buildKeepNear  = int(options["SmotherBuildKeepNear"]);
             buildMatDiv    = std::max(1, int(options["SmotherBuildMaterialDiv"]));
-            buildStarve    = int(options["SmotherBuildStarve"]);
-            buildStarveAt  = int(options["SmotherBuildStarveAt"]);
-            buildLmr       = int(options["SmotherBuildLmr"]);
-            buildDefLmr    = int(options["SmotherBuildDefLmr"]);
-            buildNmp       = int(options["SmotherBuildNmp"]);
-            buildOwnKeep   = int(options["SmotherBuildOwnKeep"]);
+            buildStarve    = 0;
+            buildStarveAt  = 4;
+            buildLmr       = 0;
+            buildDefLmr    = 0;
+            buildNmp       = 0;
+            buildOwnKeep   = 0;
             Smother::set_build_weights(std::string(options["SmotherBuildWeights"]));
-            Smother::set_build_extras(int(options["SmotherBuildReady"]),
-                                      int(options["SmotherBuildDefRing"]),
+            Smother::set_build_extras(0,
+                                      100,
                                       std::string(options["SmotherBuildRingTable"]),
-                                      int(options["SmotherBuildExit"]),
+                                      0,
                                       int(options["SmotherBuildKnightCheck"]),
                                       int(options["SmotherBuildDecoy"]),
                                       int(options["SmotherBuildModelScale"]),
                                       std::string(options["SmotherBuildModel"]));
             Smother::set_build_net(int(options["SmotherBuildNetScale"]));
             buildEscape    = int(options["SmotherBuildEscape"]);
-            buildKnightSafe = int(options["SmotherBuildKnightSafe"]);
+            buildKnightSafe = 0;
             shapeWeight    = 0;
         }
     }

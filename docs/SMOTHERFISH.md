@@ -97,7 +97,6 @@ All options are standard UCI options. Defaults are what was measured best.
 | `SmotherNodes` | 5000000 | Node limit per proof (lifted with a forced mate in hand in brutal mode). |
 | `SmotherParallel` | true | Prove in a separate thread next to the search. |
 | `SmotherPonderDeep` | true | Unlimited proving while pondering. |
-| `SmotherRobust` | false | Compare alternative proofs and pick the hardest to escape. Measured worse; keep off. |
 
 ### Winning and brutal mode
 
@@ -108,7 +107,6 @@ All options are standard UCI options. Defaults are what was measured best.
 | `SmotherBigCp` | 1000 | Brutal mode: advantage from which the deep prover runs. |
 | `SmotherBrutalTimePercent` | 300 | Deep prover time, percent of the planned time (capped at 60% of the maximum). |
 | `SmotherMatePercent` | 15 | Brutal mode with a forced mate in hand: share of the remaining clock per move. |
-| `SmotherSeek` | 0 | Brutal mode off: moves per game in which ordinary mates count below smothers (brutal mode uses 200). |
 | `SmotherSeekRule50` | 60 | No seeking or construction once the 50-move counter reaches this (half-moves). |
 
 ### Construction mode
@@ -123,18 +121,8 @@ All options are standard UCI options. Defaults are what was measured best.
 | `SmotherBuildKeep` | 11 | Construction-score points per enemy piece kept on the board (possible blockers). 3 until Nov 21, 8 in 1.2, 11 in 1.3. |
 | `SmotherBuildKeepNear` | 2 | Extra points per enemy piece within two squares of its king. |
 | `SmotherBuildEscape` | 4 | Points lost per square next to the enemy king that holds none of its pieces and that we do not attack (where a checked king steps out). |
-| `SmotherBuildOwnKeep` | 0 | Experimental: points per queen and knight of ours kept. Measured: no gain. |
-| `SmotherBuildKnightSafe` | 0 | Experimental: points lost per knight of ours near the king that is attacked and undefended. Measured: fewer smothers at Elo 2500. |
-| `SmotherBuildLmr` / `SmotherBuildDefLmr` / `SmotherBuildNmp` | 0 | Experimental search control in construction mode (less reduction for box-building moves / for the defender's moves next to its king; no null move when the box is tight). Measured: no reliable gain. |
 | `SmotherFullExtra` | 3 | After a near proof, how many moves longer a true smother may be and still be preferred. |
-| `SmotherFullFirst` | 0 | Experimental: percent of the prover budget spent on a true smother before the near-smother search. Measured: no gain. |
 | `SmotherBuildMaterialDiv` | 8 | Extra material above the floor counts 1/N. |
-| `SmotherBuildStarve` | 0 | Experimental: points lost per unit of blocker reserve (enemy pieces minus open king squares) below `SmotherBuildStarveAt` (4). Measured: no gain. |
-| `SmotherBuildTime` | 0 | Experimental: each construction move uses at least 1/N of the clock left. Measured: no gain. |
-| `SmotherBuildSurvive` | 0 | Experimental blocker terms, a bit mask: 1 pinned blocker, 2 defended blocker, 4 blocker our knight wins, 8 pawn blocker that can step away. |
-| `SmotherBuildSurviveCap` | 12 | Cap on those terms, in score points. |
-| `SmotherBuildVersion` | 1 | 2 = construction-score weights fitted to game data (`notes/fit/`); better at predicting, not better in games. |
-| `SmotherPartial` | false | "All but one" smothers always count (the same as `SmotherGoal` Near). |
 | `SmotherPartialAfter` | 0 | "All but one" smothers count after this many construction moves (0 = never; `SmotherGoal` Hybrid uses 80, 40 before 1.5). |
 | `SmotherHumanAfter` | 40 | Hybrid against a human opponent (`UCI_Opponent`): near smothers count after this many construction moves (0 = same as against computers). |
 | `UCI_Opponent` | (empty) | Standard UCI opponent info from the GUI; only "human" / "computer" is used. |
@@ -147,11 +135,8 @@ All options are standard UCI options. Defaults are what was measured best.
 | `SmotherBuildDecoy` | 0 | Points when the one open square next to a cornered king is covered by a defender piece and our queen or rook can go there, guarded (Philidor's sacrifice). |
 | `SmotherCrushMoves` | 16 | Prover depth when crushing (attacker moves); 12 before 1.6. |
 | `SmotherCrushQuiet` | 3 | Quiet attacker moves per proof line when crushing; 2 before 1.6. |
-| `SmotherHold` | 0 | Experimental: keep holding when the box has at most one open square. |
 | `SmotherBuildModelScale` | 0 | Learned linear model (`SmotherBuildModel`, 17 coefficients, log-odds of a knight smother within 10 of our moves) as the construction score, in points per log-odd. Peaks near 20, equal to the hand score. |
 | `SmotherBuildNetScale` | 0 | Small learned network (`src/smother_net.h`: 17 features and the 5x5 squares around the enemy king, 16 hidden units) as the construction score. 6 equals the hand score; 20 and more lose games (the search gives up material to please the network). The `smothernet` command prints its inputs and output for the side to move. |
-| `SmotherPrepCp` | 0 | Experimental "prep phase": from this advantage until construction, bonuses for keeping our knight (`SmotherPrepKnight`), our queen (`SmotherPrepQueen`), enemy pieces (`SmotherPrepPiece`) and enemy pawns in front of their king (`SmotherPrepShield`). Measured: no gain. |
-| `SmotherEscapeMoves` / `SmotherEscapePercent` | 0 / 20 | Experimental: extra prover time after the defender leaves a proven line. Measured: no gain. |
 
 ### Other
 
@@ -159,7 +144,19 @@ All options are standard UCI options. Defaults are what was measured best.
 | ------ | ------- | ------- |
 | `Analysis Elo` | 0 | For "go infinite" analysis (DroidFish's analysis mode): above 0, limits analysis depth to what the `UCI_Elo` limiter uses at that rating. 0 = full strength. |
 
-### Older experiments (off by default)
+### Removed in 1.6
+
+Measured experiments that never beat the defaults were removed as options
+(the engine behaves exactly as with their old defaults): `SmotherShape*`,
+`SmotherPrep*`, `SmotherRobust`, `SmotherEscapeMoves/Percent`,
+`SmotherBuildVersion`, `SmotherHold`, `SmotherFullFirst`,
+`SmotherBuildSurvive(Cap)`, `SmotherBuildStarve(At)`, `SmotherBuildTime`,
+`SmotherBuildLmr/DefLmr/Nmp`, `SmotherBuildOwnKeep`, `SmotherBuildKnightSafe`,
+`SmotherBuildReady/DefRing/Exit`, `SmotherPartial` (use `SmotherGoal Near`)
+and `SmotherSeek` (brutal mode seeks for up to 200 moves). Their results are
+in notes/HANDOFF.md.
+
+### Trap steering (off by default)
 
 `SmotherSteer`, `SmotherSteerFloor`, `SmotherSteerLines`, `SmotherSteerTime`,
 `SmotherSteerWonOnly`, `SmotherTrapDepth`, `SmotherWinMargin`,
@@ -167,10 +164,6 @@ All options are standard UCI options. Defaults are what was measured best.
 `SmotherWinSteerTime`, `SmotherMateDelays`, `SmotherMateSlack`: steering the
 choice between near-equal moves towards smother traps. It did not raise the
 smother rate and cost strength against strong opponents.
-`SmotherShape`, `SmotherShapeCap`, `SmotherShapeAlways`: a small evaluation
-bonus for smother-friendly positions; no measurable effect. Construction mode
-replaced both.
-
 ## Full, hybrid or near
 
 A true (full) smother needs every square next to the mated king filled by
