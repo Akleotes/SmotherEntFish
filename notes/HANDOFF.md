@@ -1615,3 +1615,8 @@ log-odd; replaces the same hand terms as SmotherBuildModelScale).
   difference 8e-5. Bench unchanged (1210779).
 - grid51: grid50's design with the network at scale 6 / 11 / 20 vs
   KnightCheck 16 (seeds +1000).
+- Queued after grid51 / grid50 / sprt-proverquiet are read: (1) on-policy
+  round: add the network arms' own games to the data, retrain, re-export,
+  retest; (2) wider inputs: pieces beyond the 5x5 window that reach the
+  last open ring square (rook/bishop/queen lines), knight distance map;
+  judged by classic smothers per 100 games, not AUC.
