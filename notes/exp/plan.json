@@ -1,0 +1,1395 @@
+{
+ "exp": "grid55-r1",
+ "tc": "5+0.05",
+ "chunk": 25,
+ "max_parallel": 256,
+ "runs": [
+  {
+   "name": "e2600_B",
+   "elo": 2600,
+   "games": 20,
+   "chunk": 20,
+   "seed": 62502,
+   "tc": "10+0.1",
+   "opts": []
+  },
+  {
+   "name": "e2600_B",
+   "elo": 2600,
+   "games": 20,
+   "chunk": 20,
+   "seed": 62503,
+   "tc": "10+0.1",
+   "opts": []
+  },
+  {
+   "name": "e2600_B",
+   "elo": 2600,
+   "games": 20,
+   "chunk": 20,
+   "seed": 62515,
+   "tc": "10+0.1",
+   "opts": []
+  },
+  {
+   "name": "e2600_B",
+   "elo": 2600,
+   "games": 20,
+   "chunk": 20,
+   "seed": 62516,
+   "tc": "10+0.1",
+   "opts": []
+  },
+  {
+   "name": "e2600_O1",
+   "elo": 2600,
+   "games": 20,
+   "chunk": 20,
+   "seed": 62508,
+   "tc": "10+0.1",
+   "opts": [
+    "SmotherBuildCp=500",
+    "SmotherBuildFloor=300",
+    "SmotherBuildMoves=200"
+   ]
+  },
+  {
+   "name": "e2600_O1",
+   "elo": 2600,
+   "games": 20,
+   "chunk": 20,
+   "seed": 62509,
+   "tc": "10+0.1",
+   "opts": [
+    "SmotherBuildCp=500",
+    "SmotherBuildFloor=300",
+    "SmotherBuildMoves=200"
+   ]
+  },
+  {
+   "name": "e2600_O2",
+   "elo": 2600,
+   "games": 20,
+   "chunk": 20,
+   "seed": 62501,
+   "tc": "10+0.1",
+   "opts": [
+    "SmotherBuildCp=500",
+    "SmotherBuildFloor=300",
+    "SmotherBuildMoves=200",
+    "SmotherBuildMaterialDiv=16"
+   ]
+  },
+  {
+   "name": "e2600_O2",
+   "elo": 2600,
+   "games": 20,
+   "chunk": 20,
+   "seed": 62502,
+   "tc": "10+0.1",
+   "opts": [
+    "SmotherBuildCp=500",
+    "SmotherBuildFloor=300",
+    "SmotherBuildMoves=200",
+    "SmotherBuildMaterialDiv=16"
+   ]
+  },
+  {
+   "name": "e2600_O2",
+   "elo": 2600,
+   "games": 20,
+   "chunk": 20,
+   "seed": 62514,
+   "tc": "10+0.1",
+   "opts": [
+    "SmotherBuildCp=500",
+    "SmotherBuildFloor=300",
+    "SmotherBuildMoves=200",
+    "SmotherBuildMaterialDiv=16"
+   ]
+  },
+  {
+   "name": "e2600_O2",
+   "elo": 2600,
+   "games": 20,
+   "chunk": 20,
+   "seed": 62515,
+   "tc": "10+0.1",
+   "opts": [
+    "SmotherBuildCp=500",
+    "SmotherBuildFloor=300",
+    "SmotherBuildMoves=200",
+    "SmotherBuildMaterialDiv=16"
+   ]
+  },
+  {
+   "name": "e2600_O3",
+   "elo": 2600,
+   "games": 20,
+   "chunk": 20,
+   "seed": 62507,
+   "tc": "10+0.1",
+   "opts": [
+    "SmotherBuildCp=400",
+    "SmotherBuildFloor=200",
+    "SmotherBuildMoves=200",
+    "SmotherBuildMaterialDiv=16"
+   ]
+  },
+  {
+   "name": "e2600_O3",
+   "elo": 2600,
+   "games": 20,
+   "chunk": 20,
+   "seed": 62508,
+   "tc": "10+0.1",
+   "opts": [
+    "SmotherBuildCp=400",
+    "SmotherBuildFloor=200",
+    "SmotherBuildMoves=200",
+    "SmotherBuildMaterialDiv=16"
+   ]
+  },
+  {
+   "name": "e1500_B",
+   "elo": 1500,
+   "games": 24,
+   "chunk": 24,
+   "seed": 62006,
+   "tc": "5+0.05",
+   "opts": []
+  },
+  {
+   "name": "e1500_B",
+   "elo": 1500,
+   "games": 24,
+   "chunk": 24,
+   "seed": 62007,
+   "tc": "5+0.05",
+   "opts": []
+  },
+  {
+   "name": "e1500_B",
+   "elo": 1500,
+   "games": 24,
+   "chunk": 24,
+   "seed": 62019,
+   "tc": "5+0.05",
+   "opts": []
+  },
+  {
+   "name": "e1500_B",
+   "elo": 1500,
+   "games": 24,
+   "chunk": 24,
+   "seed": 62020,
+   "tc": "5+0.05",
+   "opts": []
+  },
+  {
+   "name": "e1500_B",
+   "elo": 1500,
+   "games": 24,
+   "chunk": 24,
+   "seed": 62032,
+   "tc": "5+0.05",
+   "opts": []
+  },
+  {
+   "name": "e1500_B",
+   "elo": 1500,
+   "games": 24,
+   "chunk": 24,
+   "seed": 62033,
+   "tc": "5+0.05",
+   "opts": []
+  },
+  {
+   "name": "e1500_B",
+   "elo": 1500,
+   "games": 24,
+   "chunk": 24,
+   "seed": 62045,
+   "tc": "5+0.05",
+   "opts": []
+  },
+  {
+   "name": "e1500_B",
+   "elo": 1500,
+   "games": 24,
+   "chunk": 24,
+   "seed": 62046,
+   "tc": "5+0.05",
+   "opts": []
+  },
+  {
+   "name": "e1500_B",
+   "elo": 1500,
+   "games": 24,
+   "chunk": 24,
+   "seed": 62058,
+   "tc": "5+0.05",
+   "opts": []
+  },
+  {
+   "name": "e1500_B",
+   "elo": 1500,
+   "games": 24,
+   "chunk": 24,
+   "seed": 62059,
+   "tc": "5+0.05",
+   "opts": []
+  },
+  {
+   "name": "e1500_B",
+   "elo": 1500,
+   "games": 24,
+   "chunk": 24,
+   "seed": 62071,
+   "tc": "5+0.05",
+   "opts": []
+  },
+  {
+   "name": "e1500_B",
+   "elo": 1500,
+   "games": 24,
+   "chunk": 24,
+   "seed": 62072,
+   "tc": "5+0.05",
+   "opts": []
+  },
+  {
+   "name": "e1500_B",
+   "elo": 1500,
+   "games": 24,
+   "chunk": 24,
+   "seed": 62084,
+   "tc": "5+0.05",
+   "opts": []
+  },
+  {
+   "name": "e1500_B",
+   "elo": 1500,
+   "games": 24,
+   "chunk": 24,
+   "seed": 62085,
+   "tc": "5+0.05",
+   "opts": []
+  },
+  {
+   "name": "e1500_B",
+   "elo": 1500,
+   "games": 24,
+   "chunk": 24,
+   "seed": 62097,
+   "tc": "5+0.05",
+   "opts": []
+  },
+  {
+   "name": "e1500_B",
+   "elo": 1500,
+   "games": 24,
+   "chunk": 24,
+   "seed": 62098,
+   "tc": "5+0.05",
+   "opts": []
+  },
+  {
+   "name": "e1500_O1",
+   "elo": 1500,
+   "games": 24,
+   "chunk": 24,
+   "seed": 62005,
+   "tc": "5+0.05",
+   "opts": [
+    "SmotherBuildCp=500",
+    "SmotherBuildFloor=300",
+    "SmotherBuildMoves=200"
+   ]
+  },
+  {
+   "name": "e1500_O1",
+   "elo": 1500,
+   "games": 24,
+   "chunk": 24,
+   "seed": 62006,
+   "tc": "5+0.05",
+   "opts": [
+    "SmotherBuildCp=500",
+    "SmotherBuildFloor=300",
+    "SmotherBuildMoves=200"
+   ]
+  },
+  {
+   "name": "e1500_O1",
+   "elo": 1500,
+   "games": 24,
+   "chunk": 24,
+   "seed": 62018,
+   "tc": "5+0.05",
+   "opts": [
+    "SmotherBuildCp=500",
+    "SmotherBuildFloor=300",
+    "SmotherBuildMoves=200"
+   ]
+  },
+  {
+   "name": "e1500_O1",
+   "elo": 1500,
+   "games": 24,
+   "chunk": 24,
+   "seed": 62019,
+   "tc": "5+0.05",
+   "opts": [
+    "SmotherBuildCp=500",
+    "SmotherBuildFloor=300",
+    "SmotherBuildMoves=200"
+   ]
+  },
+  {
+   "name": "e1500_O1",
+   "elo": 1500,
+   "games": 24,
+   "chunk": 24,
+   "seed": 62031,
+   "tc": "5+0.05",
+   "opts": [
+    "SmotherBuildCp=500",
+    "SmotherBuildFloor=300",
+    "SmotherBuildMoves=200"
+   ]
+  },
+  {
+   "name": "e1500_O1",
+   "elo": 1500,
+   "games": 24,
+   "chunk": 24,
+   "seed": 62032,
+   "tc": "5+0.05",
+   "opts": [
+    "SmotherBuildCp=500",
+    "SmotherBuildFloor=300",
+    "SmotherBuildMoves=200"
+   ]
+  },
+  {
+   "name": "e1500_O1",
+   "elo": 1500,
+   "games": 24,
+   "chunk": 24,
+   "seed": 62044,
+   "tc": "5+0.05",
+   "opts": [
+    "SmotherBuildCp=500",
+    "SmotherBuildFloor=300",
+    "SmotherBuildMoves=200"
+   ]
+  },
+  {
+   "name": "e1500_O1",
+   "elo": 1500,
+   "games": 24,
+   "chunk": 24,
+   "seed": 62045,
+   "tc": "5+0.05",
+   "opts": [
+    "SmotherBuildCp=500",
+    "SmotherBuildFloor=300",
+    "SmotherBuildMoves=200"
+   ]
+  },
+  {
+   "name": "e1500_O1",
+   "elo": 1500,
+   "games": 24,
+   "chunk": 24,
+   "seed": 62057,
+   "tc": "5+0.05",
+   "opts": [
+    "SmotherBuildCp=500",
+    "SmotherBuildFloor=300",
+    "SmotherBuildMoves=200"
+   ]
+  },
+  {
+   "name": "e1500_O1",
+   "elo": 1500,
+   "games": 24,
+   "chunk": 24,
+   "seed": 62058,
+   "tc": "5+0.05",
+   "opts": [
+    "SmotherBuildCp=500",
+    "SmotherBuildFloor=300",
+    "SmotherBuildMoves=200"
+   ]
+  },
+  {
+   "name": "e1500_O1",
+   "elo": 1500,
+   "games": 24,
+   "chunk": 24,
+   "seed": 62070,
+   "tc": "5+0.05",
+   "opts": [
+    "SmotherBuildCp=500",
+    "SmotherBuildFloor=300",
+    "SmotherBuildMoves=200"
+   ]
+  },
+  {
+   "name": "e1500_O1",
+   "elo": 1500,
+   "games": 24,
+   "chunk": 24,
+   "seed": 62071,
+   "tc": "5+0.05",
+   "opts": [
+    "SmotherBuildCp=500",
+    "SmotherBuildFloor=300",
+    "SmotherBuildMoves=200"
+   ]
+  },
+  {
+   "name": "e1500_O1",
+   "elo": 1500,
+   "games": 24,
+   "chunk": 24,
+   "seed": 62083,
+   "tc": "5+0.05",
+   "opts": [
+    "SmotherBuildCp=500",
+    "SmotherBuildFloor=300",
+    "SmotherBuildMoves=200"
+   ]
+  },
+  {
+   "name": "e1500_O1",
+   "elo": 1500,
+   "games": 24,
+   "chunk": 24,
+   "seed": 62084,
+   "tc": "5+0.05",
+   "opts": [
+    "SmotherBuildCp=500",
+    "SmotherBuildFloor=300",
+    "SmotherBuildMoves=200"
+   ]
+  },
+  {
+   "name": "e1500_O1",
+   "elo": 1500,
+   "games": 24,
+   "chunk": 24,
+   "seed": 62096,
+   "tc": "5+0.05",
+   "opts": [
+    "SmotherBuildCp=500",
+    "SmotherBuildFloor=300",
+    "SmotherBuildMoves=200"
+   ]
+  },
+  {
+   "name": "e1500_O1",
+   "elo": 1500,
+   "games": 24,
+   "chunk": 24,
+   "seed": 62097,
+   "tc": "5+0.05",
+   "opts": [
+    "SmotherBuildCp=500",
+    "SmotherBuildFloor=300",
+    "SmotherBuildMoves=200"
+   ]
+  },
+  {
+   "name": "e1500_O2",
+   "elo": 1500,
+   "games": 24,
+   "chunk": 24,
+   "seed": 62004,
+   "tc": "5+0.05",
+   "opts": [
+    "SmotherBuildCp=500",
+    "SmotherBuildFloor=300",
+    "SmotherBuildMoves=200",
+    "SmotherBuildMaterialDiv=16"
+   ]
+  },
+  {
+   "name": "e1500_O2",
+   "elo": 1500,
+   "games": 24,
+   "chunk": 24,
+   "seed": 62005,
+   "tc": "5+0.05",
+   "opts": [
+    "SmotherBuildCp=500",
+    "SmotherBuildFloor=300",
+    "SmotherBuildMoves=200",
+    "SmotherBuildMaterialDiv=16"
+   ]
+  },
+  {
+   "name": "e1500_O2",
+   "elo": 1500,
+   "games": 24,
+   "chunk": 24,
+   "seed": 62017,
+   "tc": "5+0.05",
+   "opts": [
+    "SmotherBuildCp=500",
+    "SmotherBuildFloor=300",
+    "SmotherBuildMoves=200",
+    "SmotherBuildMaterialDiv=16"
+   ]
+  },
+  {
+   "name": "e1500_O2",
+   "elo": 1500,
+   "games": 24,
+   "chunk": 24,
+   "seed": 62018,
+   "tc": "5+0.05",
+   "opts": [
+    "SmotherBuildCp=500",
+    "SmotherBuildFloor=300",
+    "SmotherBuildMoves=200",
+    "SmotherBuildMaterialDiv=16"
+   ]
+  },
+  {
+   "name": "e1500_O2",
+   "elo": 1500,
+   "games": 24,
+   "chunk": 24,
+   "seed": 62030,
+   "tc": "5+0.05",
+   "opts": [
+    "SmotherBuildCp=500",
+    "SmotherBuildFloor=300",
+    "SmotherBuildMoves=200",
+    "SmotherBuildMaterialDiv=16"
+   ]
+  },
+  {
+   "name": "e1500_O2",
+   "elo": 1500,
+   "games": 24,
+   "chunk": 24,
+   "seed": 62031,
+   "tc": "5+0.05",
+   "opts": [
+    "SmotherBuildCp=500",
+    "SmotherBuildFloor=300",
+    "SmotherBuildMoves=200",
+    "SmotherBuildMaterialDiv=16"
+   ]
+  },
+  {
+   "name": "e1500_O2",
+   "elo": 1500,
+   "games": 24,
+   "chunk": 24,
+   "seed": 62043,
+   "tc": "5+0.05",
+   "opts": [
+    "SmotherBuildCp=500",
+    "SmotherBuildFloor=300",
+    "SmotherBuildMoves=200",
+    "SmotherBuildMaterialDiv=16"
+   ]
+  },
+  {
+   "name": "e1500_O2",
+   "elo": 1500,
+   "games": 24,
+   "chunk": 24,
+   "seed": 62044,
+   "tc": "5+0.05",
+   "opts": [
+    "SmotherBuildCp=500",
+    "SmotherBuildFloor=300",
+    "SmotherBuildMoves=200",
+    "SmotherBuildMaterialDiv=16"
+   ]
+  },
+  {
+   "name": "e1500_O2",
+   "elo": 1500,
+   "games": 24,
+   "chunk": 24,
+   "seed": 62056,
+   "tc": "5+0.05",
+   "opts": [
+    "SmotherBuildCp=500",
+    "SmotherBuildFloor=300",
+    "SmotherBuildMoves=200",
+    "SmotherBuildMaterialDiv=16"
+   ]
+  },
+  {
+   "name": "e1500_O2",
+   "elo": 1500,
+   "games": 24,
+   "chunk": 24,
+   "seed": 62057,
+   "tc": "5+0.05",
+   "opts": [
+    "SmotherBuildCp=500",
+    "SmotherBuildFloor=300",
+    "SmotherBuildMoves=200",
+    "SmotherBuildMaterialDiv=16"
+   ]
+  },
+  {
+   "name": "e1500_O2",
+   "elo": 1500,
+   "games": 24,
+   "chunk": 24,
+   "seed": 62069,
+   "tc": "5+0.05",
+   "opts": [
+    "SmotherBuildCp=500",
+    "SmotherBuildFloor=300",
+    "SmotherBuildMoves=200",
+    "SmotherBuildMaterialDiv=16"
+   ]
+  },
+  {
+   "name": "e1500_O2",
+   "elo": 1500,
+   "games": 24,
+   "chunk": 24,
+   "seed": 62070,
+   "tc": "5+0.05",
+   "opts": [
+    "SmotherBuildCp=500",
+    "SmotherBuildFloor=300",
+    "SmotherBuildMoves=200",
+    "SmotherBuildMaterialDiv=16"
+   ]
+  },
+  {
+   "name": "e1500_O2",
+   "elo": 1500,
+   "games": 24,
+   "chunk": 24,
+   "seed": 62082,
+   "tc": "5+0.05",
+   "opts": [
+    "SmotherBuildCp=500",
+    "SmotherBuildFloor=300",
+    "SmotherBuildMoves=200",
+    "SmotherBuildMaterialDiv=16"
+   ]
+  },
+  {
+   "name": "e1500_O2",
+   "elo": 1500,
+   "games": 24,
+   "chunk": 24,
+   "seed": 62083,
+   "tc": "5+0.05",
+   "opts": [
+    "SmotherBuildCp=500",
+    "SmotherBuildFloor=300",
+    "SmotherBuildMoves=200",
+    "SmotherBuildMaterialDiv=16"
+   ]
+  },
+  {
+   "name": "e1500_O2",
+   "elo": 1500,
+   "games": 24,
+   "chunk": 24,
+   "seed": 62095,
+   "tc": "5+0.05",
+   "opts": [
+    "SmotherBuildCp=500",
+    "SmotherBuildFloor=300",
+    "SmotherBuildMoves=200",
+    "SmotherBuildMaterialDiv=16"
+   ]
+  },
+  {
+   "name": "e1500_O2",
+   "elo": 1500,
+   "games": 24,
+   "chunk": 24,
+   "seed": 62096,
+   "tc": "5+0.05",
+   "opts": [
+    "SmotherBuildCp=500",
+    "SmotherBuildFloor=300",
+    "SmotherBuildMoves=200",
+    "SmotherBuildMaterialDiv=16"
+   ]
+  },
+  {
+   "name": "e1500_O3",
+   "elo": 1500,
+   "games": 24,
+   "chunk": 24,
+   "seed": 62003,
+   "tc": "5+0.05",
+   "opts": [
+    "SmotherBuildCp=400",
+    "SmotherBuildFloor=200",
+    "SmotherBuildMoves=200",
+    "SmotherBuildMaterialDiv=16"
+   ]
+  },
+  {
+   "name": "e1500_O3",
+   "elo": 1500,
+   "games": 24,
+   "chunk": 24,
+   "seed": 62004,
+   "tc": "5+0.05",
+   "opts": [
+    "SmotherBuildCp=400",
+    "SmotherBuildFloor=200",
+    "SmotherBuildMoves=200",
+    "SmotherBuildMaterialDiv=16"
+   ]
+  },
+  {
+   "name": "e1500_O3",
+   "elo": 1500,
+   "games": 24,
+   "chunk": 24,
+   "seed": 62016,
+   "tc": "5+0.05",
+   "opts": [
+    "SmotherBuildCp=400",
+    "SmotherBuildFloor=200",
+    "SmotherBuildMoves=200",
+    "SmotherBuildMaterialDiv=16"
+   ]
+  },
+  {
+   "name": "e1500_O3",
+   "elo": 1500,
+   "games": 24,
+   "chunk": 24,
+   "seed": 62017,
+   "tc": "5+0.05",
+   "opts": [
+    "SmotherBuildCp=400",
+    "SmotherBuildFloor=200",
+    "SmotherBuildMoves=200",
+    "SmotherBuildMaterialDiv=16"
+   ]
+  },
+  {
+   "name": "e1500_O3",
+   "elo": 1500,
+   "games": 24,
+   "chunk": 24,
+   "seed": 62029,
+   "tc": "5+0.05",
+   "opts": [
+    "SmotherBuildCp=400",
+    "SmotherBuildFloor=200",
+    "SmotherBuildMoves=200",
+    "SmotherBuildMaterialDiv=16"
+   ]
+  },
+  {
+   "name": "e1500_O3",
+   "elo": 1500,
+   "games": 24,
+   "chunk": 24,
+   "seed": 62030,
+   "tc": "5+0.05",
+   "opts": [
+    "SmotherBuildCp=400",
+    "SmotherBuildFloor=200",
+    "SmotherBuildMoves=200",
+    "SmotherBuildMaterialDiv=16"
+   ]
+  },
+  {
+   "name": "e1500_O3",
+   "elo": 1500,
+   "games": 24,
+   "chunk": 24,
+   "seed": 62042,
+   "tc": "5+0.05",
+   "opts": [
+    "SmotherBuildCp=400",
+    "SmotherBuildFloor=200",
+    "SmotherBuildMoves=200",
+    "SmotherBuildMaterialDiv=16"
+   ]
+  },
+  {
+   "name": "e1500_O3",
+   "elo": 1500,
+   "games": 24,
+   "chunk": 24,
+   "seed": 62043,
+   "tc": "5+0.05",
+   "opts": [
+    "SmotherBuildCp=400",
+    "SmotherBuildFloor=200",
+    "SmotherBuildMoves=200",
+    "SmotherBuildMaterialDiv=16"
+   ]
+  },
+  {
+   "name": "e1500_O3",
+   "elo": 1500,
+   "games": 24,
+   "chunk": 24,
+   "seed": 62055,
+   "tc": "5+0.05",
+   "opts": [
+    "SmotherBuildCp=400",
+    "SmotherBuildFloor=200",
+    "SmotherBuildMoves=200",
+    "SmotherBuildMaterialDiv=16"
+   ]
+  },
+  {
+   "name": "e1500_O3",
+   "elo": 1500,
+   "games": 24,
+   "chunk": 24,
+   "seed": 62056,
+   "tc": "5+0.05",
+   "opts": [
+    "SmotherBuildCp=400",
+    "SmotherBuildFloor=200",
+    "SmotherBuildMoves=200",
+    "SmotherBuildMaterialDiv=16"
+   ]
+  },
+  {
+   "name": "e1500_O3",
+   "elo": 1500,
+   "games": 24,
+   "chunk": 24,
+   "seed": 62068,
+   "tc": "5+0.05",
+   "opts": [
+    "SmotherBuildCp=400",
+    "SmotherBuildFloor=200",
+    "SmotherBuildMoves=200",
+    "SmotherBuildMaterialDiv=16"
+   ]
+  },
+  {
+   "name": "e1500_O3",
+   "elo": 1500,
+   "games": 24,
+   "chunk": 24,
+   "seed": 62069,
+   "tc": "5+0.05",
+   "opts": [
+    "SmotherBuildCp=400",
+    "SmotherBuildFloor=200",
+    "SmotherBuildMoves=200",
+    "SmotherBuildMaterialDiv=16"
+   ]
+  },
+  {
+   "name": "e1500_O3",
+   "elo": 1500,
+   "games": 24,
+   "chunk": 24,
+   "seed": 62081,
+   "tc": "5+0.05",
+   "opts": [
+    "SmotherBuildCp=400",
+    "SmotherBuildFloor=200",
+    "SmotherBuildMoves=200",
+    "SmotherBuildMaterialDiv=16"
+   ]
+  },
+  {
+   "name": "e1500_O3",
+   "elo": 1500,
+   "games": 24,
+   "chunk": 24,
+   "seed": 62082,
+   "tc": "5+0.05",
+   "opts": [
+    "SmotherBuildCp=400",
+    "SmotherBuildFloor=200",
+    "SmotherBuildMoves=200",
+    "SmotherBuildMaterialDiv=16"
+   ]
+  },
+  {
+   "name": "e1500_O3",
+   "elo": 1500,
+   "games": 24,
+   "chunk": 24,
+   "seed": 62094,
+   "tc": "5+0.05",
+   "opts": [
+    "SmotherBuildCp=400",
+    "SmotherBuildFloor=200",
+    "SmotherBuildMoves=200",
+    "SmotherBuildMaterialDiv=16"
+   ]
+  },
+  {
+   "name": "e1500_O3",
+   "elo": 1500,
+   "games": 24,
+   "chunk": 24,
+   "seed": 62095,
+   "tc": "5+0.05",
+   "opts": [
+    "SmotherBuildCp=400",
+    "SmotherBuildFloor=200",
+    "SmotherBuildMoves=200",
+    "SmotherBuildMaterialDiv=16"
+   ]
+  },
+  {
+   "name": "m1500_B",
+   "elo": 1500,
+   "games": 24,
+   "chunk": 24,
+   "seed": 62000,
+   "tc": "5+0.05",
+   "opts": [],
+   "opponent": "maia3-1500"
+  },
+  {
+   "name": "m1500_B",
+   "elo": 1500,
+   "games": 24,
+   "chunk": 24,
+   "seed": 62001,
+   "tc": "5+0.05",
+   "opts": [],
+   "opponent": "maia3-1500"
+  },
+  {
+   "name": "m1500_B",
+   "elo": 1500,
+   "games": 24,
+   "chunk": 24,
+   "seed": 62013,
+   "tc": "5+0.05",
+   "opts": [],
+   "opponent": "maia3-1500"
+  },
+  {
+   "name": "m1500_B",
+   "elo": 1500,
+   "games": 24,
+   "chunk": 24,
+   "seed": 62014,
+   "tc": "5+0.05",
+   "opts": [],
+   "opponent": "maia3-1500"
+  },
+  {
+   "name": "m1500_B",
+   "elo": 1500,
+   "games": 24,
+   "chunk": 24,
+   "seed": 62026,
+   "tc": "5+0.05",
+   "opts": [],
+   "opponent": "maia3-1500"
+  },
+  {
+   "name": "m1500_B",
+   "elo": 1500,
+   "games": 24,
+   "chunk": 24,
+   "seed": 62027,
+   "tc": "5+0.05",
+   "opts": [],
+   "opponent": "maia3-1500"
+  },
+  {
+   "name": "m1500_B",
+   "elo": 1500,
+   "games": 24,
+   "chunk": 24,
+   "seed": 62039,
+   "tc": "5+0.05",
+   "opts": [],
+   "opponent": "maia3-1500"
+  },
+  {
+   "name": "m1500_B",
+   "elo": 1500,
+   "games": 24,
+   "chunk": 24,
+   "seed": 62040,
+   "tc": "5+0.05",
+   "opts": [],
+   "opponent": "maia3-1500"
+  },
+  {
+   "name": "m1500_O1",
+   "elo": 1500,
+   "games": 24,
+   "chunk": 24,
+   "seed": 62002,
+   "tc": "5+0.05",
+   "opts": [
+    "SmotherBuildCp=500",
+    "SmotherBuildFloor=300",
+    "SmotherBuildMoves=200"
+   ],
+   "opponent": "maia3-1500"
+  },
+  {
+   "name": "m1500_O1",
+   "elo": 1500,
+   "games": 24,
+   "chunk": 24,
+   "seed": 62003,
+   "tc": "5+0.05",
+   "opts": [
+    "SmotherBuildCp=500",
+    "SmotherBuildFloor=300",
+    "SmotherBuildMoves=200"
+   ],
+   "opponent": "maia3-1500"
+  },
+  {
+   "name": "m1500_O1",
+   "elo": 1500,
+   "games": 24,
+   "chunk": 24,
+   "seed": 62015,
+   "tc": "5+0.05",
+   "opts": [
+    "SmotherBuildCp=500",
+    "SmotherBuildFloor=300",
+    "SmotherBuildMoves=200"
+   ],
+   "opponent": "maia3-1500"
+  },
+  {
+   "name": "m1500_O1",
+   "elo": 1500,
+   "games": 24,
+   "chunk": 24,
+   "seed": 62016,
+   "tc": "5+0.05",
+   "opts": [
+    "SmotherBuildCp=500",
+    "SmotherBuildFloor=300",
+    "SmotherBuildMoves=200"
+   ],
+   "opponent": "maia3-1500"
+  },
+  {
+   "name": "m1500_O1",
+   "elo": 1500,
+   "games": 24,
+   "chunk": 24,
+   "seed": 62028,
+   "tc": "5+0.05",
+   "opts": [
+    "SmotherBuildCp=500",
+    "SmotherBuildFloor=300",
+    "SmotherBuildMoves=200"
+   ],
+   "opponent": "maia3-1500"
+  },
+  {
+   "name": "m1500_O1",
+   "elo": 1500,
+   "games": 24,
+   "chunk": 24,
+   "seed": 62029,
+   "tc": "5+0.05",
+   "opts": [
+    "SmotherBuildCp=500",
+    "SmotherBuildFloor=300",
+    "SmotherBuildMoves=200"
+   ],
+   "opponent": "maia3-1500"
+  },
+  {
+   "name": "m1500_O1",
+   "elo": 1500,
+   "games": 24,
+   "chunk": 24,
+   "seed": 62041,
+   "tc": "5+0.05",
+   "opts": [
+    "SmotherBuildCp=500",
+    "SmotherBuildFloor=300",
+    "SmotherBuildMoves=200"
+   ],
+   "opponent": "maia3-1500"
+  },
+  {
+   "name": "m1500_O1",
+   "elo": 1500,
+   "games": 24,
+   "chunk": 24,
+   "seed": 62042,
+   "tc": "5+0.05",
+   "opts": [
+    "SmotherBuildCp=500",
+    "SmotherBuildFloor=300",
+    "SmotherBuildMoves=200"
+   ],
+   "opponent": "maia3-1500"
+  },
+  {
+   "name": "m1500_O2",
+   "elo": 1500,
+   "games": 24,
+   "chunk": 24,
+   "seed": 62004,
+   "tc": "5+0.05",
+   "opts": [
+    "SmotherBuildCp=500",
+    "SmotherBuildFloor=300",
+    "SmotherBuildMoves=200",
+    "SmotherBuildMaterialDiv=16"
+   ],
+   "opponent": "maia3-1500"
+  },
+  {
+   "name": "m1500_O2",
+   "elo": 1500,
+   "games": 24,
+   "chunk": 24,
+   "seed": 62005,
+   "tc": "5+0.05",
+   "opts": [
+    "SmotherBuildCp=500",
+    "SmotherBuildFloor=300",
+    "SmotherBuildMoves=200",
+    "SmotherBuildMaterialDiv=16"
+   ],
+   "opponent": "maia3-1500"
+  },
+  {
+   "name": "m1500_O2",
+   "elo": 1500,
+   "games": 24,
+   "chunk": 24,
+   "seed": 62017,
+   "tc": "5+0.05",
+   "opts": [
+    "SmotherBuildCp=500",
+    "SmotherBuildFloor=300",
+    "SmotherBuildMoves=200",
+    "SmotherBuildMaterialDiv=16"
+   ],
+   "opponent": "maia3-1500"
+  },
+  {
+   "name": "m1500_O2",
+   "elo": 1500,
+   "games": 24,
+   "chunk": 24,
+   "seed": 62018,
+   "tc": "5+0.05",
+   "opts": [
+    "SmotherBuildCp=500",
+    "SmotherBuildFloor=300",
+    "SmotherBuildMoves=200",
+    "SmotherBuildMaterialDiv=16"
+   ],
+   "opponent": "maia3-1500"
+  },
+  {
+   "name": "m1500_O2",
+   "elo": 1500,
+   "games": 24,
+   "chunk": 24,
+   "seed": 62030,
+   "tc": "5+0.05",
+   "opts": [
+    "SmotherBuildCp=500",
+    "SmotherBuildFloor=300",
+    "SmotherBuildMoves=200",
+    "SmotherBuildMaterialDiv=16"
+   ],
+   "opponent": "maia3-1500"
+  },
+  {
+   "name": "m1500_O2",
+   "elo": 1500,
+   "games": 24,
+   "chunk": 24,
+   "seed": 62031,
+   "tc": "5+0.05",
+   "opts": [
+    "SmotherBuildCp=500",
+    "SmotherBuildFloor=300",
+    "SmotherBuildMoves=200",
+    "SmotherBuildMaterialDiv=16"
+   ],
+   "opponent": "maia3-1500"
+  },
+  {
+   "name": "m1500_O2",
+   "elo": 1500,
+   "games": 24,
+   "chunk": 24,
+   "seed": 62043,
+   "tc": "5+0.05",
+   "opts": [
+    "SmotherBuildCp=500",
+    "SmotherBuildFloor=300",
+    "SmotherBuildMoves=200",
+    "SmotherBuildMaterialDiv=16"
+   ],
+   "opponent": "maia3-1500"
+  },
+  {
+   "name": "m1500_O2",
+   "elo": 1500,
+   "games": 24,
+   "chunk": 24,
+   "seed": 62044,
+   "tc": "5+0.05",
+   "opts": [
+    "SmotherBuildCp=500",
+    "SmotherBuildFloor=300",
+    "SmotherBuildMoves=200",
+    "SmotherBuildMaterialDiv=16"
+   ],
+   "opponent": "maia3-1500"
+  },
+  {
+   "name": "m1500_O3",
+   "elo": 1500,
+   "games": 24,
+   "chunk": 24,
+   "seed": 62006,
+   "tc": "5+0.05",
+   "opts": [
+    "SmotherBuildCp=400",
+    "SmotherBuildFloor=200",
+    "SmotherBuildMoves=200",
+    "SmotherBuildMaterialDiv=16"
+   ],
+   "opponent": "maia3-1500"
+  },
+  {
+   "name": "m1500_O3",
+   "elo": 1500,
+   "games": 24,
+   "chunk": 24,
+   "seed": 62007,
+   "tc": "5+0.05",
+   "opts": [
+    "SmotherBuildCp=400",
+    "SmotherBuildFloor=200",
+    "SmotherBuildMoves=200",
+    "SmotherBuildMaterialDiv=16"
+   ],
+   "opponent": "maia3-1500"
+  },
+  {
+   "name": "m1500_O3",
+   "elo": 1500,
+   "games": 24,
+   "chunk": 24,
+   "seed": 62019,
+   "tc": "5+0.05",
+   "opts": [
+    "SmotherBuildCp=400",
+    "SmotherBuildFloor=200",
+    "SmotherBuildMoves=200",
+    "SmotherBuildMaterialDiv=16"
+   ],
+   "opponent": "maia3-1500"
+  },
+  {
+   "name": "m1500_O3",
+   "elo": 1500,
+   "games": 24,
+   "chunk": 24,
+   "seed": 62020,
+   "tc": "5+0.05",
+   "opts": [
+    "SmotherBuildCp=400",
+    "SmotherBuildFloor=200",
+    "SmotherBuildMoves=200",
+    "SmotherBuildMaterialDiv=16"
+   ],
+   "opponent": "maia3-1500"
+  },
+  {
+   "name": "m1500_O3",
+   "elo": 1500,
+   "games": 24,
+   "chunk": 24,
+   "seed": 62032,
+   "tc": "5+0.05",
+   "opts": [
+    "SmotherBuildCp=400",
+    "SmotherBuildFloor=200",
+    "SmotherBuildMoves=200",
+    "SmotherBuildMaterialDiv=16"
+   ],
+   "opponent": "maia3-1500"
+  },
+  {
+   "name": "m1500_O3",
+   "elo": 1500,
+   "games": 24,
+   "chunk": 24,
+   "seed": 62033,
+   "tc": "5+0.05",
+   "opts": [
+    "SmotherBuildCp=400",
+    "SmotherBuildFloor=200",
+    "SmotherBuildMoves=200",
+    "SmotherBuildMaterialDiv=16"
+   ],
+   "opponent": "maia3-1500"
+  },
+  {
+   "name": "m1500_O3",
+   "elo": 1500,
+   "games": 24,
+   "chunk": 24,
+   "seed": 62045,
+   "tc": "5+0.05",
+   "opts": [
+    "SmotherBuildCp=400",
+    "SmotherBuildFloor=200",
+    "SmotherBuildMoves=200",
+    "SmotherBuildMaterialDiv=16"
+   ],
+   "opponent": "maia3-1500"
+  },
+  {
+   "name": "m1500_O3",
+   "elo": 1500,
+   "games": 24,
+   "chunk": 24,
+   "seed": 62046,
+   "tc": "5+0.05",
+   "opts": [
+    "SmotherBuildCp=400",
+    "SmotherBuildFloor=200",
+    "SmotherBuildMoves=200",
+    "SmotherBuildMaterialDiv=16"
+   ],
+   "opponent": "maia3-1500"
+  }
+ ],
+ "shard": [
+  [
+   0,
+   1,
+   2,
+   3
+  ],
+  4
+ ]
+}
