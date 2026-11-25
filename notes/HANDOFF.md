@@ -1915,3 +1915,8 @@ Akleotes grid56: 5,240 of 5,280 games (1 job lost).
 Housekeeping: helper-exp deletes moved to a workflow (session git deletes
 are refused); status page: status.json built every 15 min by the Status
 data workflow (notes/scripts/status_data.py).
+Fork 2456cd (one of the two newest helpers) became unreachable on Nov 26
+~05:55 JST (github.com answers 403; still listed as a fork): its grid55
+(1,252 games) and grid56 (1,320) shares never arrived; refilled on Akleotes
+as grid55-r3 and grid56-r2 (with first_chunk). grid55-r2 (Akleotes's own
+share, corrected) delivered all 2,544 games.
