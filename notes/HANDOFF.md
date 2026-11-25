@@ -1828,3 +1828,11 @@ guide, notes/release/v1.6.md with STRENGTH_RESULT placeholder). Bench
 sprt-release16 (1.6 settings vs 1.5.1 defaults, 10+0.1, bounds [-3, 1],
 8 accounts incl. the new fork, 162 runners): 32,400 games, -0.3 Elo (95%
 -1.2 to +0.5), LLR +14.1, H1: no regression. Release notes filled in.
+
+Release 1.6: all six binaries built and passed bench, but the Publish step
+failed with HTTP 504 (GitHub outage, Nov 25 16:07 UTC incident); re-run
+pending. Track A (main version, full strength): grid53 = 1.6 defaults vs
+SmotherBuildDecoy 40 / 80; Elo 1500 6,000 games per arm, Maia-3 1500
+1,200 per arm (target: +10% knight smothers, detectable at this size).
+Track B (opt-in "obsessed" setting that spends strength) waits for the
+user's signal.
