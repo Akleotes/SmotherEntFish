@@ -1870,3 +1870,11 @@ grid54 (1.6 strength margin, 10+0.1): vs UCI_Elo 2600 940 games +937 =3 -0
 (99.8%); vs 3000 360 games +353 =7 -0 (99.0%). 100 games of Akleotes's
 re-run jobs never reached the results branch (results were committed by
 the first attempt). Track B floor (>= 80% vs 2600) leaves a large budget.
+
+Helper forks: four more joined Nov 26 (IDs f0afe4, a8e399, 87fb66, 2456cd),
+found automatically: 11 accounts, 13 shares.
+grid55 (Track B round 1: spend strength on earlier and longer
+construction): B 1.6 vs O1 (BuildCp 500, Floor 300, BuildMoves 200) vs O2
+(O1 + MaterialDiv 16) vs O3 (BuildCp 400, Floor 200, BuildMoves 200,
+MaterialDiv 16); Elo 1500 x2500, Maia-3 1500 x1200 (5+0.05), Elo 2600 x400
+at 10+0.1 (floor: >= 80%).
