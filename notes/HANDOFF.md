@@ -1836,3 +1836,11 @@ SmotherBuildDecoy 40 / 80; Elo 1500 6,000 games per arm, Maia-3 1500
 1,200 per arm (target: +10% knight smothers, detectable at this size).
 Track B (opt-in "obsessed" setting that spends strength) waits for the
 user's signal.
+
+Release 1.6 published (Nov 26 ~02:00 JST) from 6a8caf3d: the 1.6 defaults
+plus the removal of 29 experimental options (identical play to the
+SPRT-tested build: 300 positions, same moves and node counts, fixed depth,
+sequential prover). The first publish failed in a GitHub outage (504).
+Helper forks synced to 6a8caf3d except d32e35 (still 33bbe361):
+notes/volunteers.json now has "base" 6a8caf3d and per-fork "bases"
+{"d32e35": "33bbe361"} until it syncs (volunteers.py targets reads it).
