@@ -32,10 +32,14 @@ experiment meant for your fork and starts it there.
 - Public repositories have free Actions minutes on GitHub's standard
   machines.
 
-## Faster results
+## Starting automatically
 
-The schedule polls about once an hour. If you want an experiment to start
-right away, press **Run workflow** on **Helper poll** again.
+The main repository's "Helper kick" workflow starts your fork's Helper poll
+within about 15 minutes of a new experiment, so you do not need to press
+anything. For that, add the repository owner as a collaborator on your fork
+(your fork's Settings, Collaborators). Without it, your fork still picks up
+experiments on its own schedule, about once an hour, or when you press
+**Run workflow** on **Helper poll**.
 
 ## Keeping your fork up to date
 

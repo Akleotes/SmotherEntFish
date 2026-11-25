@@ -1898,3 +1898,7 @@ classic PAT of the owner, scope public_repo, owner = collaborator with write
 on each fork). No checkout, inline script, permissions {}, no PR/fork
 triggers; inert until the secret exists. Forks need no sync (their tips
 have 6a8caf3d as an ancestor, so helper branches built on it still copy).
+Helper kick verified (Nov 26 04:42 JST): secret set, public_repo scope is
+enough; first run kicked 10 forks (Akleotes already had grid56); 9 copied
+grid56 at once, 2 waiting for a free runner behind grid55. Aurazur now
+starts automatically.
