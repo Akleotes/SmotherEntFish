@@ -1850,3 +1850,14 @@ version (about 4 -> 6+ per 100 vs SF 1500; all types reported too), with a
 strength floor of >= 80% score vs Stockfish UCI_Elo 2600 at 10+0.1.
 grid54: 1.6 strength baseline vs UCI_Elo 2600 (1,000 games) and 3000 (400)
 at 10+0.1.
+
+Sacrifice census (Track B groundwork; smother_sacrifice_census.py):
+positions >= +3 (material), enemy king on an edge, from 1.6 games; every
+move SF19 still scores >= +300 cp (MultiPV 40, depth 8); "sacrifice" =
+>= 150 cp below the best; 6 sampled opponent replies per move; prover
+after replies that fill a ring square or answer a check. vs SF 1500 (300
+positions): sacrifices with expected hit >= 0.1: 0/300; other moves 2/300.
+vs Maia-3 1500 (200): 0/200 and 0/200. One-move sacrificial gambles almost
+never create a forced knight smother from +3..+8 positions (one-ply
+horizon; multi-move gambles not measured). Track B should lean on longer /
+earlier construction and trap steering vs humans, not sacrifices.
