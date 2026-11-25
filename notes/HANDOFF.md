@@ -1536,3 +1536,16 @@ KnightCheck 16 vs 1.5.1: +0.7 Elo [-0.5, +1.8], pentanomial [3, 458, 8046,
 488, 5], H1 for [-3, 0]. tc180k16 partial (3+2; knight per 100): SF 1500
 1.4 (2/139) vs 3.8 (5/130); SF 2500 0 vs 0.9; Maia-3 1500 2.0 (3/150) vs
 6.0 (9/150); together 5 vs 15; no draws or losses.
+
+tc180k16 (6 of 7 shards; knight per 100): SF 1500 0.9 (3/319) vs 3.7
+(10/268, z +2.3); Maia-3 1500 1.4 (5/350) vs 6.3 (22/350, z +3.3); SF 2500
+0 vs 0.4. No draws or losses. User wants a more substantial gain before
+calling it 1.6.
+Diagnostic (classic goal, grid47 Elo 1500, 7,473 wins): classic hazard
+~0.5% per 20 of our moves, fading after 100 (longer build will not help).
+At the final mate: classic games - defender 3-6 units, ring closed;
+other mates - defender 0-2 units in 63%, 3+ open ring squares in 88%; we
+have a knight in 79%; we underpromote to knights often (4,699 vs 5,078
+queen promotions). The box runs out of blockers: grid48 tests Keep 22,
+Keep 22 + MaterialDiv 16, Starve 10 (at 4) on SmotherClassic + KnightCheck
+16.
