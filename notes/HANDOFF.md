@@ -1554,3 +1554,18 @@ Rule (user, Nov 25): after every distributed launch, remind the user to
 press "Run workflow" on Helper poll for the helper forks (AlSynthK,
 bazaak-coder, Aurazur in particular; Aurazur never runs on its own), even
 though it is optional, so results come back faster.
+
+grid48 (all 8 shares; knight per 100): Elo 1500 (2500): base 3.2 (81, 13
+draws), Keep 22 3.1 (4 draws), Keep 22 + MatDiv 16 3.0, Starve 10 3.5 (87);
+Maia-3 1500 (600): 2.7 / 3.2 / 3.3 / 3.5; Elo 2500 (400): 0.8 / 1.0 / 1.8 /
+1.2. Keep 22 cut "defender <= 2 units at the mate" from 62% to 25% but did
+not raise knight smothers: blockers were not the limit.
+Classic hazard by state (grid48 Elo 1500, 1.15M positions; knight smother
+within 10 moves): closed box + corner + knight one move from a checking
+square 82% (0.04% of positions); 1 open + corner + knight 1 move 7.6%
+(1.6%); 3+ open (77% of positions) < 0.1%. The last open square is the
+bottleneck. With 1 open in a corner: "decoy ready" (a defender piece
+covers the hole, our queen/rook can go there guarded) 7.6% vs 4.2% / 3.3%.
+New options: SmotherBuildDecoy, SmotherCrushMoves (12), SmotherCrushQuiet
+(2). grid49: base, CrushQuiet 3, + CrushMoves 16, Decoy 40, Decoy 40 +
+Quiet 3 (all SmotherClassic + KnightCheck 16).

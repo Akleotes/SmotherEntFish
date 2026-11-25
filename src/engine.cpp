@@ -157,6 +157,9 @@ Engine::Engine(std::optional<std::filesystem::path> path) :
     options.add("SmotherMaxMoves", Option(8, 1, 20));
 
     options.add("SmotherQuietMoves", Option(1, 0, 3));
+    // Prover limits once the game is crushing (mate in hand, +10, or construction).
+    options.add("SmotherCrushMoves", Option(12, 1, 20));
+    options.add("SmotherCrushQuiet", Option(2, 0, 3));
 
     options.add("SmotherTimePercent", Option(25, 0, 100));
 
@@ -317,6 +320,8 @@ Engine::Engine(std::optional<std::filesystem::path> path) :
     // KnightCheck: points per knight one knight move from a safe checking
     // square (half for two moves); for classic (knight) smothers.
     options.add("SmotherBuildKnightCheck", Option(0, 0, 100));
+    // Decoy: points when a sacrifice can force the last blocker into the box.
+    options.add("SmotherBuildDecoy", Option(0, 0, 200));
 
     // While pondering, let the parallel prover search deep and unbounded on
     // the opponent's time.

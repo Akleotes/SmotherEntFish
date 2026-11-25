@@ -422,8 +422,8 @@ void Search::Worker::start_smother_prover() {
     sl.robust     = bool(options["SmotherRobust"]);
     if (mgr.smotherCrush)
     {
-        sl.maxMoves   = std::max(sl.maxMoves, 12);
-        sl.quietMoves = std::max(sl.quietMoves, 2);
+        sl.maxMoves   = std::max(sl.maxMoves, int(options["SmotherCrushMoves"]));
+        sl.quietMoves = std::max(sl.quietMoves, int(options["SmotherCrushQuiet"]));
     }
 
 
@@ -995,7 +995,8 @@ bool Search::Worker::iterative_deepening() {
                                       int(options["SmotherBuildDefRing"]),
                                       std::string(options["SmotherBuildRingTable"]),
                                       int(options["SmotherBuildExit"]),
-                                      int(options["SmotherBuildKnightCheck"]));
+                                      int(options["SmotherBuildKnightCheck"]),
+                                      int(options["SmotherBuildDecoy"]));
             buildEscape    = int(options["SmotherBuildEscape"]);
             buildKnightSafe = int(options["SmotherBuildKnightSafe"]);
             shapeWeight    = 0;

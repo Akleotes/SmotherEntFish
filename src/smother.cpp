@@ -664,13 +664,15 @@ void set_build_weights(const std::string& s) {
     w.defRingPct = buildWeights.defRingPct;
     w.exit       = buildWeights.exit;
     w.knightCheck = buildWeights.knightCheck;
+    w.decoy       = buildWeights.decoy;
     w.useTable   = buildWeights.useTable;
     std::copy(std::begin(buildWeights.ringTable), std::end(buildWeights.ringTable), w.ringTable);
     buildWeights = w;
 }
 
-void set_build_extras(int ready, int defRingPct, const std::string& ringTable, int exit, int knightCheck) {
+void set_build_extras(int ready, int defRingPct, const std::string& ringTable, int exit, int knightCheck, int decoy) {
     buildWeights.ready      = ready;
+    buildWeights.decoy      = decoy;
     buildWeights.knightCheck = knightCheck;
     buildWeights.exit       = exit;
     buildWeights.defRingPct = defRingPct;
@@ -737,6 +739,16 @@ int build_score(const Position& pos, Color us, int survive, int cap, int version
             exits += popcount(to & safe);
         }
         score -= W.exit * std::min(exits, 6);
+    }
+
+    // Decoy: the last open square can be filled by force.
+    if (W.decoy && holes == 1 && corner)
+    {
+        const Square   s   = lsb(ring & ~pos.pieces(them));
+        const Bitboard att = pos.attackers_to(s);
+        if ((att & pos.pieces(them) & ~pos.pieces(KING)) && (att & pos.pieces(us, QUEEN, ROOK))
+            && (att & pos.pieces(us) & ~pos.pieces(QUEEN)))
+            score += W.decoy;
     }
 
     // Knight routes to safe checking squares (classic smothers).
