@@ -1633,3 +1633,8 @@ Lichess bots session 3 (Nov 25 03:50-08:50 JST): 164 games +84 =78 -2, all
 opponents bots (matchmaking); 1 classic smother (bot 3, SmotherClassic).
 Both losses at 30+0 vs a 3124 bot (one flag in a drawn KBP v K, one at 1 s);
 bot 4 played that bot ~30 times in a row.
+
+sprt-proverquiet (SmotherTimePercent=0 vs default, 10+0.1, bounds [0, 3],
+28,800 games over all 7 accounts): +0.3 Elo [-0.6, 1.2], LLR -16.3, H0.
+The prover's time in undecided positions costs no measurable strength;
+turning it off is not a 1.6 strength gain.
