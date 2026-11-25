@@ -1549,3 +1549,8 @@ have a knight in 79%; we underpromote to knights often (4,699 vs 5,078
 queen promotions). The box runs out of blockers: grid48 tests Keep 22,
 Keep 22 + MaterialDiv 16, Starve 10 (at 4) on SmotherClassic + KnightCheck
 16.
+
+Rule (user, Nov 25): after every distributed launch, remind the user to
+press "Run workflow" on Helper poll for the helper forks (AlSynthK,
+bazaak-coder, Aurazur in particular; Aurazur never runs on its own), even
+though it is optional, so results come back faster.
