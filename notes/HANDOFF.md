@@ -1810,3 +1810,17 @@ come from docs/status/results.json: update it after each analysis and
 republish (copy docs/status/* to gh-pages). Docs: README (test status link,
 knight smothers, helping), guide (knight-smother options and findings,
 helping link).
+
+D1 trap census vs Maia-3 1500 (smother_d1_traps_maia.py; opponent = local
+Maia-3 5M at Elo 1500, sampled 8 times per candidate, "go nodes 1"): 600
+stalled positions from our Maia-3 games: best candidate with expected hit
+>= 0.1 in 1.0% (>= 0.5 in 0.5%), the move we played 0.2% (0%); mean gain
+best - played +0.0044 per position (95% bootstrap +0.0006 to +0.0096),
+carried by 5 positions. Small but nonzero against human-like play (zero
+against SF 1500). Next after 1.6: SmotherSteer + SmotherSteerWonOnly with
+SmotherClassic vs Maia-3 (about 2,000 games per arm).
+
+Release 1.6 prepared on a local branch release-1.6 (defaults SmotherClassic
+true, KnightCheck 16, CrushQuiet 3, CrushMoves 16; version 1.6; README,
+guide, notes/release/v1.6.md with STRENGTH_RESULT placeholder). Bench
+1210779. Waiting for sprt-release16.
