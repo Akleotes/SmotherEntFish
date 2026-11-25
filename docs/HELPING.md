@@ -57,3 +57,25 @@ stops running, its share is re-issued to the other helpers
   account; `refill EXP` writes a plan with the shares of accounts that never
   ran (distribute it with `ONLY=...` as the command prints);
   `merge EXP OUTDIR` collects everything, refills included.
+
+## Questions
+
+**Does it cost anything?** No. Public repositories have free GitHub Actions
+minutes on GitHub's standard runners; the tests only use those.
+
+**What exactly runs?** Each job builds Smotherfish from the experiment's
+branch, plays games against Stockfish (and sometimes the human-like Maia-3
+network) and saves the results to your fork. It is testing of Smotherfish
+itself, as GitHub's terms for Actions allow.
+
+**Is my account name shown anywhere?** No. Forks are identified by a short ID
+(the first 6 hex digits of a hash of the account name) in the repository and
+on the status page.
+
+**How do I see my fork's work?** Your fork's Actions tab, or the
+[test status page](https://demonic1594.github.io/Smotherfish/), which lists
+every helper with its latest run.
+
+**Do I need to keep my fork in sync?** Only when the maintainers ask (after a
+release). Experiments carry their own engine code, so an unsynced fork keeps
+working until then.

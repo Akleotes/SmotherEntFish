@@ -6,306 +6,197 @@
 
   A Stockfish-strength UCI chess engine that plays for the smothered mate.
   <br>
-  <strong>[Read the Smotherfish guide][guide-link]</strong>
+  <strong>[Download][release-link]</strong>
+  &middot;
+  <strong>[Guide][guide-link]</strong>
+  &middot;
+  <strong>[Test status][status-link]</strong>
   <br>
   <br>
-  [Report bug][smf-issue-link]
-  &middot;
-  [Android builds][android-link]
-  &middot;
-  [Development log][handoff-link]
-  &middot;
-  [Test status][status-link]
+  [Report a bug][smf-issue-link]
   &middot;
   [Help test][helping-link]
   &middot;
+  [Changelog][changelog-link]
+  &middot;
+  [Development log][handoff-link]
+  &middot;
   [Upstream Stockfish][upstream-link]
 
+  [![Release][release-badge]][release-link]
   [![License][smf-license-badge]][smf-license-link]
   [![Based on][based-badge]][upstream-link]
   [![Protocol][uci-badge]][uci-link]
   <br>
   [![Last commit][commit-badge]][smf-commits-link]
-  [![Android][android-badge]][android-link]
+  [![Status page][status-badge]][status-link]
 
 </div>
 
 ## Overview
 
-Smotherfish is a free UCI chess engine derived from [Stockfish][upstream-link]
-(the development version of 15 November 2026, after Stockfish 19).
-It plays with Stockfish's full strength and adds one goal of its own: ending the
-game with a smothered mate, where the enemy king is unable to move because its
-own pieces occupy every square around it.
+Smotherfish is a free UCI chess engine built on [Stockfish][upstream-link]
+(development version of 22 November 2026, upstream commit `3e8fde75`). It keeps
+Stockfish's full playing strength and adds one ambition of its own: to end the
+game with a **smothered mate**, the textbook pattern in which a knight mates a
+king that its own pieces box in on every side.
 
-The engine proves forced smothered mates and prefers them to faster ordinary
-mates. In brutal mode it also builds them: once a game is decided, it spends
-moves boxing the enemy king in with its own pieces before delivering the mate.
-Against an opponent who defends well the game is never decided, and
-Smotherfish plays as ordinary Stockfish.
+A smothered mate cannot be forced from most positions, because it needs the
+defender's own pieces packed around its king. Smotherfish therefore combines
+three mechanisms:
 
-Like Stockfish, Smotherfish does not include a graphical user interface. Use it
-with any UCI chess GUI, such as DroidFish on Android. It identifies itself as
-"Smotherfish 1.6 (Stockfish dev-20261122-3e8fde75)".
+1. **A dedicated prover** finds forced smothered mates (checks, sacrifices and a
+   few quiet moves) and plays them, even over a faster ordinary mate.
+2. **Brutal mode** values every ordinary mate below a smothered one, so the
+   search prefers any smother it can see.
+3. **Construction mode** takes over once a game is decided: instead of mating at
+   once, the engine spends moves building the position a smother needs (the
+   enemy king cornered, its pieces kept close, a knight brought within reach),
+   without ever giving back the win.
 
-## What it does
+Against an opponent who defends well, the game never becomes decided and
+Smotherfish plays exactly like Stockfish. Every change is verified to cost no
+measurable strength before it becomes a default.
 
-- **Proves smothered mates.** A dedicated search looks for forced sequences
-  (checks, sacrifices and a few quiet moves) that end in a smothered mate.
-  When it finds one, the engine plays it, even over a faster ordinary mate.
-- **Brutal mode** (`SmotherBrutal`, on by default). Hunts for smothers on
-  every move. Once the game is decided (at least 8 pawns up, or a forced
-  mate), it spends up to 80 moves building one: it stops caring about extra
-  material, keeps the enemy pieces next to their king, drives the king into a
-  corner and brings the queen and knights close. It never lets its advantage
-  drop below 6 pawns, and mates normally when the budget runs out.
-- **Smother goal** (`SmotherGoal`): Hybrid (the default: true smothers
-  first, near ones later in the game), Full (only true smothers), or Near
-  (also "all but one" smothers, where one square next to the king is empty
-  but covered). A true smother up to three moves longer is always preferred
-  to a near one. Since 1.5, Hybrid holds out for a true smother for 80
-  construction moves (of up to 160) before it accepts a near one; against a
-  human opponent (1.5.1, from the GUI's `UCI_Opponent`, e.g. lichess-bot)
-  after 40, because people resign lost games before a long build ends.
-- **With brutal mode off** it plays Stockfish's moves except when a smother
-  is proven.
-- **Human mode:** `HumanElo` N plays like a human of rating N (1020-2400,
-  measured against the human-like Maia-3 network); 0 = off. See
-  docs/SMOTHERFISH.md.
+## Version 1.6 at a glance
 
-## Version 1.6: knight smothers
+Version 1.6 plays for the textbook (knight) smothered mate.
 
-Since 1.6 Smotherfish plays for the textbook smothered mate: a knight mates
-a king that its own pieces box in on every side. 1.5.1 ended 0.7 games in
-100 that way against Stockfish Elo 1500; 1.6 (`SmotherClassic`,
-`SmotherBuildKnightCheck 16`, `SmotherCrushQuiet 3` and `SmotherCrushMoves
-16` by default) about 4, and 5 against the human-like Maia-3 1500, with no
-measurable strength cost. `SmotherClassic false` brings back 1.5.1's aim
-(any piece may give the smothered mate). Details and the experiments since (a
-learned network, trap audits) are in the guide, "Knight smothers".
+| | 1.5.1 | **1.6** |
+| --- | ---: | ---: |
+| Knight smothers per 100 games vs Stockfish (`UCI_Elo` 1500), 5+0.05 | 0.7 | **3.8** |
+| Knight smothers per 100 games vs Maia-3 1500 (human-like), 5+0.05 | 0.3 | **3.3** |
+| Knight smothers per 100 games vs Stockfish 1500, 3+2 | 0.9 | **3.7** |
+| Knight smothers per 100 games vs Maia-3 1500, 3+2 | 1.4 | **6.3** |
+| Strength against 1.5.1, 10+0.1, 32,400 games | | **-0.3 Elo** (95%: -1.2 to +0.5) |
 
-## Helping test Smotherfish
+1.6 trades other kinds of smothered mates (a queen against a boxed king, or a
+box with one covered gap) for knight smothers. `SmotherClassic false` restores
+1.5.1's aim. The [test status page][status-link] shows how games end, version by
+version.
 
-Improvements are tested over thousands of games on GitHub Actions. Anyone
-can lend their Actions minutes by forking this repository and enabling its
-workflows: see [Helping test Smotherfish](docs/HELPING.md). The
-[test status page][status-link] shows the helpers, what is running and the
-latest results.
+## Download
 
-## Measured results
+Prebuilt binaries are on the [Releases page][release-link].
 
-Games at 5 seconds plus 0.05 seconds per move, 600 to 2000 games per row,
-against Stockfish 19 limited by `UCI_Elo` and against the human-like Maia
-networks. Smothered mates per 100 games:
+| File | For |
+| ---- | --- |
+| `smotherfish-1.6-android-arm64-dotprod` | Android phones from about 2019 on (try this first) |
+| `smotherfish-1.6-android-arm64` | Older Android phones, or if the first does not start |
+| `smotherfish-1.6-windows-x86-64-avx2.exe` | Windows PCs from about 2015 on |
+| `smotherfish-1.6-windows-x86-64.exe` | Older Windows PCs |
+| `smotherfish-1.6-linux-x86-64-avx2` | Linux, CPUs from about 2015 on |
+| `smotherfish-1.6-linux-x86-64` | Linux, older CPUs |
 
-| Opponent | Brutal mode off | Brutal mode | Score (brutal) |
-| -------- | ------------ | ----------- | -------------- |
-| Stockfish, Elo 1500 | 1.1 | 12.7 | 1.000 |
-| Stockfish, Elo 2000 | - | 7.8 | 0.999 |
-| Stockfish, Elo 2500 | - | 4.2 | 1.000 |
-| Maia 1100 | - | 7.3 | 0.999 |
-| Maia 1900 | - | 4.7 | 0.998 |
-| Stockfish, Elo 3000 | 0.2 | 2.0 | 0.997 |
+Every binary is checked against the bench signature before release. Keep the
+file name: DroidFish treats an engine named `stockfish` specially.
 
-Keeping the opponent's pieces on the board while building a smother
-(`SmotherBuildKeep`, 8 since November 2026) raised these further. Games ending
-in a full or near ("all but one") smother, brutal mode, 1000 games per row:
+## Using Smotherfish
 
-| Opponent | Hybrid goal (default) | Near goal |
-| -------- | --------------------- | --------- |
-| Stockfish, Elo 1500 | 53 (61 with pondering) | 66 |
-| Stockfish, Elo 2000 | 44 | 54 |
-| Stockfish, Elo 2500 | 38 | 46 |
-| Maia 1100 | 44 | 49 |
-| Stockfish, Elo 3000 | 13 | - |
+Like Stockfish, Smotherfish has no graphical interface. Add it as a UCI engine
+in any chess GUI, for example DroidFish (Android), Arena, Cute Chess, En Croissant
+or ChessBase, or run it as a Lichess bot through
+[lichess-bot](https://github.com/lichess-bot-devs/lichess-bot). It identifies
+itself as `Smotherfish 1.6 (Stockfish dev-20261122-3e8fde75)`.
 
-Version 1.3 tuned the construction weights on game results (details in
-docs/SMOTHERFISH.md, "Tuning"). At 3 minutes plus 2 seconds per move, 250
-games per row, Hybrid goal (the default):
+No settings are needed: smother hunting is on by default. Common profiles:
 
-| Opponent | Full smother | Full or near smother | Score |
-| -------- | ------------ | -------------------- | ----- |
-| Stockfish, Elo 1500 | 12.4 | 71.6 | 1.000 |
-| Stockfish, Elo 2000 | 10.8 | 65.8 | 1.000 |
-| Stockfish, Elo 2500 | 7.3 | 60.9 | 0.998 |
+| Goal | Settings |
+| ---- | -------- |
+| Knight smothered mates (default) | none |
+| Any smothered mate, as often as possible | `SmotherClassic false`, `SmotherGoal Near` |
+| Ordinary Stockfish play, smothers only when proven | `SmotherBrutal false` |
+| Play like a human of a given rating | `HumanElo` 1020-2400 (calibrated against Maia-3) |
+| Weaker analysis on a phone | `Analysis Elo` N |
 
-(1.2 defaults in the same games: 59.8 / 62.0 / 49.2 full or near.) The tuning
-costs no strength: +1.3 Elo against 1.2 over 21,600 games at 10+0.1 (95%
-range +0.2 to +2.4).
+Against human opponents (when the GUI sends `UCI_Opponent`, as lichess-bot
+does), Smotherfish shortens its smother building, because people resign lost
+positions long before a long build ends. Every option is documented in the
+[guide][guide-link].
 
-Version 1.5 builds longer for a true smother (near smothers accepted after
-80 construction moves instead of 40, up to 160 construction moves instead
-of 80) and scores the king's box in steps (`SmotherBuildRingTable`). At
-3+2 against 1.4.1 (170-260 games per row; smothers per 100 games):
+## How it works
 
-| Opponent | Full: 1.4.1 | Full: 1.5 | Full or near: 1.4.1 | Full or near: 1.5 |
-| -------- | ----------- | --------- | ------------------- | ----------------- |
-| Stockfish, Elo 1500 | 12.3 | 13.2 | 70.4 | 63.6 |
-| Stockfish, Elo 2500 | 6.9 | 8.8 | 58.3 | 51.8 |
-| Maia-3 1500 (human-like) | 8.8 | 17.3 | 66.8 | 62.3 |
+| Component | Where | What it does |
+| --------- | ----- | ------------ |
+| Prover | `src/smother.cpp` | AND/OR proof search on a helper thread. The defence that resists longest must end in a smothered mate; every other defence must lose to a faster ordinary mate. Verified on all 24,506 Lichess `smotheredMate` puzzles. |
+| Brutal mode | `src/search.cpp` | Ordinary mates count below smothered ones; the prover searches deeper (16 moves, 3 quiet) when the engine is crushing. |
+| Construction mode | `src/search.cpp`, `src/smother.cpp` | From +8 pawns (or a forced mate): extra material counts 1/8, a construction score rewards a boxed, cornered king, kept enemy pieces and a knight on its way to a checking square. Never drops below +6; up to 160 moves per game. |
+| Goal | `SmotherGoal`, `SmotherClassic` | Knight smothers first; "all but one" smothers are also accepted after 80 construction moves (40 against people). |
 
-At 5+0.05 (1,000-2,500 games per row) true smothers roughly double
-against Stockfish Elo 1500-2500 (8 to 14-15 and 4 to 8-9 per 100). Strength
-against 1.4.1 at 10+0.1: -1.0 Elo over 18,000 games (95% -2.2 to +0.1),
-no measurable cost. The previous behaviour: `SmotherPartialAfter 40`,
-`SmotherBuildMoves 80`, `SmotherBuildRingTable` empty.
+The [guide][guide-link] explains each part in detail, with the measurements
+behind every default.
 
-Losses are rare (none at Elo 1500 or 2500, 1 in 1000 games at Elo 2000: an
-ordinary blitz loss before any smother hunting started), and a full-strength strength test
-(SPRT, 6400 games) found no cost: +2 Elo against the default engine. Version 1.1 moved to the newer
-Stockfish base: in direct games against version 1 it scored 0.517 (about
-+12 Elo) over 4000 games, with the same smother rate. Brutal mode makes decided games longer
-(a median of about 120 half-moves instead of about 53), because it delays the
-mate to build the smother.
+## Testing and results
 
-### Strength against Stockfish
+Smotherfish is developed by measurement. Each idea is played out over thousands
+of games against Stockfish limited by `UCI_Elo` and against the human-like
+Maia-3 network, and each default change must pass a strength test (SPRT) against
+the previous version at full strength, the method Stockfish's own Fishtest uses.
 
-Smotherfish 1.2 with its default settings (smother hunting on) against the
-unmodified Stockfish it is built on (upstream commit 3e8fde75), both at full
-strength: 10 seconds plus 0.1 per move, 1 thread, 16 MB hash, openings from
-Stockfish's own 8moves_v3 book with both colours per opening, played with
-fastchess as in Stockfish's own testing.
+- **Strength.** 1.2 against unmodified Stockfish: -0.3 Elo over 43,200 games
+  (95%: -1.1 to +0.4); 1.3 at 60+0.6: +0.5 Elo over 7,320 games. Later versions
+  are each within noise of their predecessor (1.6: -0.3 Elo over 32,400 games).
+- **Research.** The guide's "Findings" section summarises what limits smothered
+  mates and which ideas did not work (learned networks, trap steering, keeping
+  material, deeper proving), so they are not repeated.
+- **Live status.** The [test status page][status-link] shows running tests,
+  the helpers and every recent result.
 
-| Games | Score | Elo | 95% range | Game pairs (0, 0.5, 1, 1.5, 2 points) |
-| ----- | ----- | --- | --------- | ------------------------------------- |
-| 43,200 | 49.95% | -0.3 | -1.1 to +0.4 | 5, 1097, 19435, 1061, 2 |
+## Help test Smotherfish
 
-The two engines are equal within the margin of error: hunting smothered mates
-costs no measurable strength. The match ran on GitHub Actions, split over six
-accounts; the per-chunk results are in `notes/results/sprt/`. Version 1.3 measured
-+1.3 Elo against 1.2 (above), so it is at least as strong.
+Tests run on GitHub Actions, spread over volunteers' forks of this repository.
+Anyone with a GitHub account can lend their Actions minutes: fork the
+repository, enable its workflows and run the "Helper poll" workflow once. Your
+fork then plays its share of every test; nothing runs on your computer. See
+[Helping test Smotherfish][helping-link].
 
-At a longer time control, 60 seconds plus 0.6 per move, Smotherfish 1.3
-against the same Stockfish: 7,320 games, +0.5 Elo (95% range -0.6 to +1.7),
-game pairs 0, 73, 3503, 84, 0. Equal at blitz and at longer games.
+## Building from source
 
-## Using it
-
-Smother hunting is on out of the box (brutal mode with the Hybrid goal), so no
-settings are needed. Set `SmotherGoal` to Near for the most smothers of either
-kind, or Full for true smothers only; set `SmotherBrutal` to `false` for
-ordinary Stockfish play that only takes smothers when they come up.
-Everything else works like Stockfish.
-
-**Android (DroidFish and similar apps).** Static arm64 binaries are built by
-the `Android build` workflow (push to a branch named `android-build/<name>`).
-Download `smotherfish-android-armv8-dotprod` (most phones since about 2019)
-or `smotherfish-android-armv8` from the workflow run's artifacts, copy it to
-the phone and add it as an engine. Do not rename it to `stockfish`, which
-DroidFish treats specially.
-
-**Building from source** works exactly as for Stockfish:
+Building works exactly as for Stockfish:
 
 ```
 cd src
 make -j profile-build
 ```
 
-`./stockfish bench` must report 1210779 nodes, the same as the upstream
-Stockfish commit it is based on: the bench runs with brutal mode off, and the
-smother features do not change the normal search.
+`./stockfish bench` must report **1210779** nodes, the same as the upstream
+commit: the bench runs with smother hunting off, and the smother features do
+not change Stockfish's normal search.
 
-## Project files
+## Repository layout
 
-- `src/smother.h`, `src/smother.cpp`: the smothered-mate prover and the
-  construction score.
-- `src/search.cpp`: how the prover, brutal mode and construction mode are
-  wired into the search (search for "Smother").
-- `docs/SMOTHERFISH.md`: how it works, all options, all measurements.
-- `notes/HANDOFF.md`: the full development log, experiment by experiment.
-- `notes/RESEARCH.md`: related engines and research.
-- `docs/smotherfish-icon.png` (512 px), `docs/smotherfish-icon-full.png`
-  (1254 px) and `docs/smotherfish-icon-sizes.png` (size preview): the
-  project icon.
-- `notes/scripts/`: the match runner, opening book generator, prover
-  regression test (Lichess smothered-mate puzzles) and summary tools.
-- `.github/workflows/smother-exp.yml`, `android-build.yml`: experiments on
-  GitHub Actions and the Android builds.
+| Path | Contents |
+| ---- | -------- |
+| `src/smother.h`, `src/smother.cpp` | The smother prover, the construction score and the learned model and network |
+| `src/search.cpp` | How the prover, brutal mode and construction mode are wired into the search (search for "Smother") |
+| `docs/SMOTHERFISH.md` | The guide: concepts, every option, methodology and results |
+| `docs/HELPING.md` | How to lend GitHub Actions minutes to the tests |
+| `docs/CHANGELOG.md` | Release history |
+| `docs/status/` | Source of the test status page (published from the `gh-pages` branch) |
+| `notes/HANDOFF.md` | The full development log, experiment by experiment |
+| `notes/scripts/` | Match runner, test distribution, analysis and training tools |
+| `notes/exp/`, `notes/release/` | Experiment plans and release notes |
+| `.github/workflows/` | Experiments, strength tests, helper polling, releases and the Lichess bot |
 
 ## License and credits
 
 Smotherfish is free software under the
 [GNU General Public License version 3][smf-license-link], like Stockfish. All
 credit for the engine itself goes to the Stockfish developers (see
-[AUTHORS](AUTHORS)). If you distribute Smotherfish, you must include the
-license and the full source code, including the changes in this fork.
+[AUTHORS](AUTHORS)). If you distribute Smotherfish, you must include the license
+and the full source code, including the changes in this fork.
 
 ## About Stockfish (upstream)
 
-[Stockfish][website-link] is a **free and strong UCI chess engine** derived from
-Glaurung 2.1 that analyzes chess positions and computes the optimal moves.
-
-Stockfish **does not include a graphical user interface** (GUI) that is required
-to display a chessboard and to make it easy to input moves. These GUIs are
-developed independently from Stockfish and are available online. **Read the
-documentation for your GUI** of choice for information about how to use
-Stockfish with it.
-
-See also the Stockfish [documentation][wiki-usage-link] for further usage help.
-
-### Files
-
-This distribution of Stockfish consists of the following files:
-
-  * [README.md][readme-link], the file you are currently reading.
-
-  * [Copying.txt][license-link], a text file containing the GNU General Public
-    License version 3.
-
-  * [AUTHORS][authors-link], a text file with the list of authors for the project.
-
-  * [src][src-link], a subdirectory containing the full source code, including a
-    Makefile that can be used to compile Stockfish on Unix-like systems.
-
-  * a file with the .nnue extension, storing the neural network for the NNUE
-    evaluation. Binary distributions will have this file embedded.
-
-### Contributing
-
-__Help test Smotherfish with your GitHub Actions minutes: see [Helping test Smotherfish](docs/HELPING.md).__
-
-__See [Contributing Guide](CONTRIBUTING.md).__
-
-#### Donating hardware
-
-Improving Stockfish requires a massive amount of testing. You can donate your
-hardware resources by installing the [Fishtest Worker][worker-link] and viewing
-the current tests on [Fishtest][fishtest-link].
-
-#### Improving the code
-
-In the [chessprogramming wiki][programming-link], many techniques used in
-Stockfish are explained with a lot of background information.
-The [section on Stockfish][programmingsf-link] describes many features
-and techniques used by Stockfish. However, it is generic rather than
-focused on Stockfish's precise implementation.
-
-The engine testing is done on [Fishtest][fishtest-link].
-If you want to help improve Stockfish, please read this [guideline][guideline-link]
-first, where the basics of Stockfish development are explained.
-
-Discussions about Stockfish take place these days mainly in the Stockfish
-[Discord server][discord-link]. This is also the best place to ask questions
-about the codebase and how to improve it.
-
-### Compiling Stockfish
-
-Stockfish has support for 32 or 64-bit CPUs, certain hardware instructions,
-big-endian machines such as Power PC, and other platforms.
-
-On Unix-like systems, it should be easy to compile Stockfish directly from the
-source code with the included Makefile in the folder `src`. In general, it is
-recommended to run `make help` to see a list of make targets with corresponding
-descriptions. An example suitable for most Intel and AMD chips:
-
-```
-cd src
-make -j profile-build
-```
-
-Detailed compilation instructions for all platforms can be found in our
-[documentation][wiki-compile-link]. Our wiki also has information about
-the [UCI commands][wiki-uci-link] supported by Stockfish.
+[Stockfish][website-link] is a free and strong UCI chess engine derived from
+Glaurung 2.1 that analyzes chess positions and computes the optimal moves. It
+does not include a graphical user interface; see the Stockfish
+[documentation][wiki-usage-link] for usage, [compiling][wiki-compile-link] and
+the supported [UCI commands][wiki-uci-link]. Stockfish is improved through
+massive testing on [Fishtest][fishtest-link]; you can donate hardware by running
+the [Fishtest Worker][worker-link]. Discussion about Stockfish takes place mainly
+on the Stockfish [Discord server][discord-link]; contribution rules are in the
+[Contributing Guide](CONTRIBUTING.md).
 
 ### Terms of use
 
@@ -329,25 +220,11 @@ Stockfish uses neural networks trained on [data provided by the Leela Chess Zero
 project][lc0-data-link], which is made available under the [Open Database License][odbl-link] (ODbL).
 
 
-[authors-link]:       https://github.com/official-stockfish/Stockfish/blob/master/AUTHORS
-[build-link]:         https://github.com/official-stockfish/Stockfish/actions/workflows/stockfish.yml
-[commits-link]:       https://github.com/official-stockfish/Stockfish/commits/master
 [discord-link]:       https://discord.gg/GWDRS3kU6R
-[issue-link]:         https://github.com/official-stockfish/Stockfish/issues/new?assignees=&labels=&template=BUG-REPORT.yml
-[discussions-link]:   https://github.com/official-stockfish/Stockfish/discussions/new
 [fishtest-link]:      https://tests.stockfishchess.org/tests
-[guideline-link]:     https://github.com/official-stockfish/fishtest/wiki/Creating-my-first-test
 [license-link]:       https://github.com/official-stockfish/Stockfish/blob/master/Copying.txt
-[programming-link]:   https://www.chessprogramming.org/Main_Page
-[programmingsf-link]: https://www.chessprogramming.org/Stockfish
-[readme-link]:        https://github.com/official-stockfish/Stockfish/blob/master/README.md
-[release-link]:       https://github.com/official-stockfish/Stockfish/releases/latest
-[src-link]:           https://github.com/official-stockfish/Stockfish/tree/master/src
-[stockfish128-logo]:  https://stockfishchess.org/images/logo/icon_128x128.png
 [uci-link]:           https://backscattering.de/chess/uci/
 [website-link]:       https://stockfishchess.org
-[website-blog-link]:  https://stockfishchess.org/blog/
-[wiki-link]:          https://github.com/official-stockfish/Stockfish/wiki
 [wiki-compile-link]:  https://github.com/official-stockfish/Stockfish/wiki/Compiling-from-source
 [wiki-uci-link]:      https://github.com/official-stockfish/Stockfish/wiki/UCI-&-Commands
 [wiki-usage-link]:    https://github.com/official-stockfish/Stockfish/wiki/Download-and-usage
@@ -355,25 +232,19 @@ project][lc0-data-link], which is made available under the [Open Database Licens
 [lc0-data-link]:      https://storage.lczero.org/files/training_data
 [odbl-link]:          https://opendatacommons.org/licenses/odbl/odbl-10.txt
 
-[build-badge]:        https://img.shields.io/github/actions/workflow/status/official-stockfish/Stockfish/stockfish.yml?branch=master&style=for-the-badge&label=stockfish&logo=github
-[commits-badge]:      https://img.shields.io/github/commits-since/official-stockfish/Stockfish/latest?style=for-the-badge
-[discord-badge]:      https://img.shields.io/discord/435943710472011776?style=for-the-badge&label=discord&logo=Discord
-[fishtest-badge]:     https://img.shields.io/website?style=for-the-badge&down_color=red&down_message=Offline&label=Fishtest&up_color=success&up_message=Online&url=https%3A%2F%2Ftests.stockfishchess.org%2Ftests%2Ffinished
-[license-badge]:      https://img.shields.io/github/license/official-stockfish/Stockfish?style=for-the-badge&label=license&color=success
-[release-badge]:      https://img.shields.io/github/v/release/official-stockfish/Stockfish?style=for-the-badge&label=official%20release
-[website-badge]:      https://img.shields.io/website?style=for-the-badge&down_color=red&down_message=Offline&label=website&up_color=success&up_message=Online&url=https%3A%2F%2Fstockfishchess.org
-
-[guide-link]:    docs/SMOTHERFISH.md
-[status-link]: https://demonic1594.github.io/Smotherfish/
-[helping-link]: docs/HELPING.md
-[handoff-link]:  notes/HANDOFF.md
-[upstream-link]: https://github.com/official-stockfish/Stockfish
-[android-link]:  https://github.com/Demonic1594/Smotherfish/actions/workflows/android-build.yml
-[based-badge]:   https://img.shields.io/badge/based%20on-Stockfish%20dev%202026--11--15-blue?style=for-the-badge
-[uci-badge]:     https://img.shields.io/badge/protocol-UCI-informational?style=for-the-badge
-[commit-badge]:  https://img.shields.io/github/last-commit/Demonic1594/Smotherfish/smotherfish?style=for-the-badge
-[android-badge]: https://img.shields.io/badge/android-arm64%20builds-success?style=for-the-badge
+[guide-link]:        docs/SMOTHERFISH.md
+[changelog-link]:    docs/CHANGELOG.md
+[helping-link]:      docs/HELPING.md
+[handoff-link]:      notes/HANDOFF.md
+[status-link]:       https://demonic1594.github.io/Smotherfish/
+[release-link]:      https://github.com/Demonic1594/Smotherfish/releases/latest
+[upstream-link]:     https://github.com/official-stockfish/Stockfish
 [smf-issue-link]:    https://github.com/Demonic1594/Smotherfish/issues/new
 [smf-license-link]:  Copying.txt
 [smf-commits-link]:  https://github.com/Demonic1594/Smotherfish/commits/smotherfish
+[release-badge]:     https://img.shields.io/github/v/release/Demonic1594/Smotherfish?style=for-the-badge&color=3d6fd0
+[based-badge]:       https://img.shields.io/badge/based%20on-Stockfish%20dev%202026--11--22-152867?style=for-the-badge
+[uci-badge]:         https://img.shields.io/badge/protocol-UCI-informational?style=for-the-badge
+[commit-badge]:      https://img.shields.io/github/last-commit/Demonic1594/Smotherfish/smotherfish?style=for-the-badge
+[status-badge]:      https://img.shields.io/badge/test%20status-live-e5392f?style=for-the-badge
 [smf-license-badge]: https://img.shields.io/badge/license-GPL--3.0-success?style=for-the-badge

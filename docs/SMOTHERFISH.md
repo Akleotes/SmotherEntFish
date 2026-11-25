@@ -1,115 +1,202 @@
 # Smotherfish guide
 
 Smotherfish 1.6 is Stockfish (development version of 22 November 2026,
-upstream commit 3e8fde75) with one extra goal: end the game with a
-smothered mate. This guide explains how it works, lists every option, and
-summarises what was measured. The day-by-day development log is in
-`notes/HANDOFF.md`.
+upstream commit `3e8fde75`) with one additional goal: to end the game with a
+smothered mate. This guide explains the concepts, how the engine pursues them,
+every option, how Smotherfish is tested and what was measured. The release
+history is in [CHANGELOG.md](CHANGELOG.md); the day-by-day development log,
+with every experiment, is in `notes/HANDOFF.md`.
 
-## The idea in one paragraph
+## Contents
 
-A smothered mate needs the enemy king's own pieces on every square around it,
-so it cannot be forced from most positions. Smotherfish therefore does three
-things. It proves forced smothered mates when they exist and plays them, even
-over a quicker ordinary mate. In brutal mode it treats every ordinary mate as
-worth less than a smothered one. And once a game is decided, brutal mode
-spends moves building the position a smother needs, instead of mating at
-once. Against an opponent who plays well, the game is never decided, so the
+1. [Concepts](#1-concepts)
+2. [How the engine works](#2-how-the-engine-works)
+3. [Options reference](#3-options-reference)
+4. [Recommended configurations](#4-recommended-configurations)
+5. [Human mode (HumanElo)](#5-human-mode-humanelo)
+6. [How Smotherfish is tested](#6-how-smotherfish-is-tested)
+7. [Results](#7-results)
+8. [Findings: what limits smothered mates](#8-findings-what-limits-smothered-mates)
+9. [Testing your own changes](#9-testing-your-own-changes)
+
+## 1. Concepts
+
+### 1.1 Kinds of smothered mate
+
+At checkmate, look at the squares next to the mated king.
+
+| Kind | Definition | Counted by 1.6 |
+| ---- | ---------- | -------------- |
+| **Knight (classic) smother** | Every neighbour square holds one of the mated side's own pieces. Only a knight (or a pawn promoting to one) can give this mate. This is the textbook smothered mate. | Yes, the main goal |
+| **Full smother, other piece** | Every neighbour square holds one of the mated side's own pieces except the square of the checking piece itself, for example a protected queen giving check from an adjacent square. | Only with `SmotherClassic false` |
+| **Near ("all but one") smother** | As a full smother, but exactly one more neighbour square is empty or holds an attacking piece (it is covered, since the position is mate). | After the goal switch (section 2.4) |
+| **Plain mate** | Any other checkmate. | No |
+
+### 1.2 Why a smothered mate is hard to force
+
+A smothered mate needs the defender's own pieces on every square around its
+king. A defender who sees it coming can almost always avoid that arrangement,
+so in most positions a smother cannot be forced at all. In 33 million human
+Lichess games, knight smothers occur in about 0.07% of games, nearly all of
+them after an unforced mistake.
+
+Smotherfish therefore does three things:
+
+1. It **proves** forced smothered mates when they exist and plays them, even
+   over a quicker ordinary mate.
+2. In **brutal mode** it values every ordinary mate below a smothered one, so
+   the search prefers any smother it can see.
+3. In **construction mode**, once the game is decided, it spends moves
+   building the position a smother needs instead of mating at once, without
+   ever giving back the win.
+
+Against an opponent who plays well the game never becomes decided, and the
 engine plays ordinary Stockfish.
 
-## How it works
+## 2. How the engine works
 
-### The smother prover (`src/smother.cpp`)
+### 2.1 The smother prover (`src/smother.cpp`)
 
-An AND/OR proof search:
+An AND/OR proof search, separate from Stockfish's normal search:
 
-- The attacking side may play checks, plus a limited number of quiet moves
-  (`SmotherQuietMoves`) that threaten a smother.
-- A proof must work against every defence. The defence that resists longest
+- The attacking side may play checks (including sacrifices) plus a limited
+  number of quiet moves that threaten a smother (`SmotherQuietMoves`, or
+  `SmotherCrushQuiet` when crushing).
+- A proof must hold against every defence. The defence that resists longest
   must end in a smothered mate; every other defence must lose to a strictly
-  faster ordinary mate. So a defender who avoids the smother is mated sooner.
-- Iterative deepening up to `SmotherMaxMoves` attacker moves, with its own
-  proof table, node and time limits.
-- A line that brings back a position already seen in the game or on the line
-  is not a proof (otherwise a defender who escapes once escapes again, and the
-  game can end in a draw by repetition).
-- By default it runs in a thread next to the normal search
-  (`SmotherParallel`) and, when it proves a smother, its line replaces the
-  search's move.
+  faster ordinary mate. A defender who avoids the smother is therefore mated
+  sooner (with `SmotherStrict`, every defence must be smothered).
+- Iterative deepening up to `SmotherMaxMoves` attacker moves (8; 16 when
+  crushing), with its own proof table and node and time limits.
+- A line that repeats a position already seen in the game or on the line is
+  not a proof, so a defender cannot escape into a draw by repetition.
+- By default it runs on a helper thread next to the search
+  (`SmotherParallel`); when it proves a smother, its line replaces the search's
+  move.
 
-Regression test: all 24,506 Lichess puzzles with the `smotheredMate` theme
-(`notes/scripts/puzzles.py`). The prover proves 24,482 of them, every proof
-is checked move by move, and none is wrong. The other 24 are smothers only in
-the puzzle's main line, not forced under the rule above.
+**Verification.** All 24,506 Lichess puzzles with the `smotheredMate` theme
+(`notes/scripts/puzzles.py`): 24,482 are proved, every proof is checked move by
+move, and none is wrong. The other 24 are smothers only in the puzzle's main
+line, not forced under the rule above. On real human games, the prover finds
+99% of the forced smothers that occurred.
 
-### Modes
+### 2.2 Winning and brutal mode
 
-- **Brutal mode off.** The prover runs with a small share of the move's time
-  (`SmotherTimePercent`), more once the engine is clearly winning
-  (`SmotherWinCp`, `SmotherWinTimePercent`). Otherwise the move is Stockfish's.
-- **Brutal mode** (`SmotherBrutal`). In the search, an ordinary mate of the
-  opponent counts as a sure win but below any smothered mate, so the engine
-  prefers any smother it can see. When the engine is crushing
-  (`SmotherBigCp`, or a forced mate), the prover searches deeper (12 moves,
-  2 quiet) with more time (`SmotherBrutalTimePercent`). With a forced mate in
-  hand it may use `SmotherMatePercent` of the remaining clock for at most 12
-  moves per game.
-- **Construction mode** (`SmotherBuild`, on by default, only with brutal
-  mode). Once the game is decided (`SmotherBuildCp`, or a forced mate), the
-  evaluation changes for at most `SmotherBuildMoves` moves per game:
-  - At or above `SmotherBuildFloor`, extra advantage counts only one eighth.
-    Below the floor the normal evaluation applies, so the engine never gives
-    back more than that.
-  - The construction score rewards the enemy king in a corner or on an edge,
-    boxed in by its own pieces; the enemy pieces kept on the board (a smother
-    needs blockers, and capturing them was the main way chances were lost);
-    and our queen and knights close to it. In the measured
-    games 77% of smothered mates were delivered against a king in a corner.
-  - An ordinary mate counts no more than the floor, a smothered mate stays a
-    real mate.
-  - It switches off before the 50-move rule and when the budget is used up;
-    the engine then mates normally.
-- **Pondering.** While thinking on the opponent's time the prover searches
-  deep and without limits (`SmotherPonderDeep`).
+- **Winning.** Once the previous search scored at least `SmotherWinCp` (+3
+  pawns), the prover gets a larger share of the move's time
+  (`SmotherWinTimePercent`).
+- **Brutal mode** (`SmotherBrutal`, on by default). In the search, an ordinary
+  mate counts as a certain win but below any smothered mate, so the engine
+  prefers any smother it can see. When the engine is crushing (`SmotherBigCp`,
+  +10 pawns, or a forced mate) the prover searches 16 moves deep with 3 quiet
+  moves and more time (`SmotherBrutalTimePercent`, capped at 60% of the maximum
+  time). With a forced mate in hand it may use `SmotherMatePercent` of the
+  remaining clock.
 
-## Options
+### 2.3 Construction mode
 
-All options are standard UCI options. Defaults are what was measured best.
+Construction mode (`SmotherBuild`, on with brutal mode) starts once the
+previous search scored at least `SmotherBuildCp` (+8 pawns) or found a forced
+mate, and continues while the score stays at or above `SmotherBuildFloor` (+6
+pawns), for at most `SmotherBuildMoves` (160) moves per game.
 
-### Main switches
+While it is on, the static evaluation at every node of the search is changed,
+from our side's point of view, as
+
+```
+u' = floor + (u - floor) / 8 + construction_score * 8 cp      (for u >= floor)
+```
+
+so extra material above the floor counts only one eighth
+(`SmotherBuildMaterialDiv`) and each construction-score point is worth 8
+centipawns (`SmotherBuildWeight`). Below the floor the normal evaluation
+applies, so the engine never gives back more than that. An ordinary mate
+counts no more than the floor; a smothered mate keeps its real mate score.
+
+The **construction score** (`src/smother.cpp`, `build_score`) rewards:
+
+- the enemy king's box: points by the number of open squares next to it
+  (`SmotherBuildRingTable`, 60 / 50 / 0 / -10 / -15 for 0 / 1 / 2 / 3 / 4+);
+- the king in a corner or on an edge (`SmotherBuildWeights`);
+- enemy pieces kept on the board, the possible blockers (`SmotherBuildKeep`,
+  `SmotherBuildKeepNear`);
+- a penalty per open square next to the king that we do not attack
+  (`SmotherBuildEscape`);
+- our queen and knights near the king, and, for knight smothers, a knight one
+  knight move from a safe checking square (`SmotherBuildKnightCheck`, half for
+  two moves).
+
+Construction switches off before the 50-move rule (`SmotherSeekRule50`) and
+when the budget is used up; the engine then mates normally.
+
+### 2.4 The goal: which smothers count
+
+- With `SmotherClassic true` (the 1.6 default) only knight smothers count as
+  full smothers.
+- `SmotherGoal` decides when near smothers count as well:
+  - **Hybrid** (default): only full smothers for the first 80 construction
+    moves, then near smothers too (`SmotherPartialAfter`). A full smother up to
+    `SmotherFullExtra` (3) moves longer is still preferred to a near one.
+  - **Full**: only full smothers.
+  - **Near**: near smothers count from the start.
+
+### 2.5 Human opponents
+
+Human players resign lost games: on Lichess (33 million human games, November
+2025 to October 2026), a blitz player 9-14 points down resigns on about 6% of
+their moves, and only 23% of blitz games with an 8-point deficit end in mate.
+When the GUI reports a human opponent (`UCI_Opponent`, for example "GM 2500
+human Name", sent by lichess-bot), Hybrid therefore switches to near smothers
+after `SmotherHumanAfter` (40) construction moves instead of 80. Against an
+opponent resigning on the measured curve this kept every true smother and
+doubled the total.
+
+### 2.6 Pondering
+
+While thinking on the opponent's time, the prover searches deep and without
+limits (`SmotherPonderDeep`). At Elo 1500 with an opponent thinking at least
+one second per move, this raised true smothers from 10.8 to 12.2 per 100 games.
+
+## 3. Options reference
+
+All options are standard UCI options; the defaults are what was measured best.
+
+### 3.1 Main switches
 
 | Option | Default | Meaning |
 | ------ | ------- | ------- |
 | `SmotherMate` | true | Run the smother prover at all. |
-| `SmotherBrutal` | true | Brutal mode (see above). The main switch for smother hunting; on by default since November 2026 (full-strength SPRTs: no cost). |
-| `SmotherBuild` | true | Construction mode; only active with `SmotherBrutal`. |
-| `SmotherGoal` | Hybrid | What counts as a smother in brutal mode: **Hybrid** (default: true smothers first, "all but one" ones after 80 construction moves), **Full** (only true smothers), **Near** ("all but one" ones always). See "Full, hybrid or near" below. |
-| `SmotherClassic` | true | Count only knight smothers (the textbook smothered mate: a knight mates a king boxed in on every side by its own pieces). By default any piece may deliver the mate. Default since 1.6 (false = 1.5.1's aim, any piece); see "Knight smothers" below. |
+| `SmotherBrutal` | true | Brutal mode (section 2.2), the main switch for smother hunting. |
+| `SmotherBuild` | true | Construction mode (section 2.3); only with `SmotherBrutal`. |
+| `SmotherClassic` | true | Count only knight smothers as full smothers. `false` = any piece (1.5.1's aim). |
+| `SmotherGoal` | Hybrid | Hybrid, Full or Near (section 2.4). |
 | `SmotherStrict` | false | Require a smother against every defence (no faster-mate escapes). Finds far fewer proofs. |
 
-### Prover
+### 3.2 Prover
 
 | Option | Default | Meaning |
 | ------ | ------- | ------- |
-| `SmotherMaxMoves` | 8 | Longest proof, in attacker moves (12 when crushing in brutal mode). |
-| `SmotherQuietMoves` | 1 | Quiet (non-checking) attacker moves allowed per line (2 when crushing). |
+| `SmotherMaxMoves` | 8 | Longest proof in attacker moves outside crushing positions. |
+| `SmotherQuietMoves` | 1 | Quiet attacker moves per proof line outside crushing positions. |
+| `SmotherCrushMoves` | 16 | Longest proof when crushing (12 before 1.6). |
+| `SmotherCrushQuiet` | 3 | Quiet attacker moves per line when crushing (2 before 1.6). |
 | `SmotherTimePercent` | 25 | Prover time, percent of the move's planned time. |
 | `SmotherNodes` | 5000000 | Node limit per proof (lifted with a forced mate in hand in brutal mode). |
-| `SmotherParallel` | true | Prove in a separate thread next to the search. |
+| `SmotherParallel` | true | Prove on a helper thread next to the search. |
 | `SmotherPonderDeep` | true | Unlimited proving while pondering. |
 
-### Winning and brutal mode
+### 3.3 Winning and brutal mode
 
 | Option | Default | Meaning |
 | ------ | ------- | ------- |
 | `SmotherWinCp` | 300 | Advantage (centipawns) from which the prover gets more time. |
 | `SmotherWinTimePercent` | 100 | Prover time when winning, percent of the planned time. |
-| `SmotherBigCp` | 1000 | Brutal mode: advantage from which the deep prover runs. |
+| `SmotherBigCp` | 1000 | Advantage from which the deep (crushing) prover runs. |
 | `SmotherBrutalTimePercent` | 300 | Deep prover time, percent of the planned time (capped at 60% of the maximum). |
-| `SmotherMatePercent` | 15 | Brutal mode with a forced mate in hand: share of the remaining clock per move. |
+| `SmotherMatePercent` | 15 | With a forced mate in hand: share of the remaining clock per move. |
 | `SmotherSeekRule50` | 60 | No seeking or construction once the 50-move counter reaches this (half-moves). |
 
-### Construction mode
+### 3.4 Construction mode
 
 | Option | Default | Meaning |
 | ------ | ------- | ------- |
@@ -117,274 +204,79 @@ All options are standard UCI options. Defaults are what was measured best.
 | `SmotherBuildFloor` | 600 | Advantage it never gives up while building. |
 | `SmotherBuildMoves` | 160 | Most moves per game spent building (80 before 1.5). |
 | `SmotherBuildWeight` | 8 | Centipawns per construction-score point. |
-| `SmotherBuildWeights` | 13,8,23,8,2,4 | Construction-score weights: enemy pieces next to their king, open squares there, king in a corner, on an edge, our knights near it, our queen near it. Tuned on game results in 1.3 (was 12,10,25,10,4,3; see "Tuning" below). |
-| `SmotherBuildKeep` | 11 | Construction-score points per enemy piece kept on the board (possible blockers). 3 until Nov 21, 8 in 1.2, 11 in 1.3. |
-| `SmotherBuildKeepNear` | 2 | Extra points per enemy piece within two squares of its king. |
-| `SmotherBuildEscape` | 4 | Points lost per square next to the enemy king that holds none of its pieces and that we do not attack (where a checked king steps out). |
-| `SmotherFullExtra` | 3 | After a near proof, how many moves longer a true smother may be and still be preferred. |
 | `SmotherBuildMaterialDiv` | 8 | Extra material above the floor counts 1/N. |
-| `SmotherPartialAfter` | 0 | "All but one" smothers count after this many construction moves (0 = never; `SmotherGoal` Hybrid uses 80, 40 before 1.5). |
-| `SmotherHumanAfter` | 40 | Hybrid against a human opponent (`UCI_Opponent`): near smothers count after this many construction moves (0 = same as against computers). |
-| `UCI_Opponent` | (empty) | Standard UCI opponent info from the GUI; only "human" / "computer" is used. |
+| `SmotherBuildWeights` | 13,8,23,8,2,4 | Boxed, hole, corner, edge, knight-near and queen-near weights (tuned on game results in 1.3). |
+| `SmotherBuildRingTable` | 60,50,0,-10,-15 | Points by open squares next to the enemy king (0 .. 4+), replacing the linear boxed and hole terms. Empty = linear. |
+| `SmotherBuildKeep` | 11 | Points per enemy piece kept on the board. |
+| `SmotherBuildKeepNear` | 2 | Extra points per enemy piece within two squares of its king. |
+| `SmotherBuildEscape` | 4 | Points lost per open square next to the enemy king that we do not attack. |
+| `SmotherBuildKnightCheck` | 16 | Points per knight one knight move from a safe checking square (half for two). 0 = 1.5.1. |
+| `SmotherFullExtra` | 3 | After a near proof, how many moves longer a full smother may be and still be preferred. |
+| `SmotherPartialAfter` | 0 | Near smothers count after this many construction moves (0 = as `SmotherGoal` decides; Hybrid uses 80). |
+| `SmotherHumanAfter` | 40 | The same, against a human opponent (`UCI_Opponent`); 0 = as against computers. |
+| `UCI_Opponent` | (empty) | Standard UCI opponent information from the GUI; only "human" or "computer" is used. |
 
-### Knight smothers (1.6)
-
-| Option | Default | Meaning |
-| ------ | ------- | ------- |
-| `SmotherBuildKnightCheck` | 16 | Construction-score points per knight of ours one knight move from a square that checks the enemy king and that no enemy pawn guards (half for two moves). Measured best with `SmotherClassic` (0 = 1.5.1). |
-| `SmotherBuildDecoy` | 0 | Points when the one open square next to a cornered king is covered by a defender piece and our queen or rook can go there, guarded (Philidor's sacrifice). |
-| `SmotherCrushMoves` | 16 | Prover depth when crushing (attacker moves); 12 before 1.6. |
-| `SmotherCrushQuiet` | 3 | Quiet attacker moves per proof line when crushing; 2 before 1.6. |
-| `SmotherBuildModelScale` | 0 | Learned linear model (`SmotherBuildModel`, 17 coefficients, log-odds of a knight smother within 10 of our moves) as the construction score, in points per log-odd. Peaks near 20, equal to the hand score. |
-| `SmotherBuildNetScale` | 0 | Small learned network (`src/smother_net.h`: 17 features and the 5x5 squares around the enemy king, 16 hidden units) as the construction score. 6 equals the hand score; 20 and more lose games (the search gives up material to please the network). The `smothernet` command prints its inputs and output for the side to move. |
-
-### Other
+### 3.5 Experimental (off by default)
 
 | Option | Default | Meaning |
 | ------ | ------- | ------- |
-| `Analysis Elo` | 0 | For "go infinite" analysis (DroidFish's analysis mode): above 0, limits analysis depth to what the `UCI_Elo` limiter uses at that rating. 0 = full strength. |
+| `SmotherBuildDecoy` | 0 | Points when the one open square next to a cornered king is covered by a defender piece and our queen or rook can go there, guarded (Philidor's sacrifice). Under test (grid53). |
+| `SmotherBuildModelScale`, `SmotherBuildModel` | 0, 17 coefficients | A learned linear model (log-odds of a knight smother within 10 of our moves) as the construction score, in points per log-odd. Peaks near 20, equal to the hand score. |
+| `SmotherBuildNetScale` | 0 | A small learned network (`src/smother_net.h`: the 17 features and the 5x5 squares around the enemy king, 16 hidden units) as the construction score. 6 equals the hand score; 20 and more lose games. The UCI command `smothernet` prints its inputs and output. |
+| `SmotherSteer`, `SmotherSteerFloor`, `SmotherSteerLines`, `SmotherSteerTime`, `SmotherSteerWonOnly`, `SmotherTrapDepth` | 0 / various | Trap steering: among near-equal moves, prefer the one that sets a smother trap. Did not raise the rate when used at all times and cost strength against strong opponents; kept for a planned test against human-like opponents. |
+| `SmotherWinMargin`, `SmotherWinLines`, `SmotherWinTrapDepth`, `SmotherWinTrapNodes`, `SmotherWinSteerTime`, `SmotherMateDelays`, `SmotherMateSlack` | various | Trap-steering parameters in won positions and while a forced mate is in hand. |
 
-### Removed in 1.6
+### 3.6 Other
 
-Measured experiments that never beat the defaults were removed as options
-(the engine behaves exactly as with their old defaults): `SmotherShape*`,
-`SmotherPrep*`, `SmotherRobust`, `SmotherEscapeMoves/Percent`,
-`SmotherBuildVersion`, `SmotherHold`, `SmotherFullFirst`,
-`SmotherBuildSurvive(Cap)`, `SmotherBuildStarve(At)`, `SmotherBuildTime`,
-`SmotherBuildLmr/DefLmr/Nmp`, `SmotherBuildOwnKeep`, `SmotherBuildKnightSafe`,
-`SmotherBuildReady/DefRing/Exit`, `SmotherPartial` (use `SmotherGoal Near`)
-and `SmotherSeek` (brutal mode seeks for up to 200 moves). Their results are
-in notes/HANDOFF.md.
+| Option | Default | Meaning |
+| ------ | ------- | ------- |
+| `HumanElo` | 0 | Play like a human of this rating (section 5). |
+| `HumanBlunder`, `HumanBlunderPermille` | 0 | Real mistakes on top of `UCI_Elo` / `Skill Level` (percent / per mille of moves). |
+| `Analysis Elo` | 0 | For "go infinite" analysis (for example DroidFish): above 0, limits analysis depth to what the `UCI_Elo` limiter uses at that rating. |
 
-### Trap steering (off by default)
+### 3.7 Removed options
 
-`SmotherSteer`, `SmotherSteerFloor`, `SmotherSteerLines`, `SmotherSteerTime`,
-`SmotherSteerWonOnly`, `SmotherTrapDepth`, `SmotherWinMargin`,
-`SmotherWinLines`, `SmotherWinTrapDepth`, `SmotherWinTrapNodes`,
-`SmotherWinSteerTime`, `SmotherMateDelays`, `SmotherMateSlack`: steering the
-choice between near-equal moves towards smother traps. It did not raise the
-smother rate and cost strength against strong opponents.
-## Full, hybrid or near
+1.6 removed 29 options from experiments that never beat the defaults; the
+engine behaves exactly as with their old defaults (verified move for move on
+300 positions): `SmotherShape*`, `SmotherPrep*`, `SmotherRobust`,
+`SmotherEscapeMoves`, `SmotherEscapePercent`, `SmotherBuildVersion`,
+`SmotherHold`, `SmotherFullFirst`, `SmotherBuildSurvive`,
+`SmotherBuildSurviveCap`, `SmotherBuildStarve`, `SmotherBuildStarveAt`,
+`SmotherBuildTime`, `SmotherBuildLmr`, `SmotherBuildDefLmr`, `SmotherBuildNmp`,
+`SmotherBuildOwnKeep`, `SmotherBuildKnightSafe`, `SmotherBuildReady`,
+`SmotherBuildDefRing`, `SmotherBuildExit`, `SmotherPartial` (use
+`SmotherGoal Near`) and `SmotherSeek` (brutal mode seeks for up to 200 moves).
+Their measurements are in `notes/HANDOFF.md`.
 
-A true (full) smother needs every square next to the mated king filled by
-its own pieces. An "all but one" smother leaves one square empty, but covered
-by the attacker. Counting those as well changes how often a game ends with
-the king buried in its own pieces, and what share of those are true ones.
-Smothers per 100 games, brutal mode, 5+0.05:
+## 4. Recommended configurations
 
-| `SmotherGoal` | Elo 1500: true | Elo 1500: true + near | Elo 2000: true + near | Elo 2500: true + near |
-| ------------- | -------------- | --------------------- | --------------------- | --------------------- |
-| Full | 14.6 | 16.4 | about 8-9 | about 5-7 |
-| Hybrid (default) | 8.4 | 53.1 (60.8 with pondering) | 43.8 | 38.3 |
-| Near | 3.8 | 65.6 | 54.3 (true 2.5) | 45.7 |
+| Purpose | Settings | Notes |
+| ------- | -------- | ----- |
+| Knight smothered mates (default) | none | About 4 per 100 games against Stockfish 1500, 5 against Maia-3 1500. |
+| As many smothered mates of any kind as possible | `SmotherClassic false`, `SmotherGoal Near` | About two thirds of games against Stockfish 1500 end in a full or near smother (1.5.1 measurements). |
+| True smothers of any piece | `SmotherClassic false`, `SmotherGoal Full` | The most full smothers, few near ones. |
+| Ordinary Stockfish play | `SmotherBrutal false` | Smothers only when the prover finds a forced one. |
+| Quick games against people | defaults (with `UCI_Opponent` from the GUI) | Builds for a shorter time, since people resign. |
+| A human-like sparring partner | `HumanElo` N | Section 5. |
 
-(With `SmotherBuildKeep` 8, grid22 and grid23; Elo 2000 and 2500 for Full are
-from earlier runs with keep 3. With keep 3 the Hybrid total at Elo 1500 was
-35-38 and the Near total 56.)
+## 5. Human mode (HumanElo)
 
-When near smothers count, a true smother up to three moves longer is
-preferred; that raised true smothers in Near mode from 1.6 to 3.3 per 100
-games at Elo 1500 (0.4 to 2.1 at Elo 2000) with the same total. Near gives
-the most smothers of either kind; Full gives the most true ones; Hybrid is
-in between. Losses are rare (1 in 7,500 games of grid23, an ordinary blitz loss
-at Elo 2000). Strength at full strength (SPRT, 6400
-games at 10+0.1): Hybrid against brutal mode without it scored 0.502
-(+1.4 Elo, 95% -0.5 to +3.3), so no strength cost.
-
-## Measurements
-
-All games: 5 seconds plus 0.05 seconds per move unless stated, balanced
-8-ply openings (`notes/openings.txt`), paired colours, run on GitHub Actions
-with `notes/scripts/match.py`. Opponents: Stockfish 19 with
-`UCI_LimitStrength` and `UCI_Elo`, and Maia (human-like networks on lc0,
-one node per move). Raw games are on the `actions-exp/<name>` branches under
-`notes/results/`.
-
-Smothered mates per 100 games:
-
-| Setting | Elo 1500 | Elo 2000 | Elo 2500 | Elo 3000 | Maia 1100 | Maia 1900 |
-| ------- | -------- | -------- | -------- | -------- | --------- | --------- |
-| Brutal mode off | 1.1 | - | - | 0.2 | - | - |
-| Brutal, no construction | 1.2-1.5 | 1.1 | - | 0.5 | 1.4 | 1.3 |
-| Brutal, construction (20 moves) | 5.0 | - | - | 1.0 | 4.5 | - |
-| Brutal, construction (40 moves) | 6.2-8.7 | - | - | - | - | - |
-| **Brutal, construction (80 moves, default)** | **10.6-12.7** | **7.8** | **4.2** | **1.3-2.0** | **7.3-8.0** | **4.7** |
-| Brutal, construction (200 moves) | 11.8 | - | - | - | - | - |
-
-Strength: no losses in any of these runs. At Elo 3000 (600 games) the score
-was 0.993 with brutal mode, 0.993 default, 0.994 with the smother features
-switched off; with construction 0.995-0.997 (300 games).
-
-Version 1.1 (newer Stockfish base, 98 upstream commits after Stockfish 19)
-against version 1, both at full strength: 0.517 in normal mode (4000
-games) and 0.517 in brutal mode (2000 games), about +12 Elo. Its smother
-rate is unchanged (10.1 per 100 at Elo 1500; 1.5 at Elo 3000, score 0.994).
-The measurements above were made with version 1; the opponent in them is
-always Stockfish 19.
-
-What did not help (kept as options, off): steering towards traps, a small
-shaping bonus, picking the hardest-to-escape proof (`SmotherRobust`),
-preferring strict proofs (none existed where it mattered), and a stronger
-construction weight (16 halved the rate).
-
-Starting construction earlier against strong opponents does not help: at
-Elo 3000, a trigger of 4 or 6 pawns instead of 8 gave fewer smothers and more
-draws (score 0.955 at 4 pawns). 15+0.15 games give the same rate as 5+0.05.
-
-Pondering: with the engine pondering and the opponent thinking at least 1 s
-per move, deep proving while pondering (`SmotherPonderDeep`) gave 12.2 vs
-10.8 true smothers per 100 games at Elo 1500 and 9.0 vs 6.8 against Maia
-1100. It also exposed a bug, now fixed: after "ponderhit" the engine could
-wait up to about a second for a found proof's line to be rebuilt, which lost
-three games on time.
-
-Full-strength strength test (SPRT, 6400 games at 10+0.1, the method Fishtest
-uses): every hunting feature on against the default engine scored 0.503
-(+2 Elo, 95% 0 to +4). Hunting for smothers costs no strength against an
-equal opponent.
-
-Why ordinary play finds so few smothers: a forced smother exists in only 2-3%
-of games, and opponents escape about half of them by walking into a faster
-ordinary mate. Construction mode raises the number of positions where a
-smother can be forced at all.
-
-## Testing your own changes
-
-Anyone can lend GitHub Actions minutes to these tests by forking the
-repository: see [Helping test Smotherfish](HELPING.md). The live status
-page lists the helpers, what is running and the latest results.
-
-- `./stockfish bench` must still report 1210779 nodes (the bench of the
-  upstream base commit). The bench runs with brutal mode off; it switches
-  it back on afterwards.
-- `notes/scripts/puzzles.py ENGINE smothered.csv N SEED` re-runs the prover
-  regression test (the CSV is the Lichess puzzle database filtered on the
-  `smotheredMate` theme).
-- Experiments: write `notes/exp/plan.json` and push it to a branch
-  `actions-exp/<name>`; the workflow plays the games and commits the results
-  and a summary table back to that branch. See `notes/HANDOFF.md`.
-- Strength tests (SPRT): push `notes/exp/sprt.json` to an `actions-exp/<name>`
-  branch; `sprt.yml` runs waves of games until the result is clear.
-- CircleCI (free plan, a monthly credit pool): `.circleci/config.yml` runs
-  the same plan files on 30 machines at once, on branches named
-  `circle-exp/<name>`, for quick one-off tests. Its pipeline must be a native
-  CircleCI pipeline, not one created from a GitHub Actions workflow.
-
-## Version 1.5: build longer, score the box in steps
-
-A diagnostic of 2,500 recorded games (notes/HANDOFF.md, Nov 23-24) showed
-that while the engine builds, true smothers arrive at a steady rate (about
-2.5% of games per 10 moves) until Hybrid starts accepting near smothers,
-which then crowd them out; half of the plain-mate wins stopped at the
-80-move construction cap. Holding out for a true smother longer converts
-near smothers into true ones. Outside reviews (GLM, DeepSeek, ChatGPT)
-suggested further terms; only a step-shaped ring score helped, by keeping
-more near smothers as the fallback.
-
-| Option | Default | Effect |
-| ------ | ------- | ------ |
-| `SmotherPartialAfter` (via Hybrid) | 80 | Near smothers count after 80 construction moves (was 40). |
-| `SmotherBuildMoves` | 160 | Construction budget per game (was 80). |
-| `SmotherBuildRingTable` | 60,50,0,-10,-15 | Build-score points by open squares next to the enemy king (0, 1, 2, 3, 4+), replacing the linear boxed/hole terms. Empty = linear. |
-| `SmotherBuildReady`, `SmotherBuildDefRing`, `SmotherBuildExit` | off | Tested, no gain (ready squares trade near for true smothers; a lazier defender and a safe-exit penalty did nothing). |
-
-5+0.05, smothers per 100 games (true / true or near): Elo 1500 (2,500 games
-each): 1.4 defaults 8.2 / 59.6; 1.5 15.0 / 61.7. Elo 2500: 3.5-4.2 / 40;
-1.5 about 9 / 43. 3+2 results are in the README. Against humans who resign
-lost positions, longer building means some games end by resignation before
-the mate; set `SmotherPartialAfter 40` and `SmotherBuildMoves 80` for the
-old, quicker behaviour.
-
-## Version 1.6: knight smothers
-
-From November 25, 2026 only the textbook smothered mate counts: a knight
-mates a king whose every neighbour square holds one of its own pieces.
-1.5.1, which aims at any smother, ends 0.7 games in 100 that way against
-Stockfish Elo 1500. 1.6 (`SmotherClassic true`, `SmotherBuildKnightCheck 16`,
-`SmotherCrushQuiet 3` and `SmotherCrushMoves 16` by default): about 4 per 100 (2,500
-games per row, 5+0.05), 5 against the human-like Maia-3 1500, and at 3+2
-3.7 against Stockfish 1500 and 6.3 against Maia-3 (1.5.1: 0.9 and 1.4).
-Strength against 1.5.1: +0.7 Elo (95% -0.5 to +1.8).
-
-What was tried after that, and what it showed:
-
-- A learned linear model and a small network (above) predict knight
-  smothers much better than the hand score (holdout AUC 0.936 and 0.968),
-  but used as the construction score they only match it.
-- In games that never smothered, a forced knight smother almost never
-  existed even for a much larger prover budget (2 of 120 positions with one
-  open square), and one-move traps against the real opponent were just as
-  rare (1 of 240). 83% of knight smothers close the box with the defender's
-  forced reply to a check in the final sequence.
-- Games that still have our knight and queen and the enemy's pieces and
-  king-side pawns when we reach +8 smother twice as often, but making the
-  engine keep them (`SmotherPrep*`) did not raise the rate.
-
-The development log (`notes/HANDOFF.md`) has every experiment.
-
-## Version 1.5.1: humans resign
-
-Real players resign lost games: on Lichess (33 million human games,
-Nov 2025 - Oct 2026, notes/scripts/lichess_db.py), a blitz player 9-14
-points down resigns on about 6% of their moves, and only 23% of blitz games
-where one side was 8+ points down end in mate. Against an opponent that
-resigns on that measured curve (Maia-3 1500, 1,308 games per row; true /
-near smothers per 100 games), 1.5 got 5.4 / 3.1; accepting near smothers
-after 40 construction moves got 5.4 / 12.1: the same true smothers and
-twice as many in total. So when the GUI says the opponent is human
-(`UCI_Opponent` "title rating human name", sent by lichess-bot), Hybrid
-switches after `SmotherHumanAfter` (40) moves; against computers and when
-no opponent is given it stays at 80. Set `SmotherHumanAfter` 0 to turn this
-off. Strength is unaffected (construction only acts in decided games).
-
-## Tuning (version 1.3)
-
-The construction-score weights were tuned on game results rather than on
-predictions (a logistic fit to predictions, `SmotherBuildVersion` 2, was
-better offline but worse in games). Batches of weight sets played 5+0.05
-games against Stockfish at Elo 1500 and 2500, split over several GitHub
-accounts; the best sets were re-tested with more games (notes/exp/tune*).
-
-The winner (now the default) against the old defaults:
-
-| Test | Old defaults | 1.3 defaults |
-| ---- | ------------ | ------------ |
-| 5+0.05, Elo 1500, 4000 games: full / full or near per 100 | 7.8 / 53.6 | 8.1 / 58.1 |
-| 5+0.05, Elo 2500, 1500 games | 3.9 / 37.2 | 4.9 / 43.6 |
-| 3+2, Elo 1500, 250 games | 12.9 / 59.8 | 12.4 / 71.6 |
-| 3+2, Elo 2000, 250 games | 12.0 / 62.0 | 10.8 / 65.8 |
-| 3+2, Elo 2500, 250 games | 8.0 / 49.2 | 7.3 / 60.9 |
-| Strength, 10+0.1, 21,600 games (SPRT) | - | +1.3 Elo (95% +0.2 to +2.4) |
-
-True smothers alone are unchanged; games ending in a full or near smother
-rise by 4-12 per 100. No losses in these tests beyond 1 per 5500 games.
-
-Measured and not adopted (notes/HANDOFF.md, grids 36-40): search-control
-changes in construction mode, a true-smother-first prover, longer limits for
-preferring a true smother, keeping our own mating pieces, knight safety and
-holding back captures near the king. An analysis of 1000 won games
-(notes/scripts/recall.py) showed why: the engine already delivers 53 of every
-55 smothers that are forced against every defence; most of the rest are
-proofs the defender escapes into a quicker ordinary mate.
-
-## Human mode (HumanElo)
-
-`HumanElo` N (default 0 = off, 1020 to 2400) makes the engine play like a
-human of rating N. It sets the strength limit itself: below about 1860 the
-lowest `UCI_Elo` limiter plus real mistakes (a share of moves picked at
-random from the 8 best candidates; the limiter alone never loses more than
-about a pawn per move), above it the `UCI_Elo` limiter alone. No other
-option is needed; `UCI_LimitStrength`, `UCI_Elo` and `Skill Level` are
-ignored while it is on.
+`HumanElo` N (default 0 = off, 1020 to 2400) makes the engine play like a human
+of rating N. It sets the strength limit itself: below about 1860, the lowest
+`UCI_Elo` limiter plus real mistakes (a share of moves picked at random from
+the 8 best candidates, while the limiter alone never loses more than about a
+pawn per move); above it, the `UCI_Elo` limiter alone. No other option is
+needed; `UCI_LimitStrength`, `UCI_Elo` and `Skill Level` are ignored while it
+is on.
 
 Ratings are on the scale of the human-like Maia-3 network: N is the Maia-3
-level the engine scores 50% against. Maia-3's levels are compressed (a
-setting that scores 72% against level 1300 still scores 48% against 1900),
-so the levels in between are fitted, about +-50 (+-100 near the ends). Measured at 5+0.05, 300
-games per row:
+level the engine scores 50% against. Maia-3's levels are compressed (a setting
+that scores 72% against level 1300 still scores 48% against 1900), so the
+levels in between are fitted, to about +-50 (+-100 near the ends). Measured at
+5+0.05:
 
-| HumanElo | Limiter | Blunders | Measured (300 games each) |
-| -------- | ------- | -------- | ------ |
+| HumanElo | Limiter | Mistakes | Measured (300 games each) |
+| -------- | ------- | -------- | ------------------------- |
 | 1020 | 1320 | 13% | 47.3% vs 1100, 33.5% vs 1500 |
 | 1255 | 1320 | 11% | 56.3% vs 1100, 40.0% vs 1500 |
 | 1400 | 1320 | 9% | 62.0% vs 1100, 46.0% vs 1500 |
@@ -394,17 +286,157 @@ games per row:
 | 1735 | 1320 | 1% | 68.8% vs 1300, 59.8% vs 1500 |
 | 1800 | (interpolated) | | 63.3% vs 1500, 45.8% vs 1900 |
 | 1880 | 1320 | 0 | 68.2% vs 1500, 47.8% vs 1900 |
-| 2200 | (interpolated) | | 59.5% vs 1900, 42.0% vs 2300 (plays ~2115) |
+| 2200 | (interpolated) | | 59.5% vs 1900, 42.0% vs 2300 (plays about 2115) |
 | 2420 | 1455 | 0 | 76.8% vs 1700, 66.3% vs 2100 |
 
-Values in between are interpolated. For a club player of about 1350, use
-`HumanElo 1350`.
-
-The underlying options stay available: `HumanBlunder` N (percent) or
-`HumanBlunderPermille` N (per mille) add the mistakes to whatever
-`UCI_Elo` / `Skill Level` is set. Ratings measured for them before
-November 23 were too low (any blunder rate also widened the ordinary choice
-from 4 to 8 candidates; fixed): `HumanBlunder 1` plays at about 1735, not
-1350.
-
+For a club player of about 1350, use `HumanElo 1350`. `HumanBlunder` N
+(percent) or `HumanBlunderPermille` N (per mille) add the mistakes to whatever
+`UCI_Elo` or `Skill Level` is set; `HumanBlunder 1` plays at about 1735.
 Proven smothered mates are still played in full.
+
+## 6. How Smotherfish is tested
+
+### 6.1 Smother experiments
+
+- **Harness.** `notes/scripts/match.py` (python-chess) with real clocks. Games
+  are played to checkmate, stalemate, insufficient material, threefold
+  repetition, the 50-move rule or a 400-ply cap: no adjudication and no
+  resignation (an optional resignation curve measured on Lichess is available
+  for tests against "human" opponents).
+- **Openings.** 300 balanced positions about 4-5 moves deep
+  (`notes/openings.txt`), each played with both colours.
+- **Opponents.** Stockfish 19 limited by `UCI_LimitStrength` / `UCI_Elo`
+  (1500 to 3000), and the human-like Maia-3 network (moves sampled at its rating).
+- **Time controls.** Mostly 5 seconds + 0.05 per move (one thread per engine),
+  checked at 3 minutes + 2 seconds.
+- **Size.** 2,500 to 6,000 games per setting against Stockfish 1500, 600 to
+  1,200 against Maia-3, 400 against Stockfish 2500. A difference is treated as
+  real when z >= 2 (counts compared as Poisson rates); at about 4 knight smothers
+  per 100 games, detecting a +25% change needs about 7,000 games per setting.
+
+### 6.2 Strength tests
+
+Every default change passes a sequential probability ratio test (SPRT) against
+the previous version at full strength: paired games at 10 seconds + 0.1 per
+move, one thread, played with fastchess from Stockfish's `8moves_v3` opening
+book with both colours per opening, using the statistics Fishtest uses
+(`notes/scripts/sprt_stats.py`). Typical bounds are [-3, +1] Elo (no
+regression).
+
+### 6.3 Where the tests run
+
+Tests run on GitHub Actions, spread over the main repository and volunteers'
+forks ([HELPING.md](HELPING.md)): about 160 jobs and 640 games at a time.
+`notes/scripts/distribute.sh` splits a plan into shares,
+`notes/scripts/volunteers.py` tracks and merges them, and the
+[test status page](https://demonic1594.github.io/Smotherfish/) shows them live.
+Raw games are on each account's `actions-exp/<name>` branch under
+`notes/results/`.
+
+## 7. Results
+
+### 7.1 Version 1.6
+
+How games end (share of games, 5+0.05):
+
+| Opponent | Version | Knight smother | Full, other piece | Near | Plain mate | Draw |
+| -------- | ------- | -------------: | ----------------: | ---: | ---------: | ---: |
+| Stockfish 1500 | 1.5.1 | 0.7 | 13.7 | 45.0 | 40.2 | 0.2 |
+| | **1.6** | **3.8** | 0.2 | 3.8 | 91.4 | 0.6 |
+| Maia-3 1500 | 1.5.1 | 0.3 | 7.9 | 38.5 | 53.3 | 0.0 |
+| | **1.6** | **3.3** | 0.0 | 5.0 | 91.7 | 0.0 |
+| Stockfish 2500 | 1.5.1 | 1.0 | 6.6 | 30.9 | 61.5 | 0.0 |
+| | **1.6** | **0.8** | 0.2 | 2.0 | 96.2 | 0.8 |
+
+(1,876 / 2,500, 304 / 600 and 288 / 400 games; no losses.) Across the
+development grids 1.6 averaged 3.8-4.3 knight smothers per 100 games against
+Stockfish 1500 and 1.3-1.8 against Stockfish 2500. At 3+2: 3.7 against
+Stockfish 1500 and 6.3 against Maia-3 (1.5.1: 0.9 and 1.4).
+
+### 7.2 Strength record
+
+| Version | Test | Games | Elo | 95% range |
+| ------- | ---- | ----: | --: | --------- |
+| 1.1 | against 1.0 | 4,000 | +12 | |
+| 1.2 | against unmodified Stockfish (10+0.1) | 43,200 | -0.3 | -1.1 to +0.4 |
+| 1.3 | against 1.2 | 21,600 | +1.3 | +0.2 to +2.4 |
+| 1.3 | against unmodified Stockfish (60+0.6) | 7,320 | +0.5 | -0.6 to +1.7 |
+| 1.5 | against 1.4.1 | 18,000 | -1.0 | -2.2 to +0.1 |
+| 1.6 | against 1.5.1 | 32,400 | -0.3 | -1.2 to +0.5 |
+| 1.6 | prover time in undecided positions off vs on | 28,800 | +0.3 | -0.6 to +1.2 |
+
+Smother hunting costs no measurable strength against an equal opponent.
+
+### 7.3 Earlier measurements (any-piece smothers, 1.0-1.5.1)
+
+Before 1.6, a smother by any piece counted. Smothers per 100 games, 5+0.05:
+
+| Setting | Elo 1500 | Elo 2000 | Elo 2500 | Elo 3000 | Maia 1100 | Maia 1900 |
+| ------- | -------- | -------- | -------- | -------- | --------- | --------- |
+| Brutal mode off | 1.1 | - | - | 0.2 | - | - |
+| Brutal, no construction | 1.2-1.5 | 1.1 | - | 0.5 | 1.4 | 1.3 |
+| Brutal, construction (20 moves) | 5.0 | - | - | 1.0 | 4.5 | - |
+| Brutal, construction (40 moves) | 6.2-8.7 | - | - | - | - | - |
+| Brutal, construction (80 moves) | 10.6-12.7 | 7.8 | 4.2 | 1.3-2.0 | 7.3-8.0 | 4.7 |
+| Brutal, construction (200 moves) | 11.8 | - | - | - | - | - |
+
+By goal (`SmotherBuildKeep` 8; true / true + near per 100 games):
+
+| `SmotherGoal` | Elo 1500 | Elo 2000 | Elo 2500 |
+| ------------- | -------- | -------- | -------- |
+| Full | 14.6 / 16.4 | about 8-9 | about 5-7 |
+| Hybrid | 8.4 / 53.1 (60.8 with pondering) | - / 43.8 | - / 38.3 |
+| Near | 3.8 / 65.6 | 2.5 / 54.3 | - / 45.7 |
+
+Tuning in 1.3 (full / full or near per 100 games):
+
+| Test | Old defaults | 1.3 |
+| ---- | ------------ | --- |
+| 5+0.05, Elo 1500, 4,000 games | 7.8 / 53.6 | 8.1 / 58.1 |
+| 5+0.05, Elo 2500, 1,500 games | 3.9 / 37.2 | 4.9 / 43.6 |
+| 3+2, Elo 1500, 250 games | 12.9 / 59.8 | 12.4 / 71.6 |
+| 3+2, Elo 2000, 250 games | 12.0 / 62.0 | 10.8 / 65.8 |
+| 3+2, Elo 2500, 250 games | 8.0 / 49.2 | 7.3 / 60.9 |
+
+1.5 against 1.4.1 at 3+2 (true / true or near): Stockfish 1500 13.2 / 63.6
+(12.3 / 70.4), Stockfish 2500 8.8 / 51.8 (6.9 / 58.3), Maia-3 1500 17.3 / 62.3
+(8.8 / 66.8). At 5+0.05, true smothers roughly doubled against Stockfish
+1500-2500.
+
+## 8. Findings: what limits smothered mates
+
+Offline analyses of tens of thousands of games (`notes/scripts/smother_*.py`)
+and outside reviews explain why the knight-smother rate is hard to raise
+further.
+
+| Question | Measurement | Answer |
+| -------- | ----------- | ------ |
+| How does the box close? | 2,481 knight smothers | 83% close with the defender's forced reply to a check in the final sequence: 48% a block, 34% a capture of a sacrificed checking piece (Philidor's pattern). Free choices: 9%. |
+| Does the prover miss forced smothers? | 240 stalled won positions, prover with 16 moves, 3 quiet moves and 20M nodes | A forced knight smother existed in 2 of 120 positions with one open square and 0 of 120 with two: the lines do not exist. |
+| Are there traps the opponent would fall into? | 240 positions against Stockfish 1500, 600 against Maia-3 1500, 8 sampled replies per move | Against Stockfish: 1 in 240 positions. Against human-like Maia-3: 1% of positions, about 0.004 per move above the move played. |
+| Does the engine model the defender realistically? | 500 won positions | Its expected reply matched the real one 81% of the time; its lines rarely drop material. |
+| Does keeping the right pieces help? | 4,989 games | Games that still have our knight and queen, enemy pieces and king-side pawns at +8 smother about twice as often, but rewarding the engine for keeping them (the prep phase) did not raise the rate. |
+| Does a better predictor help? | 4.5 million positions, AUC 0.936 (linear) and 0.968 (network) | Used as the construction score, both only tie the hand score; at high weights the search gives up material and loses games. |
+
+What did not help (each measured over thousands of games): more prover time,
+steering towards traps at all times, a shaping bonus, robust or strict proofs,
+earlier construction (more draws), a lower floor, blocker-survivability terms,
+search-control changes in construction mode, keeping our own mating pieces,
+knight safety, ready squares, a safe-exit penalty, starving and holding
+variants, and the prep phase.
+
+## 9. Testing your own changes
+
+- `./stockfish bench` must still report **1210779** nodes (the bench of the
+  upstream base commit; it runs with brutal mode off).
+- `notes/scripts/puzzles.py ENGINE smothered.csv N SEED` re-runs the prover
+  regression test (the Lichess puzzle database filtered on `smotheredMate`).
+- **Experiments.** Write a plan (`notes/exp/<name>.json`, see
+  `notes/scripts/expand_plan.py`) and spread it over all accounts with
+  `notes/scripts/distribute.sh notes/exp/<name>.json`; follow it with
+  `notes/scripts/volunteers.py status <name>` and collect it with
+  `volunteers.py merge <name> OUTDIR`, then `notes/scripts/summary.py`.
+- **Strength tests.** Push `notes/exp/sprt.json` to an `actions-exp/<name>`
+  branch; `sprt.yml` plays games until the result is clear; combine shards with
+  `notes/scripts/sprt_stats.py ELO0 ELO1 0.05 0.05`.
+- **Helping.** To lend your GitHub Actions minutes, see [HELPING.md](HELPING.md).
