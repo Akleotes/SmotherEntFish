@@ -46,7 +46,7 @@ Smotherfish plays as ordinary Stockfish.
 
 Like Stockfish, Smotherfish does not include a graphical user interface. Use it
 with any UCI chess GUI, such as DroidFish on Android. It identifies itself as
-"Smotherfish 1.5.1 (Stockfish dev-20261122-3e8fde75)".
+"Smotherfish 1.6 (Stockfish dev-20261122-3e8fde75)".
 
 ## What it does
 
@@ -73,14 +73,15 @@ with any UCI chess GUI, such as DroidFish on Android. It identifies itself as
   measured against the human-like Maia-3 network); 0 = off. See
   docs/SMOTHERFISH.md.
 
-## In development: knight smothers (toward 1.6)
+## Version 1.6: knight smothers
 
-Only the textbook smothered mate counts from now on: a knight mates a king
-that its own pieces box in on every side. 1.5.1 ends 0.7 games in 100 that
-way against Stockfish Elo 1500; the development settings (`SmotherClassic
-true`, `SmotherBuildKnightCheck 16`, `SmotherCrushQuiet 3`,
-`SmotherCrushMoves 16`) about 4, and 5 against the human-like Maia-3 1500,
-with no measurable strength cost. Details and the experiments since (a
+Since 1.6 Smotherfish plays for the textbook smothered mate: a knight mates
+a king that its own pieces box in on every side. 1.5.1 ended 0.7 games in
+100 that way against Stockfish Elo 1500; 1.6 (`SmotherClassic`,
+`SmotherBuildKnightCheck 16`, `SmotherCrushQuiet 3` and `SmotherCrushMoves
+16` by default) about 4, and 5 against the human-like Maia-3 1500, with no
+measurable strength cost. `SmotherClassic false` brings back 1.5.1's aim
+(any piece may give the smothered mate). Details and the experiments since (a
 learned network, trap audits) are in the guide, "Knight smothers".
 
 ## Helping test Smotherfish
