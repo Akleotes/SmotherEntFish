@@ -64,9 +64,13 @@ jobs:
               if (now - dates[sha]).total_seconds() < keep_days * 86400: continue
               doomed.append(b)                                         # copied (or fork gone) and old
           print(f"{len(H)} helper-exp branches; deleting {len(doomed)}")
-          url = f"https://x-access-token:{TOKEN}@github.com/{MAIN}.git"
-          for k in range(0, len(doomed), 40):
-              batch = doomed[k:k + 40]
-              r = subprocess.run(["git", "push", "-q", url] + [":refs/heads/" + b for b in batch], capture_output=True, text=True)
-              print(("deleted " if r.returncode == 0 else "FAILED ") + ", ".join(batch))
+          deleted = failed = 0
+          for b in doomed:
+              req = urllib.request.Request(f"https://api.github.com/repos/{MAIN}/git/refs/heads/{b}", method="DELETE", headers={
+                  "Authorization": "Bearer " + TOKEN, "Accept": "application/vnd.github+json", "User-Agent": "smotherfish-housekeeping"})
+              try:
+                  urllib.request.urlopen(req, timeout=30); deleted += 1
+              except urllib.error.HTTPError as e:
+                  failed += 1; print(f"FAILED {b}: HTTP {e.code} {e.read()[:200]!r}")
+          print(f"deleted {deleted}, failed {failed}")
           PY
