@@ -1638,3 +1638,28 @@ sprt-proverquiet (SmotherTimePercent=0 vs default, 10+0.1, bounds [0, 3],
 28,800 games over all 7 accounts): +0.3 Elo [-0.6, 1.2], LLR -16.3, H0.
 The prover's time in undecided positions costs no measurable strength;
 turning it off is not a 1.6 strength gain.
+
+## Fresh-view review (Opus, high effort, brief only; Nov 25)
+
+Main diagnosis (testable): in construction mode the IMAGINED defender in
+our tree does not care about material, because above +6 our eval divides
+material by 8 while each build point is worth 8 cp (a rook ~60 cp vs
+KnightCheck 16 = 128 cp). So the tree's defender gives up pieces to deny
+build terms, while real opponents (SF1500, Maia, humans) keep material;
+moves that drive a defender piece onto the last open square (the observed
+bottleneck) look useless to the search. Would explain the KnightCheck
+plateau and the failed eval terms. Also: the last ring square can only be
+filled by a defender non-king move.
+Proposed: M1 classify how the box closed in our knight smothers; M2 compare
+real defender moves with our PV's predicted reply vs a normal-eval reply;
+M3 trap fall rate by length; M4 resources at construction start (knights,
+defender units able to reach the open square). Ideas: (1) root steering by
+expected traps under a fitted defender model (net probability as value,
+prover on the few replies that fill a ring square); (2) material-protecting
+defender in the tree (SEE pruning of losing quiet defender moves in
+construction mode, checks never pruned); (3) keep/create a knight; (4) keep
+box material before construction; (5) stall breaker. Net: use as value in
+(1), discounted label, hold out by OPENING not game (AUC may be inflated),
+ensembles against exploitation. Strength: +5 Elo from our machinery not
+realistic; M5 (prover mates the search missed in undecided SPRT positions)
+would show any ceiling.
