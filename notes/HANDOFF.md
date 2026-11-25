@@ -1929,3 +1929,18 @@ nearly all the 400-ply game cap (building from +4/+5 for 200 moves makes
 games too long). Score vs Elo 2600 (10+0.1): 99.9 / 97.5 / 96.4 / 96.1%
 (2 losses in O3): all far above the 80% floor. Verdict: earlier and longer
 construction does not raise knight smothers; it only adds long draws.
+
+grid56 (Track B round 2: trap steering; complete incl. refills r1/r2;
+knight smothers per 100): Elo 1500 (2,500 each) B 3.2 (79) / S1 SmotherSteer
+100 + SteerWonOnly 2.3 (58, z -1.8) / S2 + WinTrapDepth 7, WinSteerTime 100
+1.9 (47, z -2.7) / S3 S1 + O1 construction 1.9 (47); Maia-3 1500 (2,000) 2.8
+(56) / 2.7 (54) / 2.1 (42) / 2.8 (56). Losses vs Elo 1500 0 / 2 / 1 / 9;
+score vs 2600 100 / 99.8 / 100 / 95.8%. Trap steering lowers knight
+smothers, also against human-like Maia-3.
+Openings (25,308 1.6 games at Elo 1500 over 600 opening x colour cells):
+knight-smother rate barely depends on the opening (dispersion ratio 1.11;
+split-half r 0.05; best 20% picked on one half: 4.3 vs 3.55 per 100 on the
+other). A smother opening repertoire would be worth +20% at most, noisily.
+Track B status: building earlier/longer (grid55) and trap steering (grid56)
+both fail; with existing mechanisms there is no strength-for-smothers trade
+that raises knight smothers.
