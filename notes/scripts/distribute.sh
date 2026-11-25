@@ -15,20 +15,12 @@
 # push.
 set -euo pipefail
 plan=$1; src=${2:-$(git rev-parse --abbrev-ref HEAD)}
-# id:base:weight (base = the version the fork is on; update after a "Sync
-# fork"; weight = shares of the experiment, 20 jobs at once per share)
-targets=(
-  "8e9ce5:33bbe361:1"
-  "acf111:33bbe361:1"
-  "7a213a:33bbe361:1"
-  "0f17ee:33bbe361:1"
-  "dc665d:33bbe361:1"   # no working schedule: Run workflow by hand
-  "d32e35:33bbe361:2"   # enterprise account: 42 jobs at once on Nov 24
-                        # (limit 360, ramping up until ~Nov 29); its poll
-                        # can be dispatched from the session
-  "f2d74f:33bbe361:1"   # added Nov 25
-  "own:33bbe361:1"      # this repository
-)
+# Targets come from notes/scripts/volunteers.py: every public fork of the
+# main repository (the helpers, see docs/HELPING.md) plus this repository,
+# as id:base:weight (weight = shares, 20 jobs at once per share; set in
+# notes/volunteers.json). ONLY=id,id,... limits the targets (refills).
+mapfile -t targets < <(python3 notes/scripts/volunteers.py targets ${ONLY:+--only "$ONLY"})
+[ ${#targets[@]} -gt 0 ] || { echo "no targets"; exit 1; }
 n=0; for t in "${targets[@]}"; do n=$((n + ${t##*:})); done
 exp=$(python3 -c 'import json,sys;print(json.load(open(sys.argv[1]))["exp"])' "$plan")
 tmp=$(mktemp); cp "$plan" "$tmp"
@@ -56,4 +48,4 @@ Claude-Session: https://claude.ai/code/session_01AXQtdwTBPTjdbfRvbZua89"
   echo "$ref: shards $idx of $n (base $base)"
 done
 git checkout -q "$cur"; git branch -D -q tmp-dist; rm -f "$tmp"
-echo "merge when done: notes/scripts/merge_shards.py $exp OUTDIR <fork URLs>@actions-exp/$exp"
+echo "progress: notes/scripts/volunteers.py status $exp; merge: notes/scripts/volunteers.py merge $exp OUTDIR"

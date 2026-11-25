@@ -239,6 +239,8 @@ This distribution of Stockfish consists of the following files:
 
 ### Contributing
 
+__Help test Smotherfish with your GitHub Actions minutes: see [Helping test Smotherfish](docs/HELPING.md).__
+
 __See [Contributing Guide](CONTRIBUTING.md).__
 
 #### Donating hardware

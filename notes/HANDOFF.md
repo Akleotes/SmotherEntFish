@@ -1781,3 +1781,22 @@ New helper fork added (Nov 25, ID f2d74f, weight 1; distribute.sh now has
 9 shares). Its Actions must be enabled once in the fork's Actions tab; the
 session cannot dispatch its poll (no app access), so it runs on its own
 schedule or by Run workflow. Merge lists need its URL from now on.
+
+grid52 (prep phase; knight smothers per 100, all SmotherClassic +
+KnightCheck 16 + CrushQuiet 3 + CrushMoves 16): Elo 1500 (2500 each) B 3.8
+(95) / P 3.3 (83) / P2 3.2 (79) / P3 3.6 (91); Maia-3 1500 (600) 3.3 (20)
+/ 2.5 / 3.5 / 5.0 (30, z +1.4); Elo 2500 (400) 0.8 / 2.3 / 1.5 / 2.0. No
+gain on the main test; draws 14 / 4 / 11 / 3; no losses. Keeping the D2
+ingredients by eval bonus does not raise knight smothers (the D2 link is
+correlation). Prep phase stays off by default.
+
+Volunteer network (option B, fishtest-like on GitHub Actions; see
+docs/HELPING.md): helpers are discovered from the public forks list
+(notes/scripts/volunteers.py; IDs only, weights/exclusions in
+notes/volunteers.json); distribute.sh takes its targets from it (ONLY=...
+to restrict). volunteers.py status EXP (delivered vs expected per account,
+checked on grid52: 14,000/14,000), refill EXP (plan with the jobs of
+accounts that delivered nothing, same seeds; tested with a simulated
+missing fork: 73 jobs / 1,744 games), merge EXP OUTDIR (EXP + refills from
+every account; replaces merge_shards.py with URL lists). README links the
+guide (on the development branch; forks see it after the next release).
