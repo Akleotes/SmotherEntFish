@@ -1756,3 +1756,12 @@ Reading: with no forced smothers and no traps once construction stalls,
 what remains is the material on the board when we become winning. Keeping
 our knight and queen and the enemy's pieces/shield before +8 is the one
 lever left with measured headroom (bounded: even "ready" games give ~7.6).
+
+M2 imagined-defender test (smother_m2.py; 500 won positions from grid51
+B arms, depth 12, positions where the PV starts with the move we played):
+construction-mode PV predicts the real reply 99/122 = 81%; its predicted
+line has the defender losing >= 2 net material within 4 plies 14%.
+(Normal-eval comparison: only 27 usable, 59% match.) The tree's defender
+does NOT systematically give away material: the material-compression
+hypothesis (Opus review) is not supported. Caveat: selected sample (PV
+first move = played move).
