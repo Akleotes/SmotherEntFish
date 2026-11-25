@@ -1,0 +1,84 @@
+# Helper kick: starts "Helper poll" on every helper fork that has an
+# experiment share waiting, so nobody has to press "Run workflow" by hand.
+#
+# Uses one secret, HELPER_KICK_PAT: a classic personal access token of the
+# repository owner with only the public_repo scope (the owner must be a
+# collaborator with write access on each fork). Locked down on purpose:
+# - runs only on its schedule or by "Run workflow" here (never on pull
+#   requests or from forks, so no fork can reach the secret);
+# - checks out no code: the script is inline, so nothing in any repository
+#   can change what runs with the token;
+# - its only write call is the workflow-dispatch of helper-poll.yml on forks
+#   of this repository; the job's own GITHUB_TOKEN has no permissions.
+name: Helper kick
+
+on:
+  schedule:
+    - cron: "7,22,37,52 * * * *"
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: helper-kick
+  cancel-in-progress: false
+
+jobs:
+  kick:
+    if: github.repository == 'Demonic1594/Smotherfish'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Start Helper poll where a share is waiting
+        env:
+          PAT: ${{ secrets.HELPER_KICK_PAT }}
+        run: |
+          if [ -z "$PAT" ]; then echo "HELPER_KICK_PAT is not set: nothing to do."; exit 0; fi
+          echo "::add-mask::$PAT"
+          python3 - <<'PY'
+          import hashlib, json, os, subprocess, urllib.request
+          MAIN = "Demonic1594/Smotherfish"
+          TOKEN = os.environ["PAT"]
+
+          def api(path, data=None):
+              req = urllib.request.Request("https://api.github.com" + path,
+                  data=json.dumps(data).encode() if data is not None else None,
+                  method="POST" if data is not None else "GET",
+                  headers={"Authorization": "Bearer " + TOKEN, "Accept": "application/vnd.github+json",
+                           "X-GitHub-Api-Version": "2022-11-28", "User-Agent": "smotherfish-helper-kick"})
+              try:
+                  with urllib.request.urlopen(req, timeout=30) as r:
+                      return r.status, (json.loads(r.read() or b"null"))
+              except urllib.error.HTTPError as e:
+                  return e.code, None
+
+          def heads(url, pattern):
+              out = subprocess.run(["git", "ls-remote", url, pattern], capture_output=True, text=True).stdout
+              return {l.split("\t")[1].split("refs/heads/", 1)[1] for l in out.splitlines() if "\t" in l}
+
+          waiting = heads(f"https://github.com/{MAIN}", "refs/heads/helper-exp/*")
+          forks, page = [], 1
+          while True:
+              st, d = api(f"/repos/{MAIN}/forks?per_page=100&page={page}")
+              if st != 200 or not d: break
+              forks += d; page += 1
+              if len(d) < 100: break
+          kicked = 0
+          for f in forks:
+              repo = f["full_name"]
+              if f.get("parent", {}).get("full_name", MAIN) != MAIN and f.get("source", {}).get("full_name", MAIN) != MAIN:
+                  continue
+              hid = hashlib.sha256(f["owner"]["login"].lower().encode()).hexdigest()[:6]
+              mine = {b.split("/", 2)[2] for b in waiting if b.count("/") == 2 and b.split("/")[1] == hid}
+              mine |= {b.split("/", 1)[1] for b in waiting if b.count("/") == 1}
+              started = {b.split("/", 1)[1] for b in heads(f"https://github.com/{repo}", "refs/heads/actions-exp/*")}
+              todo = sorted(mine - started)
+              if not todo:
+                  print(f"{hid}: nothing waiting"); continue
+              st, _ = api(f"/repos/{repo}/actions/workflows/helper-poll.yml/dispatches", {"ref": f.get("default_branch", "smotherfish")})
+              if st in (200, 204):
+                  kicked += 1; print(f"{hid}: started Helper poll ({len(todo)} waiting: {', '.join(todo[:3])}{' ...' if len(todo) > 3 else ''})")
+              else:
+                  print(f"::warning::{hid}: could not start Helper poll (HTTP {st}): the owner must add this account as a collaborator with write access, and workflows must be enabled")
+          print(f"kicked {kicked} fork(s)")
+          PY

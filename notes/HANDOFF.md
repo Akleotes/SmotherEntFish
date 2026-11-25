@@ -1890,3 +1890,11 @@ hourly poll after grid55): trap steering. B 1.6 vs S1 (SmotherSteer 100,
 SteerWonOnly) vs S2 (S1 + WinTrapDepth 7, WinSteerTime 100) vs S3 (S1 +
 grid55's O1 construction); Maia-3 1500 x2000, Elo 1500 x2500 (5+0.05), Elo
 2600 x400 at 10+0.1 (floor >= 80%).
+
+Helper kick (.github/workflows/helper-kick.yml, on the main branch): every
+15 minutes (and on Run workflow) starts Helper poll on each fork that has a
+helper-exp share it has not copied yet, using the secret HELPER_KICK_PAT (a
+classic PAT of the owner, scope public_repo, owner = collaborator with write
+on each fork). No checkout, inline script, permissions {}, no PR/fork
+triggers; inert until the secret exists. Forks need no sync (their tips
+have 6a8caf3d as an ancestor, so helper branches built on it still copy).
