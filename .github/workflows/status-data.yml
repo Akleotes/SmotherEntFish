@@ -1,0 +1,46 @@
+# Status data: every 15 minutes, builds status.json for the test status page
+# (notes/scripts/status_data.py: progress and live results of recent tests,
+# helper activity by ID, throughput) and publishes it on the gh-pages branch.
+name: Status data
+
+on:
+  schedule:
+    - cron: "3,18,33,48 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: status-data
+  cancel-in-progress: false
+
+jobs:
+  build:
+    if: github.repository == 'Demonic1594/Smotherfish'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: smotherfish
+          path: main
+          fetch-depth: 0
+      - uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          path: site
+      - name: Build status.json
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 main/notes/scripts/status_data.py site/status.json site/status.json
+      - name: Publish
+        working-directory: site
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add status.json
+          git diff --cached --quiet && { echo "no change"; exit 0; }
+          git commit -q -m "Status data $(date -u +%Y-%m-%dT%H:%MZ)"
+          git push -q
