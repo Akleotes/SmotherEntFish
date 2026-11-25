@@ -1663,3 +1663,16 @@ box material before construction; (5) stall breaker. Net: use as value in
 ensembles against exploitation. Strength: +5 Elo from our machinery not
 realistic; M5 (prover mates the search missed in undecided SPRT positions)
 would show any ceiling.
+
+DeepSeek round 3: (1) closure prover: separate AND/OR search whose goal
+is "a defender piece occupies the last open ring square" (checks,
+captures, sacrifices, attacks on that square's defender, zugzwang); also a
+diagnostic: how often is closure forceable at all; (2) prover move
+ordering toward the last square (little use: our prover is exhaustive
+within its move set); (3) closure predictor / second net head with
+"closure forceable within K" labels; (4) extensions for last-square moves
+in construction mode (similar to the LMR tries that failed); (5) root
+steering by net on child positions (Opus idea 1 without a defender
+model); (6) pin/freeze term for the piece on the last square. Strength:
++5 Elo not realistic (agrees with Opus). Did not spot the material
+compression issue; its eval-term ideas (3, 6) are exposed to it.
