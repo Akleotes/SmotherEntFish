@@ -1620,3 +1620,16 @@ log-odd; replaces the same hand terms as SmotherBuildModelScale).
   retest; (2) wider inputs: pieces beyond the 5x5 window that reach the
   last open ring square (rook/bishop/queen lines), knight distance map;
   judged by classic smothers per 100 games, not AUC.
+
+grid50 (classic / 100 games; KnightCheck 16 vs linear model scale 6/11/20;
+all SmotherClassic + CrushQuiet 3 + CrushMoves 16): Elo 1500 (2500 each)
+3.8 / 2.5 / 3.4 / 4.1; Maia-3 1500 (600) 3.7 / 2.5 / 2.5 / 4.3; Elo 2500
+(400) 1.8 / 2.3 / 1.0 / 2.3. Higher scale better; 20 matches the hand score
+(103 vs 96, z +0.5), 6 is worse (z -2.6). 1 loss in 14k (2500, M20); time
+losses 4 (M20) vs 8 (B). grid51b: net 30 / 45 and model 35 on Elo 1500 and
+Maia-3 1500, grid51 seeds.
+
+Lichess bots session 3 (Nov 25 03:50-08:50 JST): 164 games +84 =78 -2, all
+opponents bots (matchmaking); 1 classic smother (bot 3, SmotherClassic).
+Both losses at 30+0 vs a 3124 bot (one flag in a drawn KBP v K, one at 1 s);
+bot 4 played that bot ~30 times in a row.
