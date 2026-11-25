@@ -1726,3 +1726,14 @@ compression plus readiness bonus; keep ingredients in normal play;
 closability-aware target and exit; net as action value over modelled
 replies, policy head, time-to-smother heads. Strength: +5 not credible.
 Note: the network scale WAS bracketed (grid51/51b: 20+ loses games).
+
+Closure audit (smother_audit.py; prover alone, Classic, 16 moves, 3 quiet,
+20M nodes; positions us to move, >= +8, enemy king on an edge, from
+grid51 B / N6 games; for smother games, positions more than 16 of our
+moves before the mate): forced knight smother exists in 1 open square,
+games without a smother 2/120 (1.7%); 2 open squares 0/120; games with a
+smother (earlier positions) 1 open 2/57, 2 open 3/62. So in our stalled
+positions a forced knight smother almost never exists even with a big
+budget: an OPPORTUNITY problem, not a prover-limit problem. A stronger or
+closure prover is unlikely to help much; the lever is non-forced closure
+(traps against the real defender: Opus idea 1 / GLM D1).
