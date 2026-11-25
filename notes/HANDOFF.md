@@ -1737,3 +1737,22 @@ positions a forced knight smother almost never exists even with a big
 budget: an OPPORTUNITY problem, not a prover-limit problem. A stronger or
 closure prover is unlikely to help much; the lever is non-forced closure
 (traps against the real defender: Opus idea 1 / GLM D1).
+
+D1 trap census (smother_d1_traps.py; 240 positions from grid51 e1500_B,
+>= +8, king on an edge, 1-2 open ring squares; candidates = stock SF19
+MultiPV 8 moves >= +6; real opponent SF19 UCI_Elo 1500 sampled 8 times per
+candidate; prover after replies that fill a ring square or block a check):
+a candidate with expected hit >= 0.1 in 1/240 positions (0.4%), and we
+played it. One-move traps are essentially absent in stalled positions.
+
+D2 ingredients (smother_d2_ingredients.py; 4,989 games grid51 e1500 B+N6,
+first time >= +8; knight smother rate): our knight gone 21.8% of games ->
+1.2% (vs 4.9% with); our queen gone 21.3% -> 1.2%; enemy non-pawn pieces
+0 / 1 / 2 / 3+: 0 / 0.9 / 2.0 / 5.7%; enemy pawn shield in front of the
+king 0 / 1 / 2 / 3: 2.4 / 4.7 / 5.0 / 10.4%; "ready" (king in corner zone,
+shield >= 2, a piece, our knight) 11.1% of games -> 7.6% vs 3.6%.
+At +4 the picture is similar (ready 18.9% -> 6.4%).
+Reading: with no forced smothers and no traps once construction stalls,
+what remains is the material on the board when we become winning. Keeping
+our knight and queen and the enemy's pieces/shield before +8 is the one
+lever left with measured headroom (bounded: even "ready" games give ~7.6).
