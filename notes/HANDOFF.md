@@ -1676,3 +1676,15 @@ steering by net on child positions (Opus idea 1 without a defender
 model); (6) pin/freeze term for the piece on the last square. Strength:
 +5 Elo not realistic (agrees with Opus). Did not spot the material
 compression issue; its eval-term ideas (3, 6) are exposed to it.
+
+grid51 + grid51b (knight smothers per 100; B = KnightCheck 16):
+Elo 1500 (2500): B 3.9 (98) | net 6: 4.2 (105) | 11: 2.8 | 20: 0.8, 14
+losses | 30: 0.4, 22 losses | 45: 0.2, 28 losses; linear model 35: 2.6.
+Maia-3 1500 (600): B 5.0 | net 6: 5.3 | 11: 3.0 | 20: 1.5 | 30/45: 0.3-0.5
+with 4 losses each. Elo 2500 (400): B 1.5 | net 6 1.3 | 11 0.5 | 20 0.5, 9
+losses. All losses are us getting mated: at scale >= 20 the net term
+outweighs material (compressed /8 above +6) and the search gives up pieces
+chasing the net's output. Net at scale 6 = hand score (n.s.); linear
+model peaks near 20. The better predictor did not give more smothers when
+used as the eval at every node: matches the review's warning (the search
+exploits the predictor; the tree's defender is not the real one).
