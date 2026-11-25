@@ -1824,3 +1824,7 @@ Release 1.6 prepared on a local branch release-1.6 (defaults SmotherClassic
 true, KnightCheck 16, CrushQuiet 3, CrushMoves 16; version 1.6; README,
 guide, notes/release/v1.6.md with STRENGTH_RESULT placeholder). Bench
 1210779. Waiting for sprt-release16.
+
+sprt-release16 (1.6 settings vs 1.5.1 defaults, 10+0.1, bounds [-3, 1],
+8 accounts incl. the new fork, 162 runners): 32,400 games, -0.3 Elo (95%
+-1.2 to +0.5), LLR +14.1, H1: no regression. Release notes filled in.
