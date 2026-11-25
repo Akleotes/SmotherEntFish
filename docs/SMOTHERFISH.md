@@ -84,7 +84,7 @@ All options are standard UCI options. Defaults are what was measured best.
 | `SmotherBrutal` | true | Brutal mode (see above). The main switch for smother hunting; on by default since November 2026 (full-strength SPRTs: no cost). |
 | `SmotherBuild` | true | Construction mode; only active with `SmotherBrutal`. |
 | `SmotherGoal` | Hybrid | What counts as a smother in brutal mode: **Hybrid** (default: true smothers first, "all but one" ones after 80 construction moves), **Full** (only true smothers), **Near** ("all but one" ones always). See "Full, hybrid or near" below. |
-| `SmotherClassic` | false | Count only knight smothers. By default any piece may deliver the mate. |
+| `SmotherClassic` | false | Count only knight smothers (the textbook smothered mate: a knight mates a king boxed in on every side by its own pieces). By default any piece may deliver the mate. The development version toward 1.6 measures knight smothers only; see "Knight smothers" below. |
 | `SmotherStrict` | false | Require a smother against every defence (no faster-mate escapes). Finds far fewer proofs. |
 
 ### Prover
@@ -138,6 +138,20 @@ All options are standard UCI options. Defaults are what was measured best.
 | `SmotherPartialAfter` | 0 | "All but one" smothers count after this many construction moves (0 = never; `SmotherGoal` Hybrid uses 80, 40 before 1.5). |
 | `SmotherHumanAfter` | 40 | Hybrid against a human opponent (`UCI_Opponent`): near smothers count after this many construction moves (0 = same as against computers). |
 | `UCI_Opponent` | (empty) | Standard UCI opponent info from the GUI; only "human" / "computer" is used. |
+
+### Knight smothers (development toward 1.6)
+
+| Option | Default | Meaning |
+| ------ | ------- | ------- |
+| `SmotherBuildKnightCheck` | 0 | Construction-score points per knight of ours one knight move from a square that checks the enemy king and that no enemy pawn guards (half for two moves). 16 is the measured best with `SmotherClassic`. |
+| `SmotherBuildDecoy` | 0 | Points when the one open square next to a cornered king is covered by a defender piece and our queen or rook can go there, guarded (Philidor's sacrifice). |
+| `SmotherCrushMoves` | 12 | Prover depth when crushing (attacker moves); 16 measured with knight smothers. |
+| `SmotherCrushQuiet` | 2 | Quiet attacker moves per proof line when crushing; 3 measured with knight smothers. |
+| `SmotherHold` | 0 | Experimental: keep holding when the box has at most one open square. |
+| `SmotherBuildModelScale` | 0 | Learned linear model (`SmotherBuildModel`, 17 coefficients, log-odds of a knight smother within 10 of our moves) as the construction score, in points per log-odd. Peaks near 20, equal to the hand score. |
+| `SmotherBuildNetScale` | 0 | Small learned network (`src/smother_net.h`: 17 features and the 5x5 squares around the enemy king, 16 hidden units) as the construction score. 6 equals the hand score; 20 and more lose games (the search gives up material to please the network). The `smothernet` command prints its inputs and output for the side to move. |
+| `SmotherPrepCp` | 0 | Experimental "prep phase": from this advantage until construction, bonuses for keeping our knight (`SmotherPrepKnight`), our queen (`SmotherPrepQueen`), enemy pieces (`SmotherPrepPiece`) and enemy pawns in front of their king (`SmotherPrepShield`). Measured: no gain. |
+| `SmotherEscapeMoves` / `SmotherEscapePercent` | 0 / 20 | Experimental: extra prover time after the defender leaves a proven line. Measured: no gain. |
 
 ### Other
 
@@ -243,6 +257,10 @@ smother can be forced at all.
 
 ## Testing your own changes
 
+Anyone can lend GitHub Actions minutes to these tests by forking the
+repository: see [Helping test Smotherfish](HELPING.md). The live status
+page lists the helpers, what is running and the latest results.
+
 - `./stockfish bench` must still report 1210779 nodes (the bench of the
   upstream base commit). The bench runs with brutal mode off; it switches
   it back on afterwards.
@@ -283,6 +301,33 @@ each): 1.4 defaults 8.2 / 59.6; 1.5 15.0 / 61.7. Elo 2500: 3.5-4.2 / 40;
 lost positions, longer building means some games end by resignation before
 the mate; set `SmotherPartialAfter 40` and `SmotherBuildMoves 80` for the
 old, quicker behaviour.
+
+## Knight smothers (development toward 1.6)
+
+From November 25, 2026 only the textbook smothered mate counts: a knight
+mates a king whose every neighbour square holds one of its own pieces.
+1.5.1, which aims at any smother, ends 0.7 games in 100 that way against
+Stockfish Elo 1500. With `SmotherClassic true`, `SmotherBuildKnightCheck 16`,
+`SmotherCrushQuiet 3` and `SmotherCrushMoves 16`: about 4 per 100 (2,500
+games per row, 5+0.05), 5 against the human-like Maia-3 1500, and at 3+2
+3.7 against Stockfish 1500 and 6.3 against Maia-3 (1.5.1: 0.9 and 1.4).
+Strength against 1.5.1: +0.7 Elo (95% -0.5 to +1.8).
+
+What was tried after that, and what it showed:
+
+- A learned linear model and a small network (above) predict knight
+  smothers much better than the hand score (holdout AUC 0.936 and 0.968),
+  but used as the construction score they only match it.
+- In games that never smothered, a forced knight smother almost never
+  existed even for a much larger prover budget (2 of 120 positions with one
+  open square), and one-move traps against the real opponent were just as
+  rare (1 of 240). 83% of knight smothers close the box with the defender's
+  forced reply to a check in the final sequence.
+- Games that still have our knight and queen and the enemy's pieces and
+  king-side pawns when we reach +8 smother twice as often, but making the
+  engine keep them (`SmotherPrep*`) did not raise the rate.
+
+The development log (`notes/HANDOFF.md`) has every experiment.
 
 ## Version 1.5.1: humans resign
 

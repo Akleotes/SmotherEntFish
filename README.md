@@ -15,6 +15,10 @@
   &middot;
   [Development log][handoff-link]
   &middot;
+  [Test status][status-link]
+  &middot;
+  [Help test][helping-link]
+  &middot;
   [Upstream Stockfish][upstream-link]
 
   [![License][smf-license-badge]][smf-license-link]
@@ -68,6 +72,24 @@ with any UCI chess GUI, such as DroidFish on Android. It identifies itself as
 - **Human mode:** `HumanElo` N plays like a human of rating N (1020-2400,
   measured against the human-like Maia-3 network); 0 = off. See
   docs/SMOTHERFISH.md.
+
+## In development: knight smothers (toward 1.6)
+
+Only the textbook smothered mate counts from now on: a knight mates a king
+that its own pieces box in on every side. 1.5.1 ends 0.7 games in 100 that
+way against Stockfish Elo 1500; the development settings (`SmotherClassic
+true`, `SmotherBuildKnightCheck 16`, `SmotherCrushQuiet 3`,
+`SmotherCrushMoves 16`) about 4, and 5 against the human-like Maia-3 1500,
+with no measurable strength cost. Details and the experiments since (a
+learned network, trap audits) are in the guide, "Knight smothers".
+
+## Helping test Smotherfish
+
+Improvements are tested over thousands of games on GitHub Actions. Anyone
+can lend their Actions minutes by forking this repository and enabling its
+workflows: see [Helping test Smotherfish](docs/HELPING.md). The
+[test status page][status-link] shows the helpers, what is running and the
+latest results.
 
 ## Measured results
 
@@ -341,6 +363,8 @@ project][lc0-data-link], which is made available under the [Open Database Licens
 [website-badge]:      https://img.shields.io/website?style=for-the-badge&down_color=red&down_message=Offline&label=website&up_color=success&up_message=Online&url=https%3A%2F%2Fstockfishchess.org
 
 [guide-link]:    docs/SMOTHERFISH.md
+[status-link]: https://demonic1594.github.io/Smotherfish/
+[helping-link]: docs/HELPING.md
 [handoff-link]:  notes/HANDOFF.md
 [upstream-link]: https://github.com/official-stockfish/Stockfish
 [android-link]:  https://github.com/Demonic1594/Smotherfish/actions/workflows/android-build.yml

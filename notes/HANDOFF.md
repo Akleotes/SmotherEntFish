@@ -1800,3 +1800,13 @@ accounts that delivered nothing, same seeds; tested with a simulated
 missing fork: 73 jobs / 1,744 games), merge EXP OUTDIR (EXP + refills from
 every account; replaces merge_shards.py with URL lists). README links the
 guide (on the development branch; forks see it after the next release).
+
+Status page (docs/status/, published on the gh-pages branch; GitHub Pages
+must be set to "Deploy from a branch: gh-pages / root" once). Static: the
+browser reads the forks list and each account's workflow runs from GitHub's
+public API (IDs shown, not names; ~10 requests per load, 5-minute cache,
+"unknown" when rate limited). Results, strength tests and audit findings
+come from docs/status/results.json: update it after each analysis and
+republish (copy docs/status/* to gh-pages). Docs: README (test status link,
+knight smothers, helping), guide (knight-smother options and findings,
+helping link).
