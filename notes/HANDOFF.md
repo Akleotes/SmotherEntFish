@@ -1688,3 +1688,23 @@ chasing the net's output. Net at scale 6 = hand score (n.s.); linear
 model peaks near 20. The better predictor did not give more smothers when
 used as the eval at every node: matches the review's warning (the search
 exploits the predictor; the tree's defender is not the real one).
+
+ChatGPT round 3: first fund an offline "final-square closure audit" (one
+open ring square: is closure forceable, by which mechanism, how deep,
+does the knight mate still follow); then a target-square closure prover
+(forced recapture, interposition, deflection/overload, forced retreat;
+positive proofs only, never negative claims); network at the root only,
+among moves within epsilon of the best, ranked after the defender's best
+reply (min over a shallow defender search), later action-conditioned
+Q(s,m); closure head; target planning with limited commitment;
+feasibility-gated construction end. Measure PR-AUC/precision/calibration,
+not only AUC. Strength: +5 Elo not credible; keep non-regression.
+All three reviews agree: closure audit first; network at the root, not as
+an all-node eval (confirmed by grid51).
+
+M1 (offline, 2,481 knight smothers in grid46-51): the last ring square was
+filled by a defender blocking a check 48%, capturing a checking piece on
+the ring 34% (Philidor-type sacrifice), free choice 9%, moving an attacked
+piece 7%, few legal moves 1%; median 0 of our moves between closure and
+mate. Knight smothers come almost entirely from the final forced check
+sequence (prover territory), not from quiet closure.
