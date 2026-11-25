@@ -1861,3 +1861,12 @@ vs Maia-3 1500 (200): 0/200 and 0/200. One-move sacrificial gambles almost
 never create a forced knight smother from +3..+8 positions (one-ply
 horizon; multi-move gambles not measured). Track B should lean on longer /
 earlier construction and trap steering vs humans, not sacrifices.
+
+grid53 (Track A; knight smothers per 100, 1.6 defaults vs SmotherBuildDecoy
+40 / 80): Elo 1500 (6,000 each) 3.65 (219) / 3.48 (209) / 3.53 (212); Maia-3
+1500 (1,200 each) 3.2 (38) / 3.0 (36) / 3.7 (44, z +0.7). No gain; all
+ending types unchanged; 1 loss in 21,600. Decoy stays off.
+grid54 (1.6 strength margin, 10+0.1): vs UCI_Elo 2600 940 games +937 =3 -0
+(99.8%); vs 3000 360 games +353 =7 -0 (99.0%). 100 games of Akleotes's
+re-run jobs never reached the results branch (results were committed by
+the first attempt). Track B floor (>= 80% vs 2600) leaves a large budget.
