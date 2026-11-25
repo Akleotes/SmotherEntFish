@@ -807,6 +807,19 @@ float net_logit(const Position& pos, Color us, float* feats) {
     return out;
 }
 
+int prep_score(const Position& pos, Color us, int knight, int queen, int piece, int shield) {
+    const Color  them = ~us;
+    const Square ksq  = pos.square<KING>(them);
+    const int    f = file_of(ksq), r = rank_of(ksq) + (them == WHITE ? 1 : -1);
+    int          sh = 0;
+    if (r >= 0 && r <= 7)
+        for (int df = -1; df <= 1; ++df)
+            if (f + df >= 0 && f + df <= 7 && pos.piece_on(make_square(File(f + df), Rank(r))) == make_piece(them, PAWN))
+                ++sh;
+    const int pieces = std::min(popcount(pos.pieces(them) & ~pos.pieces(PAWN, KING)), 3);
+    return knight * bool(pos.pieces(us, KNIGHT)) + queen * bool(pos.pieces(us, QUEEN)) + piece * pieces + shield * sh;
+}
+
 void set_build_net(int scale) { buildWeights.netScale = scale; }
 
 int build_score(const Position& pos, Color us, int survive, int cap, int version, int keep, int keepNear, int starve, int starveAt, int ownKeep, int escape, int knightSafe) {

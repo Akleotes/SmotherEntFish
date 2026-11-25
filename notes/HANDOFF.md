@@ -1765,3 +1765,14 @@ line has the defender losing >= 2 net material within 4 plies 14%.
 does NOT systematically give away material: the material-compression
 hypothesis (Opus review) is not supported. Caveat: selected sample (PV
 first move = played move).
+
+Prep phase (new, off by default): SmotherPrepCp (0 = off) and
+SmotherPrepKnight / Queen / Piece / Shield (cp). Between +SmotherPrepCp
+(previous score) and construction, a bonus at every node for our knight,
+our queen, enemy non-pawn pieces (up to 3) and enemy pawns in front of the
+enemy king (from D2). Checked: +6.7 position scores +8.5 with defaults
+(bonus about +1.6); the bonus also raises the score that starts
+construction, so construction begins slightly earlier (watch draws).
+Bench unchanged. grid52: B (SmotherClassic + KnightCheck 16 + CrushQuiet 3
++ CrushMoves 16) vs P (PrepCp 400, 40/40/20/10) vs P2 (400, 80/80/40/20)
+vs P3 (300, 80/80/40/20); Elo 1500 x2500, Maia-3 1500 x600, Elo 2500 x400.

@@ -407,6 +407,10 @@ class Worker {
     // Won-mode smother shaping (SmotherShape): eval bonus for the root side.
     int  shapeWeight = 0;
     int  shapeCap    = 0;
+    // Prep phase (SmotherPrep*): between +SmotherPrepCp and construction,
+    // bonuses (internal units) for keeping the smother ingredients.
+    bool prepOn = false;
+    int  prepKnight = 0, prepQueen = 0, prepPiece = 0, prepShield = 0;
     bool seekSmother = false;  // won mode: only smothered mates score as mate
     bool seekClassic = false;
     // Construction mode (SmotherBuild): above buildFloor the evaluation stops

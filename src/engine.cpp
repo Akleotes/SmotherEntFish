@@ -192,6 +192,17 @@ Engine::Engine(std::optional<std::filesystem::path> path) :
 
     options.add("SmotherShapeAlways", Option(false));
 
+    // Prep phase (0 = off): between +SmotherPrepCp and construction, bonuses
+    // in centipawns for our knight, our queen, each enemy non-pawn piece (up
+    // to 3) and each enemy pawn in front of its king (knight-smother
+    // ingredients; measured: games that reach +8 without our knight give
+    // 1.2 knight smothers per 100 instead of 4.9).
+    options.add("SmotherPrepCp", Option(0, 0, 10000));
+    options.add("SmotherPrepKnight", Option(40, 0, 1000));
+    options.add("SmotherPrepQueen", Option(40, 0, 1000));
+    options.add("SmotherPrepPiece", Option(20, 0, 1000));
+    options.add("SmotherPrepShield", Option(10, 0, 1000));
+
     // Seek mode: in won mode, plain mates count below smothered ones, for at
     // most SmotherSeek of our moves per game (0 = off), and only while the
     // 50-move counter is below SmotherSeekRule50 half-moves.

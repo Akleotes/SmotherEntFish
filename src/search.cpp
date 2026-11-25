@@ -962,6 +962,18 @@ bool Search::Worker::iterative_deepening() {
                   ? int(options["SmotherShape"])
                   : 0;
     shapeCap    = int(options["SmotherShapeCap"]);
+    {
+        // Prep phase: won (>= SmotherPrepCp) but not yet constructing.
+        auto&       m   = *threads.main_manager();
+        const Value pv  = m.bestPreviousScore;
+        const int   cpk = std::max(1, UCIEngine::to_cp(Value(1000), rootPos));
+        prepOn = int(options["SmotherPrepCp"]) > 0 && m.smotherWon && !m.smotherBuildNow && pv != VALUE_INFINITE
+              && pv != -VALUE_INFINITE && !is_decisive(pv) && UCIEngine::to_cp(pv, rootPos) >= int(options["SmotherPrepCp"]);
+        prepKnight = int(options["SmotherPrepKnight"]) * 1000 / cpk;
+        prepQueen  = int(options["SmotherPrepQueen"]) * 1000 / cpk;
+        prepPiece  = int(options["SmotherPrepPiece"]) * 1000 / cpk;
+        prepShield = int(options["SmotherPrepShield"]) * 1000 / cpk;
+    }
     shapeUs     = us;
     {
         // Seek and construction mode are decided once per move by the main
@@ -2717,6 +2729,14 @@ Value Search::Worker::evaluate(const Position& pos) {
     if (shapeWeight)
     {
         const int b = std::min(Smother::shape(pos, shapeUs) * shapeWeight / 16, shapeCap);
+        v += pos.side_to_move() == shapeUs ? b : -b;
+        v = std::clamp(v, VALUE_TB_LOSS_IN_MAX_PLY + 1, VALUE_TB_WIN_IN_MAX_PLY - 1);
+    }
+
+    // Prep phase: keep the ingredients of a later knight smother.
+    if (prepOn)
+    {
+        const int b = Smother::prep_score(pos, shapeUs, prepKnight, prepQueen, prepPiece, prepShield);
         v += pos.side_to_move() == shapeUs ? b : -b;
         v = std::clamp(v, VALUE_TB_LOSS_IN_MAX_PLY + 1, VALUE_TB_WIN_IN_MAX_PLY - 1);
     }

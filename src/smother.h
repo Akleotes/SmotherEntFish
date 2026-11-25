@@ -124,6 +124,12 @@ float net_logit(const Position& pos, Color us, float* feats = nullptr);
 
 void set_build_net(int scale);
 
+// Prep phase (between +SmotherPrepCp and construction): ingredients of a
+// later knight smother still on the board, in the given units: our knight,
+// our queen, enemy non-pawn pieces (up to 3), enemy pawns on the three
+// squares in front of the enemy king.
+int prep_score(const Position& pos, Color us, int knight, int queen, int piece, int shield);
+
 int build_score(const Position& pos, Color us, int survive = 0, int cap = 12, int version = 1, int keep = 11, int keepNear = 2, int starve = 0, int starveAt = 4, int ownKeep = 0, int escape = 4, int knightSafe = 0);
 
 // Smother traps: pos has the DEFENDER to move (we just played our candidate).
