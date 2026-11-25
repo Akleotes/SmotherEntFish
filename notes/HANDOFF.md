@@ -1844,3 +1844,9 @@ sequential prover). The first publish failed in a GitHub outage (504).
 Helper forks synced to 6a8caf3d except d32e35 (still 33bbe361):
 notes/volunteers.json now has "base" 6a8caf3d and per-fork "bases"
 {"d32e35": "33bbe361"} until it syncs (volunteers.py targets reads it).
+
+Track B targets (user, Nov 26): knight smothers >= +50% over the main
+version (about 4 -> 6+ per 100 vs SF 1500; all types reported too), with a
+strength floor of >= 80% score vs Stockfish UCI_Elo 2600 at 10+0.1.
+grid54: 1.6 strength baseline vs UCI_Elo 2600 (1,000 games) and 3000 (400)
+at 10+0.1.
