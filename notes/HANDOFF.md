@@ -1902,3 +1902,5 @@ Helper kick verified (Nov 26 04:42 JST): secret set, public_repo scope is
 enough; first run kicked 10 forks (Akleotes already had grid56); 9 copied
 grid56 at once, 2 waiting for a free runner behind grid55. Aurazur now
 starts automatically.
+grid56: one job on 8e9ce5 failed installing Maia-3 (m1500_S2, chunk 51,
+seed 64051, 24 games); refilled as grid56-r1 on Akleotes.
