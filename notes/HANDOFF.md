@@ -1904,3 +1904,14 @@ grid56 at once, 2 waiting for a free runner behind grid55. Aurazur now
 starts automatically.
 grid56: one job on 8e9ce5 failed installing Maia-3 (m1500_S2, chunk 51,
 seed 64051, 24 games); refilled as grid56-r1 on Akleotes.
+
+Refill bug (Nov 26): refill plans listed each job as its own run, so every
+job got chunk index 0 and same-named result artifacts overwrote each other:
+grid55-r1 kept 272 of 2,544 games. Fixed: plans may set "first_chunk"
+(expand_plan.py; seed = run seed + index - first_chunk), volunteers.py
+refill sets it. Akleotes's grid55 share re-issued as grid55-r2; grid55-r1 is
+listed under "superseded" in notes/volunteers.json (merge/status skip it).
+Akleotes grid56: 5,240 of 5,280 games (1 job lost).
+Housekeeping: helper-exp deletes moved to a workflow (session git deletes
+are refused); status page: status.json built every 15 min by the Status
+data workflow (notes/scripts/status_data.py).

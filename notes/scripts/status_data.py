@@ -70,12 +70,20 @@ def fetch_part(main_heads, accounts, part, acc, url):
     ref = f"actions-exp/{part}" if acc == "own" else f"helper-exp/{acc}/{part}"
     if ref not in main_heads:
         return None
-    d = V.git_fetch(f"https://github.com/{MAIN}", ref)
+    d = None
+    for _ in range(3):
+        d = V.git_fetch(f"https://github.com/{MAIN}", ref)
+        if d:
+            break
     if not d:
         return None
     jobs = {(j["name"], j["seed"]): j["games"] for j in V.jobs_of(V.show(d, "notes/exp/plan.json") or "{}")}
     expected = sum(jobs.values())
-    rd = V.git_fetch(url, f"actions-exp/{part}")
+    rd = None
+    for _ in range(3):
+        rd = V.git_fetch(url, f"actions-exp/{part}")
+        if rd or not heads(url, f"refs/heads/actions-exp/{part}"):
+            break
     files = {}
     if rd:
         for f in V.ls(rd, f"notes/results/{part}"):
@@ -137,7 +145,7 @@ def main(out, prev_path=None):
             names.add(b.split("/")[2])
         elif b.startswith("actions-exp/"):
             names.add(b.split("/", 1)[1])
-    names = {n for n in names if not n.startswith(("sprt", "conctest", "maia-grid"))}
+    names = {n for n in names if not n.startswith(("sprt", "conctest", "maia-grid")) and n not in set(conf.get("superseded", []))}
     groups = collections.defaultdict(list)              # grid55-r1 belongs to grid55
     for n in names:
         groups[n.split("-r")[0] if "-r" in n and n.split("-r")[-1].isdigit() else n].append(n)
