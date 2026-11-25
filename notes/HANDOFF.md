@@ -1884,3 +1884,9 @@ games, max_parallel 256): peak 84 jobs at once (82 running with 174 queued,
 then 84), up from ~42 on Nov 24. Weight raised to 4 (80 jobs). Its grid55
 share was cancelled and rerun uncapped as grid55-r1 (same 108 jobs and
 seeds; merged into grid55 by volunteers.py merge).
+
+grid56 (Track B round 2, queued overnight; forks pick it up on their
+hourly poll after grid55): trap steering. B 1.6 vs S1 (SmotherSteer 100,
+SteerWonOnly) vs S2 (S1 + WinTrapDepth 7, WinSteerTime 100) vs S3 (S1 +
+grid55's O1 construction); Maia-3 1500 x2000, Elo 1500 x2500 (5+0.05), Elo
+2600 x400 at 10+0.1 (floor >= 80%).
