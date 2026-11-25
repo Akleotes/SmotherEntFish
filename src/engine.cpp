@@ -38,6 +38,7 @@
 #include "position.h"
 #include "search.h"
 #include "shm.h"
+#include "smother.h"
 #include "syzygy/tbprobe.h"
 #include "types.h"
 #include "uci.h"
@@ -326,6 +327,7 @@ Engine::Engine(std::optional<std::filesystem::path> path) :
     // coefficients (corner, edge, h0, h1, h2, corner*h0, corner*h1, kd1, kd2,
     // corner*h1*kd1, corner*h0*kd1, decoy, queen, stuck, units, exits, knights).
     options.add("SmotherBuildModelScale", Option(0, 0, 100));
+    options.add("SmotherBuildNetScale", Option(0, 0, 100));
     options.add("SmotherBuildModel", Option("-1.28,-0.30,5.01,2.73,1.93,1.25,1.92,0.79,0.76,0.67,3.54,0.95,0.97,0.27,1.28,-0.29,0.85"));
 
     // While pondering, let the parallel prover search deep and unbounded on
@@ -549,6 +551,19 @@ std::optional<PositionSetError> Engine::flip() { return pos.flip(); }
 std::string Engine::visualize() const {
     std::stringstream ss;
     ss << pos;
+    return ss.str();
+}
+
+// Knight-smother network for the side to move (checks the engine against the
+// Python training code): the 17 features, then the logit.
+std::string Engine::smother_net_trace() const {
+    float              f[17];
+    const float        z = Smother::net_logit(pos, pos.side_to_move(), f);
+    std::ostringstream ss;
+    ss << "smothernet";
+    for (float x : f)
+        ss << ' ' << x;
+    ss << " logit " << z;
     return ss.str();
 }
 

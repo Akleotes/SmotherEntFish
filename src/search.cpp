@@ -999,6 +999,7 @@ bool Search::Worker::iterative_deepening() {
                                       int(options["SmotherBuildDecoy"]),
                                       int(options["SmotherBuildModelScale"]),
                                       std::string(options["SmotherBuildModel"]));
+            Smother::set_build_net(int(options["SmotherBuildNetScale"]));
             buildEscape    = int(options["SmotherBuildEscape"]);
             buildKnightSafe = int(options["SmotherBuildKnightSafe"]);
             shapeWeight    = 0;

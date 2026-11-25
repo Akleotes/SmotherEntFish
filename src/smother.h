@@ -108,6 +108,9 @@ struct BuildWeights {
     // when > 0 it replaces the ring, corner/edge, knight/queen nearness,
     // knight-route and decoy terms.
     int  modelScale = 0;
+    // Knight-smother network (smother_net.h): points per log-odd; replaces the
+    // same terms as modelScale.
+    int  netScale = 0;
     int  model[17]  = {};
     bool useTable = false;
     int  ringTable[6] = {};
@@ -116,6 +119,10 @@ extern BuildWeights buildWeights;
 void set_build_weights(const std::string& s);
 void set_build_extras(int ready, int defRingPct, const std::string& ringTable, int exit = 0, int knightCheck = 0, int decoy = 0,
                       int modelScale = 0, const std::string& model = "");
+
+float net_logit(const Position& pos, Color us, float* feats = nullptr);
+
+void set_build_net(int scale);
 
 int build_score(const Position& pos, Color us, int survive = 0, int cap = 12, int version = 1, int keep = 11, int keepNear = 2, int starve = 0, int starveAt = 4, int ownKeep = 0, int escape = 4, int knightSafe = 0);
 

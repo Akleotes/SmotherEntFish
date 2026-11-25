@@ -17,6 +17,7 @@
 #include "bitboard.h"
 #include "movegen.h"
 #include "position.h"
+#include "smother_net.h"
 
 namespace Stockfish::Smother {
 
@@ -666,6 +667,7 @@ void set_build_weights(const std::string& s) {
     w.knightCheck = buildWeights.knightCheck;
     w.decoy       = buildWeights.decoy;
     w.modelScale  = buildWeights.modelScale;
+    w.netScale    = buildWeights.netScale;
     std::copy(std::begin(buildWeights.model), std::end(buildWeights.model), w.model);
     w.useTable   = buildWeights.useTable;
     std::copy(std::begin(buildWeights.ringTable), std::end(buildWeights.ringTable), w.ringTable);
@@ -699,6 +701,114 @@ void set_build_extras(int ready, int defRingPct, const std::string& ringTable, i
     buildWeights.useTable = n > 0;
 }
 
+// Knight (classic) smother network (SmotherBuildNetScale). Inputs exactly as
+// notes/scripts/classic_feats.py (17 features) and nn_data.py (5x5 window
+// around the enemy king, mirrored toward a1, 6 channels per square).
+// Returns the log-odds of a knight smother within 10 of our moves.
+float net_logit(const Position& pos, Color us, float* feats) {
+    const Color    them = ~us;
+    const Square   ksq  = pos.square<KING>(them);
+    const Bitboard ring = Attacks::attacks_bb(KING, ksq);
+    const Bitboard occ  = pos.pieces();
+    const Bitboard openSq = ring & ~pos.pieces(them);
+    const int      holes  = popcount(openSq);
+    const int      kf = file_of(ksq), kr = rank_of(ksq);
+    const int      e  = (kf == 0 || kf == 7) + (kr == 0 || kr == 7);
+    const bool     corner = e == 2, edge = e == 1;
+
+    Bitboard pawnGuard = 0, tp = pos.pieces(them, PAWN);
+    while (tp)
+        pawnGuard |= Attacks::attacks_bb(PAWN, pop_lsb(tp), them);
+    const Bitboard checkSqs = Attacks::attacks_bb(KNIGHT, ksq) & ~pos.pieces(us) & ~pawnGuard;
+    int      kd = 9;
+    Bitboard kn = pos.pieces(us, KNIGHT);
+    while (kn && kd > 1)
+    {
+        Bitboard one = Attacks::attacks_bb(KNIGHT, pop_lsb(kn));
+        if (one & checkSqs)
+            kd = 1;
+        else
+        {
+            Bitboard two = 0;
+            while (one)
+                two |= Attacks::attacks_bb(KNIGHT, pop_lsb(one));
+            if (two & checkSqs)
+                kd = 2;
+        }
+    }
+    Bitboard ours = 0, p = pos.pieces(us);
+    while (p)
+    {
+        const Square    s  = pop_lsb(p);
+        const PieceType pt = type_of(pos.piece_on(s));
+        ours |= pt == PAWN ? Attacks::attacks_bb(PAWN, s, us) : Attacks::attacks_bb(pt, s, occ);
+    }
+    bool decoy = false;
+    if (holes == 1 && corner)
+    {
+        const Bitboard att = pos.attackers_to(lsb(openSq));
+        decoy = (att & pos.pieces(them) & ~pos.pieces(KING)) && (att & pos.pieces(us, QUEEN, ROOK))
+             && (att & pos.pieces(us) & ~pos.pieces(QUEEN));
+    }
+    int            exits = 0;
+    const Bitboard safe  = ~ring & ~ours & ~pos.pieces(them) & ~square_bb(ksq);
+    Bitboard       rp    = ring & pos.pieces(them) & ~pos.pieces(KING);
+    while (rp)
+    {
+        const Square    s  = pop_lsb(rp);
+        const PieceType pt = type_of(pos.piece_on(s));
+        exits += popcount((pt == PAWN ? Attacks::attacks_bb(PAWN, s, them) : Attacks::attacks_bb(pt, s, occ)) & safe);
+    }
+    const float f[17] = {float(corner), float(edge), float(holes == 0), float(holes == 1), float(holes == 2),
+                         float(corner && holes == 0), float(corner && holes == 1), float(kd == 1), float(kd == 2),
+                         float(corner && holes == 1 && kd == 1), float(corner && holes == 0 && kd == 1), float(decoy),
+                         float(bool(pos.pieces(us, QUEEN))), float(!(openSq & ~ours)),
+                         std::min(popcount(pos.pieces(them) & ~pos.pieces(KING)), 8) / 8.0f,
+                         std::min(exits, 6) / 6.0f, std::min(popcount(pos.pieces(us, KNIGHT)), 2) / 2.0f};
+    if (feats)
+        std::copy(f, f + 17, feats);
+
+    float h[Net::Hidden];
+    std::copy(Net::B1, Net::B1 + Net::Hidden, h);
+    for (int i = 0; i < 17; ++i)
+        if (f[i] != 0)
+            for (int j = 0; j < Net::Hidden; ++j)
+                h[j] += f[i] * Net::W1[i][j];
+    const int fx = kf > 3 ? -1 : 1, ry = kr > 3 ? -1 : 1;
+    for (int i = 0; i < 5; ++i)
+        for (int j = 0; j < 5; ++j)
+        {
+            const int fl = kf + fx * (i - 2), rk = kr + ry * (j - 2);
+            int       ch;
+            if (fl < 0 || fl > 7 || rk < 0 || rk > 7)
+                ch = 0;
+            else
+            {
+                const Piece pc = pos.piece_on(make_square(File(fl), Rank(rk)));
+                if (pc == NO_PIECE)
+                    continue;
+                const PieceType pt = type_of(pc);
+                if (color_of(pc) == them)
+                {
+                    if (pt == KING)
+                        continue;
+                    ch = pt == PAWN ? 1 : 2;
+                }
+                else
+                    ch = pt == KNIGHT ? 3 : pt == QUEEN ? 4 : 5;
+            }
+            const float* w = Net::W1[17 + (i * 5 + j) * 6 + ch];
+            for (int k = 0; k < Net::Hidden; ++k)
+                h[k] += w[k];
+        }
+    float out = Net::B2;
+    for (int j = 0; j < Net::Hidden; ++j)
+        out += Net::W2[j] * std::max(h[j], 0.0f);
+    return out;
+}
+
+void set_build_net(int scale) { buildWeights.netScale = scale; }
+
 int build_score(const Position& pos, Color us, int survive, int cap, int version, int keep, int keepNear, int starve, int starveAt, int ownKeep, int escape, int knightSafe) {
     if (version == 2)
         return build_score_v2(pos, us);
@@ -717,7 +827,8 @@ int build_score(const Position& pos, Color us, int survive, int cap, int version
     int ringScore = W.useTable ? W.ringTable[std::min(holes, 5)] : W.boxed * boxed - W.hole * holes;
     if (W.defRingPct != 100 && pos.side_to_move() != us)
         ringScore = ringScore * W.defRingPct / 100;
-    int score = W.modelScale ? 0 : ringScore + (corner ? W.corner : edge ? W.edge : 0);
+    const bool learned = W.modelScale || W.netScale;
+    int score = learned ? 0 : ringScore + (corner ? W.corner : edge ? W.edge : 0);
 
     // Learned classic model: features as in notes/scripts (classic_feats.py).
     if (W.modelScale)
@@ -780,6 +891,8 @@ int build_score(const Position& pos, Color us, int survive, int cap, int version
                + c[15] * std::min(exits, 6) / 6 + c[16] * knights / 2;
         score += W.modelScale * z / 100;
     }
+    if (W.netScale)
+        score += int(W.netScale * net_logit(pos, us));
 
     // Exits (ChatGPT review): ways a defender ring piece can step off the ring
     // to a square we do not attack. Offline (2,343 games, <= 1 open square):
@@ -816,7 +929,7 @@ int build_score(const Position& pos, Color us, int survive, int cap, int version
     }
 
     // Decoy: the last open square can be filled by force.
-    if (W.decoy && !W.modelScale && holes == 1 && corner)
+    if (W.decoy && !learned && holes == 1 && corner)
     {
         const Square   s   = lsb(ring & ~pos.pieces(them));
         const Bitboard att = pos.attackers_to(s);
@@ -826,7 +939,7 @@ int build_score(const Position& pos, Color us, int survive, int cap, int version
     }
 
     // Knight routes to safe checking squares (classic smothers).
-    if (W.knightCheck && !W.modelScale)
+    if (W.knightCheck && !learned)
     {
         Bitboard pawnGuard = 0, tp = pos.pieces(them, PAWN);
         while (tp)
@@ -916,10 +1029,10 @@ int build_score(const Position& pos, Color us, int survive, int cap, int version
     }
 
     // The finishers: knights and the queen near the king.
-    Bitboard knights = W.modelScale ? Bitboard(0) : pos.pieces(us, KNIGHT);
+    Bitboard knights = learned ? Bitboard(0) : pos.pieces(us, KNIGHT);
     while (knights)
         score += W.knight * std::max(0, 4 - sq_distance(pop_lsb(knights), ksq));
-    Bitboard queens = W.modelScale ? Bitboard(0) : pos.pieces(us, QUEEN);
+    Bitboard queens = learned ? Bitboard(0) : pos.pieces(us, QUEEN);
     while (queens)
         score += W.queen * std::max(0, 4 - sq_distance(pop_lsb(queens), ksq));
 
