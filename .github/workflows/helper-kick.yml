@@ -67,9 +67,11 @@ jobs:
           import base64
           st, cfg = api(f"/repos/{MAIN}/contents/notes/volunteers.json?ref=smotherfish")
           try:
-              want_sync = set(json.loads(base64.b64decode(cfg["content"])).get("sync", [])) if st == 200 else set()
+              vconf = json.loads(base64.b64decode(cfg["content"])) if st == 200 else {}
           except Exception:
-              want_sync = set()
+              vconf = {}
+          want_sync = set(vconf.get("sync", []))
+          excluded = set(vconf.get("exclude", []))  # forks taken off the list (e.g. made private)
           forks, page = [], 1
           while True:
               st, d = api(f"/repos/{MAIN}/forks?per_page=100&page={page}")
@@ -82,6 +84,8 @@ jobs:
               if f.get("parent", {}).get("full_name", MAIN) != MAIN and f.get("source", {}).get("full_name", MAIN) != MAIN:
                   continue
               hid = hashlib.sha256(f["owner"]["login"].lower().encode()).hexdigest()[:6]
+              if hid in excluded:
+                  continue
               if "all" in want_sync or hid in want_sync:
                   branch = f.get("default_branch", "smotherfish")
                   req = urllib.request.Request(f"https://api.github.com/repos/{repo}/merge-upstream",
