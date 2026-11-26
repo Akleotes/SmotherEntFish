@@ -2018,3 +2018,35 @@ Stockfish 1500 + Maia-3 1500 pooled (6,000 per arm): B 3.55, H40 3.23
 B: H40 3.29 vs 3.34 (9,700 games each, z -0.2); ArmGap 48 + KnightCheck 8
 3.79 vs 3.62 (z +0.6). Neither meets the rule (z >= 2, no losses): 1.6
 as released stays the baseline; no strength SPRT needed.
+
+grid60 (SmotherBuildDefSee: the defender in our search skips moves losing
+more than N cp unless they give check; 19,600 games): knight per 100,
+SF1500 + Maia-3 1500 pooled (4,500 per arm): B 3.02, D1 3.40 (z +1.0),
+D100 3.18 (+0.4), D300 3.18 (+0.4); no losses, 99.8-100% vs 2600. By
+opponent, D1: SF1500 2.8 vs 3.0, Maia-3 4.7 vs 3.1 (z ~2.2 on its own, but
+one of six post-hoc cells). Mechanism unchanged: our captures after +8
+material 6.5-6.7, defender units at the end 2.2-2.5 in every arm, so the
+real games did not keep more defender material. grid61 confirms D1 vs B
+against Maia-3 only (the human-like case).
+
+grid61 (DefSee 1 vs B, Maia-3 only, 12,000 games): Maia-3 1500 (4,000):
+B 2.98, D1 3.83 per 100 (z +2.1); with grid60: 3.02 vs 4.05 (+34%,
+z +2.9). Maia-3 1100 (2,000): 4.70 vs 4.80 (z +0.2). Pooled fresh z +1.7.
+One loss (D1 vs Maia-3 1100, game 6): +11 material at ply 25, then lost
+material step by step to two central knights and a passed d-pawn that
+queened. Likely cause: defender knight moves that lose by static exchange
+but fork or attack a bigger piece were pruned. Fix: never prune a defender
+move whose piece then attacks one of our non-pawn pieces. grid62: B vs
+the threat-aware D1 (Maia-3 1500 x4000, Maia-3 1100 x2000, SF1500 x2000,
+SF2600 x400).
+
+grid62 (threat-aware DefSee 1 vs B, 16,800 games): knight per 100 -
+Maia-3 1500 3.92 vs D1T 3.27 (z -1.6), Maia-3 1100 5.00 vs 4.25 (z -1.1),
+SF1500 4.40 vs 3.20 (z -2.0), SF2600 1.25 vs 1.25; pooled 5+0.05 4.31 vs
+3.50 (z -2.65). No losses either side. The Maia-3 1500 "gain" of grid60/61
+did not replicate (this B arm alone scored 3.92 where the earlier B arms
+scored 2.98-3.1: the baseline itself swings by ~1 per 100 between runs of
+4,000 games). Conclusion: pruning the imagined defender's losing moves does
+not raise knight smothers; with the threat exception it lowers them.
+SmotherBuildDefSee stays off, development branch only. Lesson: a single
+post-hoc cell at z ~2 is not enough; require replication on fresh data.
