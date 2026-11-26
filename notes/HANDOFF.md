@@ -1944,3 +1944,34 @@ other). A smother opening repertoire would be worth +20% at most, noisily.
 Track B status: building earlier/longer (grid55) and trap steering (grid56)
 both fail; with existing mechanisms there is no strength-for-smothers trade
 that raises knight smothers.
+
+## grid57: Track B round 3, all smother types (26 Nov, 16,400 games)
+
+Presets on existing options, 1.6 code (base 6a8caf3d). Per 100 games:
+knight = knight (classic) smother, full = full smother by another piece,
+near = "all but one" smother.
+
+| Opponent | Arm | knight | full | near | all smothers | plain mate | score |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| SF 1500 5+0.05 (2,500) | B (1.6) | 3.0 | 0.2 | 3.6 | 6.8 | 92.8 | 99.8% |
+| | H40 (`SmotherPartialAfter 40`) | 3.5 | 0.3 | 4.0 | 7.8 | 91.7 | 99.8% |
+| | AK (`SmotherClassic false`) | 1.3 | 9.8 | 31.7 | 42.8 | 56.9 | 100% |
+| | AN (`SmotherClassic false`, `SmotherGoal Near`) | 0.8 | 2.5 | 64.3 | 67.6 | 32.3 | 100% |
+| Maia-3 1500 5+0.05 (1,200) | B | 3.1 | 0.0 | 4.9 | 8.0 | 91.9 | 100% |
+| | H40 | 3.2 | 0.2 | 4.0 | 7.4 | 92.7 | 100% |
+| | AK | 1.7 | 11.4 | 28.8 | 41.9 | 58.1 | 100% |
+| | AN | 0.8 | 3.3 | 63.4 | 67.5 | 32.4 | 100% |
+| SF 2600 10+0.1 (400) | B | 0.8 | 0.5 | 2.8 | 4.0 | 95.8 | 99.9% |
+| | H40 | 2.2 | 0.0 | 3.2 | 5.4 | 94.2 | 100% |
+| | AK | 0.0 | 5.5 | 24.8 | 30.3 | 69.5 | 100% |
+| | AN | 0.0 | 2.0 | 49.8 | 51.8 | 48.0 | 100% |
+
+- All four keep the strength floor (100% against 2600; no losses anywhere).
+- Counting all smother types, AN gives 10 times 1.6's rate (67.6 vs 6.8 per
+  100 against 1500) and AK 6 times, with games 15-45% shorter. Both trade
+  knight smothers away (0.8-1.7 vs 3.0).
+- Full smothers by any piece (knight + other): AK 11.1 vs 3.2 (3.5 times).
+- H40 is within noise of B on knight smothers (3.4 vs 3.0 per 100, pooled
+  1500 opponents, z about 0.9).
+- So the "obsessed" setting exists already as a preset: AN for any smother,
+  AK for full smothers. No setting beats 1.6 on knight smothers.
