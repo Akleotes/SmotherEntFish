@@ -2051,17 +2051,20 @@ not raise knight smothers; with the threat exception it lowers them.
 SmotherBuildDefSee stays off, development branch only. Lesson: a single
 post-hoc cell at z ~2 is not enough; require replication on fresh data.
 
-grid63 (any-smother presets across levels; re-issued as grid63-r1 after
-forks refused the first copy, see "shares on each fork's own version"):
-all smothers per 100 (B / SmotherClassic false / + SmotherGoal Near):
-Maia-3 1100 9.2 / 42.6 / 72.8; Maia-3 1900 7.4 / 38.8 / 66.1; 3+2 vs
-SF1500 2.7 / 43.9 / 69.7; 3+2 vs Maia-3 1500 10.7 / 46.6 / 69.3. Knight
-smothers 2.2-5.6 (B) vs 0.5-2.4. No losses.
+grid64 (SmotherStallAfter: a hybrid build with no new low in open squares
+next to the enemy king for N construction moves takes the near smother;
+from Lichess game JKnlm2Kk, where White checked a cornered king for ~90
+moves): knight per 100, SF1500 + Maia-3 1500 (3,700 each): B 3.16, S12
+4.03 (z +2.0), S24 4.05 (z +2.1), S40 3.59 (z +1.0); mean plies 239-241
+(no shortening), no losses, 99.8-100% vs 2600. B is at the low end of its
+usual range, so grid65 replicates on fresh seeds (B / S12 / S24, 6,000
+games each) before anything is believed.
 
-Trap ceiling (item 3, offline): in 300 one-gap positions of grid62 B
-games, a move with a reply that walks into a forced knight smother (in 2,
-checks only) exists in 7.0%; the reply's Maia-3 1500 probability: median
-0.6%, mean 4.2%, 10% of them above 10%; where a trap exists the best trap
-move catches a Maia defender ~17% of the time (uniform model ~12%).
-Ceiling ~0.7 chances x 17% per game. Next: harness prototype (Maia picks
-our move in one-gap positions by trap value) before any engine change.
+grid65 (replication, fresh seeds, 6,000 games per arm): knight per 100,
+SF1500 + Maia-3 1500: B 3.77, S12 3.90 (z +0.4, 1 loss), S24 3.63
+(z -0.4). Pooled with grid64: S12 3.95 vs 3.54 (z +1.5), S24 3.79 vs 3.54
+(z +1.0). grid64's +2 did not replicate (its B was low, 3.16). Same lesson
+as DefSee: B swings ~3.0-4.3 between runs of a few thousand games; only
+fresh-data replication counts. SmotherStallAfter stays off (dev branch):
+no knight change, no shorter games against these opponents; its only
+use would be long stalls like JKnlm2Kk, which are rare here.
