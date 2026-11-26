@@ -3,11 +3,14 @@
  "weights": {
   "d32e35": 4
  },
- "exclude": [],
+ "exclude": [
+  "2456cd"
+ ],
  "notes": {
   "d32e35": "enterprise account: 84 jobs at once on Nov 26 (probe conctest1), weight 4",
   "dc665d": "no working schedule: needs Run workflow by hand",
-  "superseded": "refill parts replaced by a later refill; merge and status skip them"
+  "superseded": "refill parts replaced by a later refill; merge and status skip them",
+  "2456cd": "excluded Nov 26: owner made the fork private to use their own Actions"
  },
  "bases": {},
  "superseded": [
