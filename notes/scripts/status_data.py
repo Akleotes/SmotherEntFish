@@ -150,6 +150,15 @@ def main(out, prev_path=None):
     for n in names:
         groups[n.split("-r")[0] if "-r" in n and n.split("-r")[-1].isdigit() else n].append(n)
 
+    # Every account's recent runs, fetched once: a test is "running" only while
+    # a run of one of its parts is queued or in progress somewhere.
+    runs_of = {}
+    with concurrent.futures.ThreadPoolExecutor(8) as ex:
+        for acc, rs in zip([a for a, _ in accounts], ex.map(
+                lambda a: (api(f"/repos/{repo_of[a[0]]}/actions/runs?per_page=50") or {}).get("workflow_runs", []), accounts)):
+            runs_of[acc] = [r for r in rs if r["name"] in ("Smother experiment", "SPRT")]
+    live_exps = {r["head_branch"].replace("actions-exp/", "") for rs in runs_of.values() for r in rs if r["status"] != "completed"}
+
     tests = []
     for tid, parts in sorted(groups.items()):
         parts = sorted(parts, key=lambda p: (p != tid, p))
@@ -165,11 +174,10 @@ def main(out, prev_path=None):
             if tid in prev_tests:
                 tests.append(prev_tests[tid])
             continue
-        if tid in prev_tests and str(prev_tests[tid].get("state", "")).startswith("finished"):
+        # Reuse a finished test unless one of its parts (a refill) is live again.
+        if tid in prev_tests and str(prev_tests[tid].get("state", "")).startswith("finished") and not (set(parts) & live_exps):
             tests.append(prev_tests[tid])
             continue
-        if tid in prev_tests and prev_tests[tid].get("plan_sha") == sha and str(prev_tests[tid].get("state", "")).startswith("finished"):
-            tests.append(prev_tests[tid]); continue
         pd = V.git_fetch(f"https://github.com/{MAIN}", refs[0])
         try:
             plan = json.loads(V.show(pd, "notes/exp/plan.json") or "{}") if pd else {}
@@ -216,7 +224,11 @@ def main(out, prev_path=None):
                 row["cells"][opp] = s
             stats.append(row)
         age_h = (NOW - datetime.datetime.fromisoformat(created.replace("Z", "+00:00"))).total_seconds() / 3600 if created else 0
-        state = "finished" if delivered >= planned else "finished-partial" if (delivered >= 0.9 * planned and age_h > 6) or age_h > 24 else "running"
+        # Running while any part has a live run, or in the first 2 hours (helper
+        # forks may not have picked their share up yet); then finished, or
+        # finished (partial) if games are missing.
+        live = bool(set(parts) & live_exps)
+        state = "running" if live or (delivered < planned and age_h < 2) else "finished" if delivered >= planned else "finished-partial"
         tests.append({"id": tid, "plan_sha": sha, "parts": parts, "created": created, "tc": tcs, "opponents": [{"key": o, "name": OPP.get(o, o)} for o in opps],
                       "planned": planned, "delivered": delivered, "state": state, "arms": stats,
                       "accounts": [{"id": k, **v} for k, v in sorted(per_acc.items())]})
@@ -224,8 +236,7 @@ def main(out, prev_path=None):
     # Account activity.
     acc_out = []
     for acc, url in accounts:
-        runs = (api(f"/repos/{repo_of[acc]}/actions/runs?per_page=20") or {}).get("workflow_runs", [])
-        exp = [r for r in runs if r["name"] in ("Smother experiment", "SPRT")]
+        exp = runs_of.get(acc, [])
         live = [r for r in exp if r["status"] != "completed"]
         last = exp[0] if exp else None
         jobs = 0
