@@ -1975,3 +1975,46 @@ near = "all but one" smother.
   1500 opponents, z about 0.9).
 - So the "obsessed" setting exists already as a preset: AN for any smother,
   AK for full smothers. No setting beats 1.6 on knight smothers.
+
+## Why boxes slip away: the arming finding (26 Nov, from grid57 B/H40 logs)
+
+Offline on 1.6's games (scratchpad scripts, python-chess):
+- Every knight smother came out of a full box (all ring squares held by
+  defender units). 18% of games reach one; 17% of those convert. 82% of
+  box episodes end when the defender moves a box unit out on its next move.
+- At the moment a box closes: knight one move from a checking square the
+  defender does not guard -> knight smother next move 48 of 48 (100%);
+  checking square guarded 50 of 104; no knight check 0 of 721.
+- Arming x box state, P(knight smother within 20 plies): one open ring
+  square armed 5.3-6.1% vs not armed 0.5%; two open squares 0.18-0.41% vs
+  0.13%. We are armed in 43% of two-open positions but only 28% of one-open
+  positions: the unconditional KnightCheck term spends its pull where it
+  does nothing.
+- Dead ends checked: a knight smother in 1-2 instead of the final queen
+  smother: 0 cases; forced knight smothers missed by the prover in box
+  positions: 1 of 189; promotions already favour knights (1,886 vs 1,277
+  queens); more attacking pieces near the king goes with fewer defender
+  units around it; the knight-smother rate per 40 plies is flat (~0.6%).
+- New option SmotherBuildArmGap (extra KnightCheck points while at most
+  one ring square is open, off by default; bench unchanged). grid58: B vs
+  ArmGap 24 / 48 / 48 + KnightCheck 8, same opponents as grid57.
+
+grid58 result (16,400 games, all accounts): no gain. Knight smothers per
+100, pooled Stockfish 1500 + Maia-3 1500 (3,700 each): B 3.73, ArmGap 24
+3.57 (z -0.4), ArmGap 48 3.41 (z -0.8), ArmGap 48 + KnightCheck 8 4.03
+(z +0.7); all 99.8-100% against 2600, no losses. Mechanism check: the
+share of one-open-square positions with a knight armed did not move (B
+27.0%, G48 27.2%, G48K8 27.8%), nor did arming when a box forms (18.7 /
+18.5 / 19.3%). The eval term cannot steer the knight in: one-open states
+last about a move and the defender in our own tree (material at 1/8)
+dissolves the box rather than allow the bonus, as the fresh-view review
+predicted. SmotherBuildArmGap stays off (dev branch only, not released).
+
+grid59 (confirmation, 25,594 games; Akleotes's 4 shares refilled as
+grid59-r1 after its run hit the 256-job limit): knight smothers per 100,
+Stockfish 1500 + Maia-3 1500 pooled (6,000 per arm): B 3.55, H40 3.23
+(z -1.0), ArmGap 48 + KnightCheck 8 3.64 (z +0.3, 3 losses to Stockfish
+1500), both 3.52 (z -0.1). Pooled with the earlier tests against their own
+B: H40 3.29 vs 3.34 (9,700 games each, z -0.2); ArmGap 48 + KnightCheck 8
+3.79 vs 3.62 (z +0.6). Neither meets the rule (z >= 2, no losses): 1.6
+as released stays the baseline; no strength SPRT needed.
