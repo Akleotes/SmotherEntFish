@@ -2050,3 +2050,18 @@ scored 2.98-3.1: the baseline itself swings by ~1 per 100 between runs of
 not raise knight smothers; with the threat exception it lowers them.
 SmotherBuildDefSee stays off, development branch only. Lesson: a single
 post-hoc cell at z ~2 is not enough; require replication on fresh data.
+
+grid63 (any-smother presets across levels; re-issued as grid63-r1 after
+forks refused the first copy, see "shares on each fork's own version"):
+all smothers per 100 (B / SmotherClassic false / + SmotherGoal Near):
+Maia-3 1100 9.2 / 42.6 / 72.8; Maia-3 1900 7.4 / 38.8 / 66.1; 3+2 vs
+SF1500 2.7 / 43.9 / 69.7; 3+2 vs Maia-3 1500 10.7 / 46.6 / 69.3. Knight
+smothers 2.2-5.6 (B) vs 0.5-2.4. No losses.
+
+Trap ceiling (item 3, offline): in 300 one-gap positions of grid62 B
+games, a move with a reply that walks into a forced knight smother (in 2,
+checks only) exists in 7.0%; the reply's Maia-3 1500 probability: median
+0.6%, mean 4.2%, 10% of them above 10%; where a trap exists the best trap
+move catches a Maia defender ~17% of the time (uniform model ~12%).
+Ceiling ~0.7 chances x 17% per game. Next: harness prototype (Maia picks
+our move in one-gap positions by trap value) before any engine change.
