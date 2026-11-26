@@ -38,5 +38,13 @@ jobs:
           ~/maia3env/bin/maia3-cache --model maia3-5m
       - name: Check it plays
         run: |
-          (printf 'uci\nisready\nposition startpos\ngo nodes 1\n'; sleep 30) \
-            | HF_HUB_OFFLINE=1 timeout 60 ~/maia3env/bin/maia3-uci --model maia3-5m --device cpu --no-use-amp | grep -m1 bestmove
+          export HF_HUB_OFFLINE=1
+          timeout 90 python3 - "$HOME/maia3env/bin/maia3-uci" <<'PY'
+          import subprocess, sys
+          p = subprocess.Popen(sys.argv[1:] + ["--model", "maia3-5m", "--device", "cpu", "--no-use-amp"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True)
+          p.stdin.write("uci\nisready\nposition startpos\ngo nodes 1\n"); p.stdin.flush()
+          for line in p.stdout:
+              if line.startswith("bestmove"):
+                  print(line.strip()); break
+          p.kill()
+          PY

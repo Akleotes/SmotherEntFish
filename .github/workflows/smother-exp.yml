@@ -151,7 +151,16 @@ jobs:
           m=$HOME/maia3env/bin/maia3-uci
           printf '#!/bin/sh\nexport OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 HF_HUB_OFFLINE=1\nexec %s --model maia3-5m --device cpu --no-use-amp "$@"\n' "$m" > engines/maia3
           chmod +x engines/maia3
-          (printf 'uci\nisready\nposition startpos\ngo nodes 1\n'; sleep 30) | timeout 60 engines/maia3 | grep -m1 bestmove
+          # Answers within seconds; the old check waited a fixed 30 s.
+          timeout 90 python3 - "engines/maia3" <<'PY'
+          import subprocess, sys
+          p = subprocess.Popen(sys.argv[1:], stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True)
+          p.stdin.write("uci\nisready\nposition startpos\ngo nodes 1\n"); p.stdin.flush()
+          for line in p.stdout:
+              if line.startswith("bestmove"):
+                  print(line.strip()); break
+          p.kill()
+          PY
       - name: Play ${{ matrix.name }} chunk ${{ matrix.chunk }}
         env:
           OPENBLAS_NUM_THREADS: "1"  # one BLAS thread per lc0 process
