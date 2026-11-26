@@ -23,8 +23,8 @@ experiment meant for your fork and starts it there.
 
 ## What your fork does
 
-- Every experiment is split into shares; each fork gets one (some accounts
-  with more capacity get more).
+- Every experiment is split over the helpers in proportion to the jobs each
+  lends at once (20 by default).
 - Your fork plays up to 20 jobs at once (or your `HELPER_JOBS`, see below),
   each about 25 games on a 4-core GitHub machine, and writes the results to the branch `actions-exp/<experiment>`
   in your fork. The maintainers read them from there; nothing is pushed to
