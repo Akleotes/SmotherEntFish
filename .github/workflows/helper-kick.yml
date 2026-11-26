@@ -92,6 +92,8 @@ jobs:
                           kind = json.loads(r.read() or b"{}").get("merge_type", "?")
                       if kind != "none":
                           print(f"{hid}: synced with this repository ({kind})")
+                          # Fill its Maia-3 cache on the new default-branch version.
+                          api(f"/repos/{repo}/actions/workflows/maia-cache.yml/dispatches", {"ref": branch})
                   except urllib.error.HTTPError as e:
                       print(f"::warning::{hid}: could not sync (HTTP {e.code}): conflicting changes on the fork, "
                             "or the token lacks the workflow scope for a version that changes workflows")
