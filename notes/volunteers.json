@@ -8,7 +8,7 @@
   "superseded": "refill parts replaced by a later refill; merge and status skip them",
   "2456cd": "excluded Nov 26: owner made the fork private to use their own Actions",
   "sync": "Helper kick keeps these forks (IDs or all) synced with Sync fork (fast-forward only) and refills their Maia cache. Left on for all, forks never fall behind base.",
-  "jobs": "jobs at once by ID, overriding the HELPER_JOBS a fork publishes (default 20); own = our account, d32e35 measured 108-109"
+  "jobs": "jobs at once by ID, overriding the HELPER_JOBS a fork publishes (default 20); own = our account. d32e35 sets HELPER_JOBS 100 itself (measured 108-109)."
  },
  "bases": {},
  "superseded": [
@@ -18,7 +18,6 @@
   "all"
  ],
  "jobs": {
-  "d32e35": 100,
   "own": 20
  }
 }
