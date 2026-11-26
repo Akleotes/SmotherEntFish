@@ -1,0 +1,25 @@
+{
+ "exp": "conctest2b",
+ "tc": "5+0.05",
+ "chunk": 6,
+ "max_parallel": 256,
+ "runs": [
+  {
+   "name": "e1500_probe",
+   "elo": 1500,
+   "games": 1536,
+   "seed": 63600,
+   "chunk": 6,
+   "opts": []
+  }
+ ],
+ "shard": [
+  [
+   0,
+   1,
+   2,
+   3
+  ],
+  4
+ ]
+}
