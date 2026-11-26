@@ -44,9 +44,11 @@ experiments on its own schedule, about once an hour, or when you press
 ## Keeping your fork up to date
 
 With the repository owner as a collaborator (see above), the maintainers
-sync your fork for you when a new version needs it: the "Helper kick"
-workflow uses GitHub's own **Sync fork**, which only fast-forwards and is
-refused if your fork has changes of its own. Without a collaborator, use
+keep your fork synced for you: the "Helper kick" workflow uses GitHub's
+own **Sync fork**. If you have changes of your own, ours are merged in
+alongside them when they do not conflict; when they do conflict, your fork
+is left exactly as it is, and its share of each test is built on the newest
+version it already has. Without a collaborator, use
 **Sync fork** on your fork's main page when the maintainers ask:
 experiments are built on the version your fork is on.
 

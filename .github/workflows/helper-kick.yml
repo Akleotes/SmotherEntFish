@@ -10,9 +10,10 @@
 #   can change what runs with the token;
 # - its only write calls are the workflow-dispatch of helper-poll.yml on
 #   forks of this repository, and GitHub's own "Sync fork" (merge-upstream,
-#   a fast-forward to this repository's default branch; refused by GitHub
-#   when the fork has conflicting changes) for the forks listed under "sync"
-#   in notes/volunteers.json (helper IDs, or "all"). Syncing a version that
+#   which fast-forwards a fork, merges ours in alongside the owner's own
+#   changes when they do not conflict, and is refused by GitHub when they
+#   do: such a fork is left as it is) for the forks listed under "sync" in
+#   notes/volunteers.json (helper IDs, or "all"). Syncing a version that
 #   changes .github/workflows needs the token's "workflow" scope as well.
 #   The job's own GITHUB_TOKEN has no permissions.
 name: Helper kick
@@ -95,8 +96,12 @@ jobs:
                           # Fill its Maia-3 cache on the new default-branch version.
                           api(f"/repos/{repo}/actions/workflows/maia-cache.yml/dispatches", {"ref": branch})
                   except urllib.error.HTTPError as e:
-                      print(f"::warning::{hid}: could not sync (HTTP {e.code}): conflicting changes on the fork, "
-                            "or the token lacks the workflow scope for a version that changes workflows")
+                      if e.code == 409:
+                          # The owner's own work conflicts with ours: leave the fork as it is.
+                          # Its test shares are built on the newest version it contains.
+                          print(f"{hid}: has changes of its own that conflict; not synced (left as is)")
+                      else:
+                          print(f"::warning::{hid}: could not sync (HTTP {e.code})")
               mine = {b.split("/", 2)[2] for b in waiting if b.count("/") == 2 and b.split("/")[1] == hid}
               mine |= {b.split("/", 1)[1] for b in waiting if b.count("/") == 1}
               started = {b.split("/", 1)[1] for b in heads(f"https://github.com/{repo}", "refs/heads/actions-exp/*")}
