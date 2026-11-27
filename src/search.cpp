@@ -227,11 +227,21 @@ Skill make_skill(const OptionsMap& options) {
         // direct low-end rates (human8): 90 per mille ~1400, 110 ~1255, 130
         // ~1020; 72 ~1490. The limiter at 1455 played ~2420 (Maia-3's top
         // levels are compressed, so the scale ends there).
-        constexpr int map[][3] = {{1020, 1320, 130}, {1255, 1320, 110}, {1400, 1320, 90},
-                                  {1490, 1320, 72},  {1580, 1320, 40},  {1700, 1320, 20},
-                                  {1735, 1320, 10},  {1780, 1320, 5},   {1815, 1320, 2},
-                                  {1880, 1320, 0},   {2420, 1455, 0}};
-        constexpr int n = int(std::size(map));
+        constexpr int map16[][3] = {{1020, 1320, 130}, {1255, 1320, 110}, {1400, 1320, 90},
+                                    {1490, 1320, 72},  {1580, 1320, 40},  {1700, 1320, 20},
+                                    {1735, 1320, 10},  {1780, 1320, 5},   {1815, 1320, 2},
+                                    {1880, 1320, 0},   {2200, 1400, 0},   {2420, 1455, 0}};
+        // HumanEloRefit (experimental, off by default): the map refitted for
+        // the engine merged with upstream 88337401, whose UCI_Elo limiter
+        // plays weaker (grid75/75b/76: 1320 with no blunders 1715 on the
+        // Maia-3 scale vs 1961 for 1.6). Each rating gets the setting that
+        // plays like 1.6's did; the blunder-driven low end is unchanged.
+        constexpr int mapRefit[][3] = {{1020, 1320, 130}, {1255, 1320, 110}, {1400, 1320, 90},
+                                       {1490, 1320, 72},  {1580, 1320, 41},  {1700, 1320, 4},
+                                       {1735, 1325, 0},   {1780, 1342, 0},   {1815, 1355, 0},
+                                       {1880, 1387, 0},   {2200, 1410, 0},   {2420, 1455, 0}};
+        const auto&   map           = options["HumanEloRefit"] ? mapRefit : map16;
+        constexpr int n             = int(std::size(map16));
         const int     r = std::clamp(h, map[0][0], map[n - 1][0]);
         int           i = 0;
         while (i < n - 2 && r > map[i + 1][0])

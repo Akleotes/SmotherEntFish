@@ -2385,3 +2385,22 @@ unchanged; the limiter-driven top end plays weaker on the merged engine
 upper HumanElo map (make_skill): grid76 measures the merged engine's
 limiter at 1360 / 1400 / 1455 / 1520 and the 1735 point (1320 + 10 per
 mille) to fit it.
+
+grid76 (merged engine, limiter anchors; 5,520 of 6,000 games, a8e399 still
+running) with grid75: rating = Maia-3 level at 50% (logit fit). Merged:
+1320/130 per mille 1075, 1320/72 1361, 1320/10 1634, 1320/0 1715, 1360/0
+1883, 1400/0 2000 (incl. grid75's HumanElo-2200 games, the same setting),
+1455/0 2478, 1520/0 2581. 1.6 measured the same way today: 1020-label
+1127, 1490-label 1356, 1880-label 1961, 2200-label 2084 (today's Maia-3
+scale reads lower at the bottom than the guide's original calibration, for
+both engines, so the refit matches 1.6 as measured today, not the guide's
+numbers). Proposed map for the merged engine (rating, limiter, per mille):
+1020 1320 130, 1255 1320 110, 1400 1320 90, 1490 1320 72 (unchanged), 1580
+1320 41, 1700 1320 4, 1735 1325 0, 1780 1342 0, 1815 1355 0, 1880 1387 0,
+2200 1410 0, 2420 1455 0. The 1580-1815 targets interpolate 1.6's rating
+by label (not measured today); 2420 kept (1.6's top not measured). In code
+as HumanEloRefit (off by default; the default table gained an explicit
+2200 1400 0 row, identical to its interpolation: every rating 1000-2499
+maps to the same setting, checked). Validation on fresh seeds (107000):
+grid77 = merged + HumanEloRefit, grid77b = 1.6, labels 1580 / 1735 / 1880 /
+2200 vs bracketing Maia-3 levels; the pairs should match.
