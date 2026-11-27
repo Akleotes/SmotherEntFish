@@ -2220,3 +2220,19 @@ the same shift at every level), yet knight smothers fell: the knight-supply
 dose-response is correlation (games that keep knights are the ones that
 smother), not a lever. Option stays off. With grid69 and grid52, supply
 and prover-coverage levers are closed at 5+0.05.
+
+Escapes (Nov 27, offline on 12,200 1.6 games of grid69/70 B arms; scripts
+prover_strict.py, prover_escape.py): 551 proof games, 410 delivered. At the
+first proof a strict proof existed in 38% (delivered 97%); only non-strict
+62% (delivered 61%); 7 of 141 escaped games had a strict proof, so
+preferring strict proofs cannot help. After an escape 120 of 141 games
+never get another proof (the game runs a median 105 plies more). Our first
+three positions after each escape, 10M nodes: a forced knight smother in
+65 of 186 (35%), 44 at the first move, median 80k nodes; only 23 of those
+games ended in one. Caveat: proved from the FEN, without the game history
+the in-game prover's anti-repetition rule uses, so some hits may not count
+in play. New options (off; bench unchanged): SmotherEscapeMoves N (prover
+budget for N of our moves after an escape, no node cap) and
+SmotherEscapePercent (share of the clock left, was hard-wired 20).
+grid71: B vs E3 (3 moves, 20%) vs E3P40 (3 moves, 40%); SF1500 x4000,
+Maia-3 1500 x2000, SF2500 x1200, SF2600 x400 at 10+0.1.
