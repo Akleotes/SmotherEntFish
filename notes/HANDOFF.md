@@ -2404,3 +2404,19 @@ as HumanEloRefit (off by default; the default table gained an explicit
 maps to the same setting, checked). Validation on fresh seeds (107000):
 grid77 = merged + HumanEloRefit, grid77b = 1.6, labels 1580 / 1735 / 1880 /
 2200 vs bracketing Maia-3 levels; the pairs should match.
+
+grid77 / grid77b (4,320 of 4,800 games each, a8e399's share missing from
+both; paired, same seeds). Score merged+refit / 1.6 and the label's 50%
+point (Maia-3 level, logit fit): 1580: vs 1300 58.8 / 59.9, vs 1700 43.6 /
+46.4, point 1531 / 1595 (n.s.); 1735: 61.3 / 61.3, 45.8 / 45.0, point 1794 /
+1778; 1880: 65.8 / 63.3, 51.9 / 52.7, point 1952 / 1999; 2200: vs 1900 51.0 /
+56.8 (z -2.2), vs 2300 38.2 / 44.0 (z -2.2), point 1931 / 2112. Mean z
+-0.61, 2 of 8 beyond 2. Refit not validated: 1735 and 1880 match, 1580 a
+little weak (not significant), 2200 too weak. Full grid76 (a8e399 arrived)
+moved the merged limiter-1400 point from 2000 to 1877 (1360: 1855), which is
+why the 1410 anchor fell short. Raised the refit's 2200 row to limiter 1425
+(interpolating 1400 -> 1877 and 1455 -> 2478 toward 2112 gives about 1421).
+grid78 = merged + refit, grid78b = 1.6 (7e892f2a), fresh seed 108000,
+labels 2200 and 2420 vs Maia-3 1900 and 2300, 600 games each, sent to the
+11 reliable accounts. Helper kick dispatched from this branch (its fix for
+the unreachable-fork crash is not on main yet).
