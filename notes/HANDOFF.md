@@ -2236,3 +2236,18 @@ budget for N of our moves after an escape, no node cap) and
 SmotherEscapePercent (share of the clock left, was hard-wired 20).
 grid71: B vs E3 (3 moves, 20%) vs E3P40 (3 moves, 40%); SF1500 x4000,
 Maia-3 1500 x2000, SF2500 x1200, SF2600 x400 at 10+0.1.
+
+Stalemates (Nov 27, from the game records of grid69/70, 38,600 games): 96
+draws, 77 of them stalemates by us at a median +20 material (also 9
+threefold, 8 at the 400-ply cap, 2 fifty moves; we never lost on time, all
+68 time endings were the opponent). In all 77 we were in check from the
+defender's last free piece and took it; 42 times every legal move
+stalemated, 35 times we had 1-7 other moves; in 76 our previous move had
+left the defender's king with no move. Cause: the quiescence search does
+not detect stalemate, and the build score rewards a king with no free
+square most, so "take the last free piece, the defender cannot move"
+scores as a perfect box. New option SmotherBuildStalemate (off; bench
+unchanged): in construction mode a defender to move, not in check, with an
+immobile king and no legal move scores as a draw. grid72: B vs ST; SF1500
+x4000, Maia-3 1500 x2000, SF2500 x1200, SF2600 x400 at 10+0.1. Read the
+stalemate draws per arm as well as knight smothers.

@@ -276,6 +276,9 @@ Engine::Engine(std::optional<std::filesystem::path> path) :
     // moves. Offline (12,200 1.6 games): a forced knight smother still
     // existed within three of our moves after 35% of escapes.
     options.add("SmotherEscapeMoves", Option(0, 0, 20));
+    // Stalemate-aware construction (experimental, off by default): a
+    // stalemated defender counts as a draw in the evaluation (see search.cpp).
+    options.add("SmotherBuildStalemate", Option(false));
     options.add("SmotherEscapePercent", Option(20, 1, 50));
     // Decoy: points when a sacrifice can force the last blocker into the box.
     options.add("SmotherBuildDecoy", Option(0, 0, 200));
