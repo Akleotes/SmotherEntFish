@@ -4,6 +4,85 @@
  "baseline_note": "B = development settings: SmotherClassic true, SmotherBuildKnightCheck 16, SmotherCrushQuiet 3, SmotherCrushMoves 16.",
  "experiments": [
   {
+   "id": "grid74",
+   "date": "2026-11-27",
+   "title": "Once-repeated positions on smother lines (merged engine)",
+   "question": "The prover rejected smother lines through any position seen before in the game. Allow a once-seen position always (R2), or only after an escape with the escape budget (R1E). On the engine merged with upstream 88337401, with grid72's openings.",
+   "opponents": [
+    "e1500",
+    "m1500",
+    "e2500",
+    "e2600"
+   ],
+   "arms": [
+    {
+     "label": "merged, defaults",
+     "cells": [
+      {
+       "k": 131,
+       "n": 3520
+      },
+      {
+       "k": 60,
+       "n": 2000
+      },
+      {
+       "k": 19,
+       "n": 1200
+      },
+      {
+       "k": 5,
+       "n": 400
+      }
+     ]
+    },
+    {
+     "label": "R2",
+     "cells": [
+      {
+       "k": 113,
+       "n": 3520
+      },
+      {
+       "k": 71,
+       "n": 2000
+      },
+      {
+       "k": 14,
+       "n": 1200
+      },
+      {
+       "k": 8,
+       "n": 400
+      }
+     ]
+    },
+    {
+     "label": "R1E",
+     "cells": [
+      {
+       "k": 109,
+       "n": 4000
+      },
+      {
+       "k": 51,
+       "n": 1520
+      },
+      {
+       "k": 19,
+       "n": 1200
+      },
+      {
+       "k": 3,
+       "n": 400
+      }
+     ]
+    }
+   ],
+   "verdict": "No gain: 2.95 (R2) and 2.66 (R1E) vs 3.12 per 100 pooled; the extra proofs are escaped more. The merged engine itself matches 1.6 on the same openings (3.12 vs 3.19 per 100, no losses).",
+   "outcome": "no"
+  },
+  {
    "id": "grid73",
    "date": "2026-11-27",
    "title": "Escape budget, confirmation",

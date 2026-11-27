@@ -2348,3 +2348,16 @@ games each, seed 103000) on the merged engine (grid75) and on 1.6
 (grid75b, built from 7e892f2a). Paired by seed; if the merged scores move
 by more than noise, the HumanElo map needs refitting before a release.
 c79670 is left out of these shares (ONLY=) while its fork is unreadable.
+
+grid74 (merged engine; 21,360 of 22,800 games, c79670's share never ran;
+knight smothers per 100, z vs B): SF1500 B 3.72, R2 (SmotherRepeatOnce 2)
+3.21 (-1.2), R1E (1 + SmotherEscapeMoves 3) 2.73 (-2.4); Maia-3 1500 3.00 /
+3.55 / 3.36; SF2500 1.58 / 1.17 / 1.58; SF2600 10+0.1 1.25 / 2.00 / 0.75.
+Pooled 5+0.05: R2 2.95, R1E 2.66 vs 3.12. No losses, no extra repetition
+draws. Allowing once-seen positions adds proofs that are escaped more
+(delivered vs SF1500 82% -> 67-69%). Options stay off.
+Merged engine vs 1.6 (grid74 B vs grid72 B, same seeds): SF1500 3.72 vs
+3.65, Maia-3 1500 3.00 vs 3.60, SF2500 1.58 vs 1.00, SF2600 1.25 vs 0.50;
+pooled 5+0.05 3.12 vs 3.19 (z -0.2); scores 99.7-100%, no losses. The
+merge keeps the smother rates. With sprt-up1 (+1.7 Elo, H1), it is a
+release candidate once grid75/75b (HumanElo calibration) are read.
