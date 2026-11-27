@@ -2174,3 +2174,11 @@ grid69 (distributed over all 16 accounts, 400 job slots): B vs Zugzwang 4
 vs Zugzwang 8 (SF1500 x4000, Maia-3 1500 x2000 each, 5+0.05), and SF2600
 at 10+0.1 x400 for B and Z4 (floor). Needs z >= 2 on fresh data, then a
 strength SPRT, before any default changes.
+grid69 launch: 7 forks (f0afe4 a8e399 f2d74f d32e35 acf111 dc665d 8e9ce5)
+never copied their shares. distribute.sh pushed shares one at a time; the
+Helper kick started by the first push synced those forks (nothing was
+waiting yet), and their shares, built on 85e3fa42 with older workflow
+files, were refused. Rebuilt on e46d090f with the same plans and pushed
+together; all 7 then started. distribute.sh now pushes all shares in one
+atomic push (tested against a local bare remote: 16 shares, slots 0-399
+once each, own 20, d32e35 100, others 20).
