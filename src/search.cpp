@@ -239,7 +239,7 @@ Skill make_skill(const OptionsMap& options) {
         constexpr int mapRefit[][3] = {{1020, 1320, 130}, {1255, 1320, 110}, {1400, 1320, 90},
                                        {1490, 1320, 72},  {1580, 1320, 41},  {1700, 1320, 4},
                                        {1735, 1325, 0},   {1780, 1342, 0},   {1815, 1355, 0},
-                                       {1880, 1387, 0},   {2200, 1410, 0},   {2420, 1455, 0}};
+                                       {1880, 1387, 0},   {2200, 1425, 0},   {2420, 1455, 0}};
         const auto&   map           = options["HumanEloRefit"] ? mapRefit : map16;
         constexpr int n             = int(std::size(map16));
         const int     r = std::clamp(h, map[0][0], map[n - 1][0]);
