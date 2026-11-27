@@ -2200,3 +2200,12 @@ through construction, added after construction's material compression.
 grid70: B vs K150 vs K300; SF1500 x3000, Maia-3 1500 x2000, SF2500 x1200
 (5+0.05), SF2600 x400 at 10+0.1. Read with knight_supply.py as well as the
 rates: the mechanism check is whether knights at +8 rise.
+
+conctest2 (Akleotes concurrency probe, Nov 27 16:10 UTC; 256 jobs of 8
+games, max_parallel 256, ONLY=d32e35): a flat plateau of 148 jobs running
+with 108 queued for a full minute, so 148 is the account's limit for the
+run, plus its 4 Lichess bot jobs: about 152 at once (was 108-109 on Nov 26;
+84 on Nov 25). Measured from the run's job start/end times through the
+Actions API (status_data.py counts at most 100 jobs per run). Akleotes
+still publishes HELPER_JOBS 100, so its share is unchanged until that is
+raised (about 140 leaves room for the bots).
