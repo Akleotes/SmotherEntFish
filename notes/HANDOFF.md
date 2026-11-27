@@ -2126,3 +2126,51 @@ engine 0.950 / human 0.925 / both 0.956; H=32 0.959 / both 0.959; H=64
 engine 0.964 / both 0.962. Human games transfer well but add nothing once
 the model is large enough, and better prediction did not give more smothers
 in play before (grid50-51). Gate failed: not put into the engine.
+
+## Funnel re-check and the prover's zugzwang blind spot (Nov 27)
+
+Offline, on 4,016 1.6 games (B arms of grid57-67, SF1500 and Maia-3;
+scripts notes/scripts/box_anatomy.py, knight_supply.py, prover_audit.py,
+prover_recall.py):
+- Supply at the decisive point (+8 material) sets the ceiling. Knights of
+  ours at +8: 0 / 1 / 2+ give 0.48 / 3.65 / 6.07 knight smothers per 100;
+  within games where the defender still has 3+ pieces: 0.97 / 5.49 / 6.73.
+  29% of decided games have no knight at +8; 24% have at most one defender
+  piece (about 0 smothers whatever we do). Knights go mostly before +4
+  (2.00 -> 1.12 -> 0.93 at +8); defender pieces collapse between +4 and +8
+  (<= 1 piece: 2.9% -> 24%, a median 6 of our moves).
+- The prep phase (grid52) did not change that supply (0-knight share 22.5-
+  26.4% in every arm vs 23.3%; defender 3+ pieces 57-62% vs 62%), so its
+  null result does not show the link is only correlation: the bonuses were
+  too weak to change a trade. A strong version is untested.
+- Box closures after +8: 324 in 3,809 games, 102 with a knight mate in one
+  (97 played). Of the 222 that did not convert, 151 (68%) had no knight of
+  ours on the board; 36 had one a quiet move away.
+- 88% of knight smothers have the king in a back-rank corner; median ply 97.
+  A castled-ready king at +4 (shield pawns, back-rank rook, our N+Q) is 9.6%
+  of games at 6.5 per 100 vs 3.25: no middlegame jackpot.
+- Measurement gaps: the D1 census vs SF1500 re-proved only after replies
+  that fill a ring square or give check (a tempo reply followed by a forced
+  check-block-mate was not counted); M1's "few legal moves 1%" counts
+  smothers produced by the same zugzwang-blind prover (selection bias).
+
+Prover blind spot: after a quiet attacker move the prover requires a
+checks-only smother if the defender could pass (null-move threat test).
+That rejects every zugzwang line, although in decided positions the
+defender has <= 4 legal moves in 40% of one-open and 51% of two-open
+positions. New options (off by default, bench 1210779 unchanged; proofs
+stay sound, defend() still checks every reply): SmotherProverZugzwang N
+(skip the test when the defender has <= N replies), SmotherProverThreatQuiet
+(the test may use one quiet move). Example: 7k/3Q2np/4NQ1N/8/8/P7/1p6/5K2 w,
+the tempo Kf2 starts a forced knight smother in 6.
+- Audit (positions as smother_audit.py, 5M nodes): no-smother games, one
+  open + knight: current 2/60, relaxed 3/60; two open 0/60 everywhere.
+- Per-game recall (1M nodes, one-open positions with a knight, 800 games):
+  smother-less games with a proven knight smother at some point: current
+  3/661 (0.5%), Zugzwang 4 20/661 (3.0%), Zugzwang 4 + ThreatQuiet 16/661;
+  in knight-smother games proofs come earlier (30 vs 25 of 139). If most
+  are delivered, about +2 per 100 on ~3.5. Playouts not done.
+grid69 (distributed over all 16 accounts, 400 job slots): B vs Zugzwang 4
+vs Zugzwang 8 (SF1500 x4000, Maia-3 1500 x2000 each, 5+0.05), and SF2600
+at 10+0.1 x400 for B and Z4 (floor). Needs z >= 2 on fresh data, then a
+strength SPRT, before any default changes.
