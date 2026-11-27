@@ -2283,3 +2283,14 @@ every engine test goes through the volunteer workflow, never locally):
    of 1-2 passed).
 4. Defaults, releases and anything touching other people's forks wait for
    the user. PR #6 holds all of the above; merging needs the user's OK.
+
+grid71 (escape budget; 22,800 games, all 16 accounts; knight smothers per
+100, z vs B): SF1500 (4,000 each) B 3.17, E3 (3 moves at 20% of the clock)
+3.45 (+0.7), E3P40 (40%) 3.55 (+0.9); Maia-3 1500 (2,000) 3.70 / 3.30 /
+3.30; SF2500 (1,200) 0.92 / 1.92 (+2.1) / 1.25; SF2600 10+0.1 (400) 1.00 /
+3.00 (+2.0) / 2.00. Pooled 5+0.05: 2.94 / 3.15 (+0.7) / 3.10 (+0.5).
+Mechanism vs SF1500: escaped games re-proved 25 -> 37 (E3), re-proved and
+smothered 18 -> 28; vs Maia-3 no change. One loss (E3P40, on time at 0.1 s,
+in a game with no proof, so not the budget). Not significant overall; the
+two strong-opponent cells are both z ~2 on small counts (23 vs 11, 12 vs
+4), so grid73 confirms E3 on fresh seeds with more games at SF2000-2600.

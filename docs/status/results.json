@@ -4,6 +4,86 @@
  "baseline_note": "B = development settings: SmotherClassic true, SmotherBuildKnightCheck 16, SmotherCrushQuiet 3, SmotherCrushMoves 16.",
  "experiments": [
   {
+   "id": "grid71",
+   "date": "2026-11-27",
+   "title": "Escape budget",
+   "question": "After the defender escapes a proven smother, the prover gets a large share of the clock for our next 3 moves (20% or 40% each).",
+   "opponents": [
+    "e1500",
+    "m1500",
+    "e2500",
+    "e2600"
+   ],
+   "arms": [
+    {
+     "label": "1.6 defaults",
+     "cells": [
+      {
+       "k": 127,
+       "n": 4000
+      },
+      {
+       "k": 74,
+       "n": 2000
+      },
+      {
+       "k": 11,
+       "n": 1200
+      },
+      {
+       "k": 4,
+       "n": 400
+      }
+     ]
+    },
+    {
+     "label": "E3",
+     "cells": [
+      {
+       "k": 138,
+       "n": 4000
+      },
+      {
+       "k": 66,
+       "n": 2000
+      },
+      {
+       "k": 23,
+       "n": 1200
+      },
+      {
+       "k": 12,
+       "n": 400
+      }
+     ]
+    },
+    {
+     "label": "E3P40",
+     "cells": [
+      {
+       "k": 142,
+       "n": 4000,
+       "losses": 1
+      },
+      {
+       "k": 66,
+       "n": 2000
+      },
+      {
+       "k": 15,
+       "n": 1200
+      },
+      {
+       "k": 8,
+       "n": 400
+      }
+     ]
+    }
+   ],
+   "verdict": "No clear gain overall: 3.15 and 3.10 vs 2.94 per 100 pooled at 5+0.05. Against stronger opponents E3 is ahead (Stockfish 2500 1.92 vs 0.92, Stockfish 2600 3.00 vs 1.00, both z ~2 on few games); confirmed or not in grid73.",
+   "outcome": "no"
+  },
+  {
    "id": "grid70",
    "date": "2026-11-27",
    "title": "Knight supply: keep our knights",
