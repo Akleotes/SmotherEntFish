@@ -279,6 +279,10 @@ Engine::Engine(std::optional<std::filesystem::path> path) :
     // Stalemate-aware construction (experimental, off by default): a
     // stalemated defender counts as a draw in the evaluation (see search.cpp).
     options.add("SmotherBuildStalemate", Option(false));
+    // Prover repetition rule (experimental, off by default): 1 = after an
+    // escape, 2 = always, a smother line may pass through a position seen
+    // once before in the game (a third occurrence still fails).
+    options.add("SmotherRepeatOnce", Option(0, 0, 2));
     options.add("SmotherEscapePercent", Option(20, 1, 50));
     // Decoy: points when a sacrifice can force the last blocker into the box.
     options.add("SmotherBuildDecoy", Option(0, 0, 200));

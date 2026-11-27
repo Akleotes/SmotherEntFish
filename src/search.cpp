@@ -423,6 +423,15 @@ void Search::Worker::start_smother_prover() {
     sl.robust     = false;
     sl.zugzwang    = int(options["SmotherProverZugzwang"]);
     sl.threatQuiet = bool(options["SmotherProverThreatQuiet"]);
+    // SmotherRepeatOnce: 1 = right after an escape (the escape window of
+    // SmotherEscapeMoves), 2 = always: a smother line may pass through a
+    // position seen once before in the game. Construction mode shuffles,
+    // and after an escape the natural re-smother often goes back through
+    // positions of the escaped line.
+    {
+        const int rep = int(options["SmotherRepeatOnce"]);
+        sl.gameRepeat = rep == 2 || (rep == 1 && mgr.smotherEscapeLeft > 0);
+    }
     if (mgr.smotherCrush)
     {
         sl.maxMoves   = std::max(sl.maxMoves, int(options["SmotherCrushMoves"]));

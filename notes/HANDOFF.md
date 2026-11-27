@@ -2318,3 +2318,16 @@ SF1500, so prover time is not what blocks a second proof (the offline 35%
 were proved from the FEN, without the game history the anti-repetition
 rule uses). No losses; every time ending was the opponent. Escape budget
 stays off.
+
+Prover repetition rule: loops() rejects a smother line through any position
+seen even once before (game or line). A second occurrence cannot be a draw
+by itself and is_draw() still catches a third, so that is stricter than a
+draw guard needs; construction shuffles (king g8-h8 and back) and after an
+escape the natural re-smother often revisits positions of the escaped line.
+New option SmotherRepeatOnce (off; 1 = in the escape window, needs
+SmotherEscapeMoves; 2 = always): allow a once-seen game position; a repeat
+on the line itself or a third occurrence still fails. grid74, on the MERGED
+engine with grid72's seeds (99000): B vs R2 vs R1E (+ SmotherEscapeMoves
+3); SF1500 x4000, Maia-3 1500 x2000, SF2500 x1200, SF2600 x400 at 10+0.1.
+Its B arms pair with grid72's B arms (1.6 engine, same openings): the
+merged engine's smother rates, needed before any release. Watch draws.
