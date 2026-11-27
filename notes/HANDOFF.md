@@ -2372,3 +2372,16 @@ f2d74f and d32e35 never did, so grid75/75b sit at 2,880 of 4,800 games
 each. Fix on the dev branch: keep the first dispatch's response (st, body
 = api(...)). It only takes effect once merged into smotherfish (Helper
 kick runs from the default branch).
+
+grid75 / grid75b (HumanElo calibration, merged engine vs 1.6, paired seeds
+103000, 600 games each incl. refills; score vs Maia-3, merged / 1.6 / guide):
+1020 vs 1100 48.9 / 51.1 / 47.3; vs 1500 32.5 / 35.4 / 33.5; 1490 vs 1100
+61.0 / 60.6 / 60.9; vs 1500 44.1 / 44.0 / 49.6; 1880 vs 1500 59.7 / 65.3 /
+68.2 (z -2.2); vs 1900 41.7 / 52.1 / 47.8 (z -3.9); 2200 vs 1900 53.9 / 55.9
+/ 59.5; vs 2300 39.2 / 43.1 / 42.0. The blunder-driven low end is
+unchanged; the limiter-driven top end plays weaker on the merged engine
+(1320 limiter, no blunders: 50% point about Maia-3 1716 vs about 1960 for
+1.6, logit interpolation). A release with the merge needs a refit of the
+upper HumanElo map (make_skill): grid76 measures the merged engine's
+limiter at 1360 / 1400 / 1455 / 1520 and the 1735 point (1320 + 10 per
+mille) to fit it.
