@@ -2306,3 +2306,15 @@ boxes the king (no king move) while one defender piece is still loose; in
 option stays off. A real fix would keep a desperado from existing when the
 box closes (capture loose off-ring pieces first), against Keep's reward for
 every kept piece; not worth it at this rate unless it ties to smothers.
+
+grid73 (escape budget confirmation, fresh seeds, pre-merge 1.6 engine;
+24,000 games; knight smothers per 100, z vs B): SF1500 (4,000 each) B 3.50,
+E3 3.67 (+0.4); Maia-3 1500 (2,000) 3.20 / 3.25; SF2000 (2,000) 2.30 /
+2.20; SF2500 (3,000) 1.73 / 1.33 (-1.25); SF2600 10+0.1 (1,000) 1.30 /
+1.20. Pooled 5+0.05 2.75 vs 2.69. With grid71, all opponents: B 531/19,600
+= 2.71, E3 547/19,600 = 2.79 (z +0.5). grid71's strong-opponent cells did
+not replicate. Mechanism: escaped games re-proved 24 (B) vs 22 (E3) against
+SF1500, so prover time is not what blocks a second proof (the offline 35%
+were proved from the FEN, without the game history the anti-repetition
+rule uses). No losses; every time ending was the opponent. Escape budget
+stays off.

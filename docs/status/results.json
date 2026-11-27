@@ -4,6 +4,73 @@
  "baseline_note": "B = development settings: SmotherClassic true, SmotherBuildKnightCheck 16, SmotherCrushQuiet 3, SmotherCrushMoves 16.",
  "experiments": [
   {
+   "id": "grid73",
+   "date": "2026-11-27",
+   "title": "Escape budget, confirmation",
+   "question": "grid71's E3 (3 moves at 20% of the clock after an escape) on fresh seeds, with more games at Stockfish 2000-2600.",
+   "opponents": [
+    "e1500",
+    "m1500",
+    "e2000",
+    "e2500",
+    "e2600"
+   ],
+   "arms": [
+    {
+     "label": "1.6 defaults",
+     "cells": [
+      {
+       "k": 140,
+       "n": 4000
+      },
+      {
+       "k": 64,
+       "n": 2000
+      },
+      {
+       "k": 46,
+       "n": 2000
+      },
+      {
+       "k": 52,
+       "n": 3000
+      },
+      {
+       "k": 13,
+       "n": 1000
+      }
+     ]
+    },
+    {
+     "label": "E3",
+     "cells": [
+      {
+       "k": 147,
+       "n": 4000
+      },
+      {
+       "k": 65,
+       "n": 2000
+      },
+      {
+       "k": 44,
+       "n": 2000
+      },
+      {
+       "k": 40,
+       "n": 3000
+      },
+      {
+       "k": 12,
+       "n": 1000
+      }
+     ]
+    }
+   ],
+   "verdict": "Not confirmed: 2.69 vs 2.75 per 100 pooled at 5+0.05, and 1.33 vs 1.73 against Stockfish 2500. With grid71, 2.79 vs 2.71 over 19,600 games per arm (z +0.5). The escape budget stays off.",
+   "outcome": "no"
+  },
+  {
    "id": "grid72",
    "date": "2026-11-27",
    "title": "Stalemate-aware construction",
@@ -138,7 +205,7 @@
      ]
     }
    ],
-   "verdict": "No clear gain overall: 3.15 and 3.10 vs 2.94 per 100 pooled at 5+0.05. Against stronger opponents E3 is ahead (Stockfish 2500 1.92 vs 0.92, Stockfish 2600 3.00 vs 1.00, both z ~2 on few games); confirmed or not in grid73.",
+   "verdict": "No gain: 3.15 and 3.10 vs 2.94 per 100 pooled at 5+0.05. Its strong-opponent cells (z ~2) did not replicate in grid73.",
    "outcome": "no"
   },
   {
