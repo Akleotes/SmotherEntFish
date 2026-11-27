@@ -376,8 +376,8 @@ class Worker {
     void decide_smother_modes();
     void finish_smother_prover(bool letFinish);
 
-    void do_move(
-      Position& pos, const Move move, const bool givesCheck, const bool capture, Stack* const ss);
+    void
+    do_move(Position& pos, const Move move, const bool givesCheck, const bool capture, Stack& ss);
     void do_null_move(Position& pos, Stack* const ss);
     void undo_move(Position& pos, const Move move);
     void undo_null_move(Position& pos);
