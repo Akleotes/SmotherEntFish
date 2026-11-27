@@ -2265,3 +2265,21 @@ account's results. A release also needs: README.md and docs/SMOTHERFISH.md
 bench, release.yml BENCH, android-build.yml bench, version, and a smother
 grid on the merged engine (the B arms of grid72, seed 99000, are the
 paired comparison).
+
+Queue (Nov 27, 16:55 UTC; the user is away, work continues autonomously;
+every engine test goes through the volunteer workflow, never locally):
+1. grid71 (escape budget). If it gains: a 3+2 check (Maia-3 1500 and
+   SF1500) and an SPRT. If not: the likely blocker is the prover's
+   anti-repetition rule after an escape (the offline hits were proved from
+   the FEN); next try allowing a position seen once before (not twice)
+   inside the escape window, and watch draws.
+2. grid72 (stalemate-aware construction). Mechanism: stalemate draws per
+   arm should drop from about 2 per 1,000 games vs SF1500 to near 0. If
+   clean: candidate default for a bug-fix release after an SPRT.
+3. sprt-up1 (upstream merge). If it passes: a smother grid on the merged
+   engine (B, seed 99000, paired with grid72's B arms), then check the
+   HumanElo calibration (the UCI_Elo limiter may play differently with the
+   new net), then a release proposal for the user (1.7: merge + whichever
+   of 1-2 passed).
+4. Defaults, releases and anything touching other people's forks wait for
+   the user. PR #6 holds all of the above; merging needs the user's OK.
