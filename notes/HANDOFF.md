@@ -2182,3 +2182,21 @@ files, were refused. Rebuilt on e46d090f with the same plans and pushed
 together; all 7 then started. distribute.sh now pushes all shares in one
 atomic push (tested against a local bare remote: 16 shares, slots 0-399
 once each, own 20, d32e35 100, others 20).
+
+grid69 (18,800 games, all 16 accounts; knight smothers per 100): SF1500
+(4,000 each) B 3.92, Zugzwang 4 3.73 (z -0.5), Zugzwang 8 3.70 (z -0.5);
+Maia-3 1500 (2,000) 3.40 / 3.40 / 3.20; SF2600 10+0.1 (400) B 2.0, Z4 0.25
+(1 vs 8). No losses. Why: Z8 finds more proof games (6.0 vs 5.15 per 100)
+but delivers fewer (61% vs 76%; Maia-3 52% vs 68%). Zugzwang proofs are
+non-strict: a defender with few moves mostly has escapes into a quicker
+plain mate, weak opponents take them, and construction declines that mate.
+The offline recall counted proofs, not conversions. Options stay off.
+
+Knight supply, second try (grid70). The 1.6-era prep phase (grid52) was a
+yes/no knight bonus of 40-80 cp and changed nothing at +8. New options,
+off by default (bench unchanged): SmotherKnightKeep N cp per knight of ours
+(up to two) from a previous score of SmotherKnightKeepCp (200) and all
+through construction, added after construction's material compression.
+grid70: B vs K150 vs K300; SF1500 x3000, Maia-3 1500 x2000, SF2500 x1200
+(5+0.05), SF2600 x400 at 10+0.1. Read with knight_supply.py as well as the
+rates: the mechanism check is whether knights at +8 rise.
