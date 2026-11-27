@@ -4,6 +4,64 @@
  "baseline_note": "B = development settings: SmotherClassic true, SmotherBuildKnightCheck 16, SmotherCrushQuiet 3, SmotherCrushMoves 16.",
  "experiments": [
   {
+   "id": "grid72",
+   "date": "2026-11-27",
+   "title": "Stalemate-aware construction",
+   "question": "77 of 96 draws in 38,600 games were stalemates by us at about +20. Score a stalemated defender as a draw in construction mode's evaluation (the quiescence search cannot see stalemate).",
+   "opponents": [
+    "e1500",
+    "m1500",
+    "e2500",
+    "e2600"
+   ],
+   "arms": [
+    {
+     "label": "1.6 defaults",
+     "cells": [
+      {
+       "k": 146,
+       "n": 4000
+      },
+      {
+       "k": 72,
+       "n": 2000
+      },
+      {
+       "k": 12,
+       "n": 1200
+      },
+      {
+       "k": 2,
+       "n": 400
+      }
+     ]
+    },
+    {
+     "label": "ST",
+     "cells": [
+      {
+       "k": 133,
+       "n": 4000
+      },
+      {
+       "k": 72,
+       "n": 2000
+      },
+      {
+       "k": 13,
+       "n": 1200
+      },
+      {
+       "k": 4,
+       "n": 400
+      }
+     ]
+    }
+   ],
+   "verdict": "No effect: stalemates 14 vs 16, knight smothers 3.03 vs 3.19 per 100 pooled. The stalemates are swindles set up beyond the horizon (a loose defender piece checks until we must take it), not a blind spot of the quiescence search.",
+   "outcome": "no"
+  },
+  {
    "id": "grid71",
    "date": "2026-11-27",
    "title": "Escape budget",

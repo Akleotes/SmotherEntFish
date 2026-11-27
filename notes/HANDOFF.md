@@ -2294,3 +2294,15 @@ smothered 18 -> 28; vs Maia-3 no change. One loss (E3P40, on time at 0.1 s,
 in a game with no proof, so not the budget). Not significant overall; the
 two strong-opponent cells are both z ~2 on small counts (23 vs 11, 12 vs
 4), so grid73 confirms E3 on fresh seeds with more games at SF2000-2600.
+
+grid72 (SmotherBuildStalemate; 15,200 games; knight smothers per 100):
+SF1500 (4,000) B 3.65, ST 3.33; Maia-3 1500 (2,000) 3.60 / 3.60; SF2500
+(1,200) 1.00 / 1.08; SF2600 10+0.1 (400) 0.50 / 1.00; pooled 5+0.05 3.19 vs
+3.03 (z -0.6). No losses. Stalemates by us 14 (B) vs 16 (ST): the fix did
+not remove them, so qsearch's stalemate blindness is not the cause. Most
+are perpetual-or-stalemate swindles set up beyond the horizon: construction
+boxes the king (no king move) while one defender piece is still loose; in
+42 of the earlier 77 every reply already stalemated. About 0.2% of games;
+option stays off. A real fix would keep a desperado from existing when the
+box closes (capture loose off-ring pieces first), against Keep's reward for
+every kept piece; not worth it at this rate unless it ties to smothers.
