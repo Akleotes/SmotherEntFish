@@ -2251,3 +2251,17 @@ unchanged): in construction mode a defender to move, not in check, with an
 immobile king and no legal move scores as a draw. grid72: B vs ST; SF1500
 x4000, Maia-3 1500 x2000, SF2500 x1200, SF2600 x400 at 10+0.1. Read the
 stalemate draws per arm as well as knight smothers.
+
+Upstream merge (Nov 27): upstream master 88337401 (11 commits since the 1.6
+base 3e8fde75: new net nn-684d0e60e71d, pawn correction history split by
+queens, futility pruning for promotions in qsearch, cached repetition
+look-behind, cleanups) merged on the dev branch, no conflicts. Bench with
+smother hunting off = upstream's, 1128273; engine name base
+dev-20261126-88337401. sprt-up1 (merge vs 1.6 = ef777425, both defaults,
+10+0.1, [0, 3]): 16 accounts, 400 runners x 200 games, one wave each,
+seed_offset 7,000,000 + 100,000 per account, base_ref pinned to ef777425.
+Combine with notes/scripts/sprt_stats.py 0 3 0.05 0.05 over every
+account's results. A release also needs: README.md and docs/SMOTHERFISH.md
+bench, release.yml BENCH, android-build.yml bench, version, and a smother
+grid on the merged engine (the B arms of grid72, seed 99000, are the
+paired comparison).
