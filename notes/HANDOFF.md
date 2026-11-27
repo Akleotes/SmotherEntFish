@@ -2331,3 +2331,13 @@ engine with grid72's seeds (99000): B vs R2 vs R1E (+ SmotherEscapeMoves
 3); SF1500 x4000, Maia-3 1500 x2000, SF2500 x1200, SF2600 x400 at 10+0.1.
 Its B arms pair with grid72's B arms (1.6 engine, same openings): the
 merged engine's smother rates, needed before any release. Watch draws.
+
+sprt-up1 final (upstream 88337401 merge vs 1.6 = ef777425, both defaults,
+10+0.1, [0, 3]): 76,000 games (38,000 pairs) from 15 accounts (c79670's
+share never started: its fork stopped serving anonymous git reads after
+18:25 UTC, as 2456cd did on Nov 26), pentanomial [18, 2082, 33446, 2423,
+31], +1.7 Elo (95% +1.1 to +2.3), LLR 5.43 > 2.94: H1. The merge is a real
+strength gain. Remaining before a release: the merged engine's smother
+rates (grid74 B vs grid72 B, same openings), the HumanElo calibration on
+the new net, then README/guide/release.yml/android-build.yml bench 1128273
+and a version number, with the user's approval.
