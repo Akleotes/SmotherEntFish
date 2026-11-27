@@ -2361,3 +2361,14 @@ Merged engine vs 1.6 (grid74 B vs grid72 B, same seeds): SF1500 3.72 vs
 pooled 5+0.05 3.12 vs 3.19 (z -0.2); scores 99.7-100%, no losses. The
 merge keeps the smother rates. With sprt-up1 (+1.7 Elo, H1), it is a
 release candidate once grid75/75b (HumanElo calibration) are read.
+
+Helper kick bug (found Nov 27 20:20 UTC): since c79670's fork stopped
+answering (about 18:25), every kick run failed with "NameError: name
+'body' is not defined". When a fork's poll could not be started, the
+warning read `body`, which only the retry path sets; the crash at c79670
+stopped the kick before every fork listed after it (97884e onwards). Forks
+whose own 15-minute schedule works still picked up shares; 0cf451, 701ef3,
+f2d74f and d32e35 never did, so grid75/75b sit at 2,880 of 4,800 games
+each. Fix on the dev branch: keep the first dispatch's response (st, body
+= api(...)). It only takes effect once merged into smotherfish (Helper
+kick runs from the default branch).
