@@ -2209,3 +2209,14 @@ run, plus its 4 Lichess bot jobs: about 152 at once (was 108-109 on Nov 26;
 Actions API (status_data.py counts at most 100 jobs per run). Akleotes
 still publishes HELPER_JOBS 100, so its share is unchanged until that is
 raised (about 140 leaves room for the bots).
+
+grid70 (SmotherKnightKeep; 19,800 games, all 16 accounts; knight smothers
+per 100, z vs B): SF1500 (3,000 each) B 3.10, K150 2.33 (-1.8), K300 2.27
+(-2.0); Maia-3 1500 (2,000) 3.70 / 3.80 / 2.65; SF2500 (1,200) 1.50 / 1.17
+/ 0.75; SF2600 10+0.1 (400) 2.00 / 0.75 / 1.00. Pooled 5+0.05: 2.98 / 2.58
+(z -1.4) / 2.10 (z -3.1). No losses; 99.8-100% vs SF2600. The mechanism
+worked (vs SF1500, no knight at +8 26% -> 9-13%, two knights 24% -> 40-45%;
+the same shift at every level), yet knight smothers fell: the knight-supply
+dose-response is correlation (games that keep knights are the ones that
+smother), not a lever. Option stays off. With grid69 and grid52, supply
+and prover-coverage levers are closed at 5+0.05.
