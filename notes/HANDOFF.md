@@ -2341,3 +2341,10 @@ strength gain. Remaining before a release: the merged engine's smother
 rates (grid74 B vs grid72 B, same openings), the HumanElo calibration on
 the new net, then README/guide/release.yml/android-build.yml bench 1128273
 and a version number, with the user's approval.
+
+HumanElo calibration check for the merge: the same HumanElo points (1020,
+1490, 1880, 2200, each vs the two Maia-3 levels of the guide's table, 600
+games each, seed 103000) on the merged engine (grid75) and on 1.6
+(grid75b, built from 7e892f2a). Paired by seed; if the merged scores move
+by more than noise, the HumanElo map needs refitting before a release.
+c79670 is left out of these shares (ONLY=) while its fork is unreadable.
