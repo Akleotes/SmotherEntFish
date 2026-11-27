@@ -14,6 +14,9 @@
 # hourly, or "Run workflow" on Actions > Helper poll); our shard starts on
 # push.
 set -euo pipefail
+# The whole body is one group, read before it runs: the loop checks out other
+# versions of notes/scripts (this file included) while bash is running it.
+{
 plan=$1; src=${2:-$(git rev-parse --abbrev-ref HEAD)}
 # Targets come from notes/scripts/volunteers.py: every public fork of the
 # main repository (the helpers, see docs/HELPING.md) plus this repository,
@@ -39,11 +42,12 @@ PY
 tmp=$(mktemp); cp "$plan" "$tmp"
 cur=$(git rev-parse --abbrev-ref HEAD)
 git fetch -q origin smotherfish
-k=0
+k=0; refspecs=(); locals=()
 for t in "${targets[@]}"; do
   id=${t%%:*}; rest=${t#*:}; base=${rest%%:*}; w=${rest#*:}
   idx=$(python3 -c "print(list(range($k, $k + $w)))"); k=$((k + w))
-  git checkout -q -B tmp-dist "$base"
+  b=tmp-dist-$id
+  git checkout -q -B "$b" "$base"
   git checkout -q "$src" -- src notes/scripts
   mkdir -p notes/exp
   python3 - "$tmp" "$idx" "$n" "$w" > notes/exp/plan.json <<'PY'
@@ -57,8 +61,19 @@ PY
   git commit -q -m "$exp: $w of $n job slots" -m "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
 Claude-Session: https://claude.ai/code/session_01KPLjFVqA3Ah52n9TgVXHRo"
   if [ "$id" = own ]; then ref=actions-exp/$exp; else ref=helper-exp/$id/$exp; fi
-  git push -q -f origin tmp-dist:refs/heads/$ref
+  refspecs+=("$b:refs/heads/$ref"); locals+=("$b")
   echo "$ref: $w of $n job slots (base $base)"
 done
-git checkout -q "$cur"; git branch -D -q tmp-dist; rm -f "$tmp"
+git checkout -q "$cur"
+# All shares in one atomic push. Every helper-exp push starts Helper kick,
+# which syncs each fork that has no share waiting. Pushed one at a time
+# (grid69), the first kick synced forks whose shares were not pushed yet;
+# those shares, built on the forks' older version with other workflow
+# files, were then refused by GitHub. In one push every share is there
+# before any kick looks.
+git push -q -f --atomic origin "${refspecs[@]}"
+git branch -D -q "${locals[@]}"; rm -f "$tmp"
+echo "pushed ${#refspecs[@]} shares in one push"
 echo "progress: notes/scripts/volunteers.py status $exp; merge: notes/scripts/volunteers.py merge $exp OUTDIR"
+exit 0
+}
