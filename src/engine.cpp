@@ -283,9 +283,6 @@ Engine::Engine(std::optional<std::filesystem::path> path) :
     // escape, 2 = always, a smother line may pass through a position seen
     // once before in the game (a third occurrence still fails).
     options.add("SmotherRepeatOnce", Option(0, 0, 2));
-    // HumanElo map refitted for the merged engine (experimental, off by
-    // default; see make_skill in search.cpp).
-    options.add("HumanEloRefit", Option(false));
     options.add("SmotherEscapePercent", Option(20, 1, 50));
     // Decoy: points when a sacrifice can force the last blocker into the box.
     options.add("SmotherBuildDecoy", Option(0, 0, 200));

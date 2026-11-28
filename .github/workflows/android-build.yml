@@ -46,7 +46,7 @@ jobs:
         run: |
           nodes=$(qemu-aarch64 ./stockfish bench 2>&1 | grep "Nodes searched" | awk '{print $4}')
           echo "bench $nodes"
-          test "$nodes" = "1210779"
+          test "$nodes" = "1128273"
           file stockfish
       - name: Collect
         run: |

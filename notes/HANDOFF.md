@@ -2453,3 +2453,12 @@ because both scores sit near 50-61%). 1700 (refit 1320/4, 1.6 1320/20) vs
 to the user: fold the refit into HumanElo (one map, HumanEloRefit removed:
 it was only a test switch) and release 1.7 with the upstream merge; waits
 for their OK.
+
+1.7 release prepared (Nov 28, the user's go-ahead: "Do both"): the refit is
+now HumanElo's only map (HumanEloRefit removed: it was a test switch, never
+released); version 1.7; bench 1128273 in README, guide, release.yml and
+android-build.yml; guide HumanElo table and Results (7.1 Version 1.7, strength
+row), new experimental options listed in 3.5; CHANGELOG and
+notes/release/v1.7.md; results.json release entry and a HumanElo audit line.
+Release: merge PR #8, then push release/v1.7 from smotherfish (release.yml
+builds, checks bench, tags v1.7), then publish results.json to gh-pages.

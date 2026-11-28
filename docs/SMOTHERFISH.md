@@ -1,7 +1,7 @@
 # Smotherfish guide
 
-Smotherfish 1.6 is Stockfish (development version of 22 November 2026,
-upstream commit `3e8fde75`) with one additional goal: to end the game with a
+Smotherfish 1.7 is Stockfish (development version of 26 November 2026,
+upstream commit `88337401`) with one additional goal: to end the game with a
 smothered mate. This guide explains the concepts, how the engine pursues them,
 every option, how Smotherfish is tested and what was measured. The release
 history is in [CHANGELOG.md](CHANGELOG.md); the day-by-day development log,
@@ -25,7 +25,7 @@ with every experiment, is in `notes/HANDOFF.md`.
 
 At checkmate, look at the squares next to the mated king.
 
-| Kind | Definition | Counted by 1.6 |
+| Kind | Definition | Counted (since 1.6) |
 | ---- | ---------- | -------------- |
 | **Knight (classic) smother** | Every neighbour square holds one of the mated side's own pieces. Only a knight (or a pawn promoting to one) can give this mate. This is the textbook smothered mate. | Yes, the main goal |
 | **Full smother, other piece** | Every neighbour square holds one of the mated side's own pieces except the square of the checking piece itself, for example a protected queen giving check from an adjacent square. | Only with `SmotherClassic false` |
@@ -227,6 +227,9 @@ All options are standard UCI options; the defaults are what was measured best.
 | `SmotherWinMargin`, `SmotherWinLines`, `SmotherWinTrapDepth`, `SmotherWinTrapNodes`, `SmotherWinSteerTime`, `SmotherMateDelays`, `SmotherMateSlack` | various | Trap-steering parameters in won positions and while a forced mate is in hand. |
 | `SmotherProverZugzwang`, `SmotherProverThreatQuiet` | 0, false | The prover's threat test after a quiet move: skip it when the defender has at most N replies (zugzwang), or let it use one more quiet move. Finds more proofs, but they are escaped (grid69): no gain. |
 | `SmotherKnightKeep`, `SmotherKnightKeepCp` | 0, 200 | Points (cp) per knight of ours, up to two, from a previous score of `SmotherKnightKeepCp` and through construction. Keeps the knights but lowers knight smothers (grid70). |
+| `SmotherEscapeMoves`, `SmotherEscapePercent` | 0, 20 | After an escaped proof: a prover budget with no node cap for N of our moves, at this share of the clock left. New meaning in 1.7 (1.6 removed older options of these names). No gain (grid71, grid73). |
+| `SmotherBuildStalemate` | false | In construction mode, a defender to move with an immobile king and no legal move scores as a draw. Stalemates did not drop: they are set up beyond the horizon (grid72). |
+| `SmotherRepeatOnce` | 0 | Let a smother line pass through a position seen once before in the game: 1 after an escape, 2 always (a third occurrence still fails). No gain (grid74). |
 
 ### 3.6 Other
 
@@ -248,7 +251,8 @@ engine behaves exactly as with their old defaults (verified move for move on
 `SmotherBuildOwnKeep`, `SmotherBuildKnightSafe`, `SmotherBuildReady`,
 `SmotherBuildDefRing`, `SmotherBuildExit`, `SmotherPartial` (use
 `SmotherGoal Near`) and `SmotherSeek` (brutal mode seeks for up to 200 moves).
-Their measurements are in `notes/HANDOFF.md`.
+Their measurements are in `notes/HANDOFF.md`. `SmotherEscapeMoves` and
+`SmotherEscapePercent` returned in 1.7 with a new meaning (section 3.5).
 
 ## 4. Recommended configurations
 
@@ -265,36 +269,45 @@ Their measurements are in `notes/HANDOFF.md`.
 ## 5. Human mode (HumanElo)
 
 `HumanElo` N (default 0 = off, 1020 to 2400) makes the engine play like a human
-of rating N. It sets the strength limit itself: below about 1860, the lowest
+of rating N. It sets the strength limit itself: below 1735, the lowest
 `UCI_Elo` limiter plus real mistakes (a share of moves picked at random from
 the 8 best candidates, while the limiter alone never loses more than about a
-pawn per move); above it, the `UCI_Elo` limiter alone. No other option is
+pawn per move); from 1735, the `UCI_Elo` limiter alone (1325 at 1735 to 1452
+at 2400). No other option is
 needed; `UCI_LimitStrength`, `UCI_Elo` and `Skill Level` are ignored while it
 is on.
 
 Ratings are on the scale of the human-like Maia-3 network: N is the Maia-3
 level the engine scores 50% against. Maia-3's levels are compressed (a setting
 that scores 72% against level 1300 still scores 48% against 1900), so the
-levels in between are fitted, to about +-50 (+-100 near the ends). Measured at
-5+0.05:
+levels in between are fitted, to about +-50 (+-100 near the ends). 1.7 uses
+the newer Stockfish, whose `UCI_Elo` limiter plays weaker at the same setting,
+so the map was refitted: each rating was measured against 1.6 on the same
+openings and plays as it did there (1580, 1700, 1735, 1880, 2200 and 2400 all
+within the noise). Measured at 5+0.05 against Maia-3, 600 games each:
 
-| HumanElo | Limiter | Mistakes | Measured (300 games each) |
-| -------- | ------- | -------- | ------------------------- |
-| 1020 | 1320 | 13% | 47.3% vs 1100, 33.5% vs 1500 |
-| 1255 | 1320 | 11% | 56.3% vs 1100, 40.0% vs 1500 |
-| 1400 | 1320 | 9% | 62.0% vs 1100, 46.0% vs 1500 |
-| 1490 | 1320 | 7.2% | 60.9% vs 1100, 49.6% vs 1500 (600 each) |
-| 1580 | 1320 | 4% | 69.5% vs 1100, 62.5% vs 1300 |
-| 1600 | (interpolated) | | 63.2% vs 1300, 45.3% vs 1700 |
-| 1735 | 1320 | 1% | 68.8% vs 1300, 59.8% vs 1500 |
-| 1800 | (interpolated) | | 63.3% vs 1500, 45.8% vs 1900 |
-| 1880 | 1320 | 0 | 68.2% vs 1500, 47.8% vs 1900 |
-| 2200 | (interpolated) | | 59.5% vs 1900, 42.0% vs 2300 (plays about 2115) |
-| 2420 | 1455 | 0 | 76.8% vs 1700, 66.3% vs 2100 |
+| HumanElo | Limiter | Mistakes | Measured | Plays like (Maia-3 level at 50%) |
+| -------- | ------- | -------- | -------- | -------------------------------- |
+| 1020 | 1320 | 13% | 48.9% vs 1100, 32.5% vs 1500 | |
+| 1255 | 1320 | 11% | (1.6: 56.3% vs 1100, 40.0% vs 1500) | |
+| 1400 | 1320 | 9% | (1.6: 62.0% vs 1100, 46.0% vs 1500) | |
+| 1490 | 1320 | 7.2% | 61.0% vs 1100, 44.1% vs 1500 | |
+| 1580 | 1320 | 2.2% | 61.3% vs 1300, 50.8% vs 1700 | 1731 (1.6: 1630) |
+| 1700 | 1320 | 0.4% | 58.2% vs 1500, 44.0% vs 1900 | 1731 (1.6: 1760) |
+| 1735 | 1325 | 0 | 61.3% vs 1500, 45.9% vs 1900 | 1795 (1.6: 1763) |
+| 1780 | 1342 | 0 | (fitted) | |
+| 1815 | 1355 | 0 | (fitted) | |
+| 1880 | 1387 | 0 | 66.2% vs 1500, 50.4% vs 1900 (1,200 each) | 1909 (1.6: 1910) |
+| 2200 | 1425 | 0 | 55.6% vs 1900, 40.8% vs 2300 | 2051 (1.6: 2063) |
+| 2400 | 1452 | 0 | 66.6% vs 1900, 55.9% vs 2300 | 2511 (1.6: 2530) |
+
+The 1255 and 1400 rows are unchanged from 1.6 and were measured there (300
+games each); the low end (1020-1490) plays the same on both engines.
 
 For a club player of about 1350, use `HumanElo 1350`. `HumanBlunder` N
 (percent) or `HumanBlunderPermille` N (per mille) add the mistakes to whatever
-`UCI_Elo` or `Skill Level` is set; `HumanBlunder 1` plays at about 1735.
+`UCI_Elo` or `Skill Level` is set; `HumanBlunder 1` with `UCI_Elo 1320` plays
+at about 1630.
 Proven smothered mates are still played in full.
 
 ## 6. How Smotherfish is tested
@@ -338,7 +351,22 @@ Raw games are on each account's `actions-exp/<name>` branch under
 
 ## 7. Results
 
-### 7.1 Version 1.6
+### 7.1 Version 1.7
+
+Knight smothers per 100 games, 5+0.05, 1.6 and 1.7 on the same openings:
+
+| Opponent | Games | 1.6 | **1.7** |
+| -------- | ----: | --: | ------: |
+| Stockfish 1500 | 4,000 / 3,520 | 3.65 | **3.72** |
+| Maia-3 1500 | 2,000 | 3.60 | **3.00** |
+| Stockfish 2500 | 1,200 | 1.00 | **1.58** |
+| Stockfish 2600 (10+0.1) | 400 | 0.50 | **1.25** |
+| Pooled | | 3.19 | **3.12** |
+
+No cell differs significantly and neither version lost a game (grid72 and
+grid74).
+
+### 7.2 Version 1.6
 
 How games end (share of games, 5+0.05):
 
@@ -356,7 +384,7 @@ development grids 1.6 averaged 3.8-4.3 knight smothers per 100 games against
 Stockfish 1500 and 1.3-1.8 against Stockfish 2500. At 3+2: 3.7 against
 Stockfish 1500 and 6.3 against Maia-3 (1.5.1: 0.9 and 1.4).
 
-### 7.2 Strength record
+### 7.3 Strength record
 
 | Version | Test | Games | Elo | 95% range |
 | ------- | ---- | ----: | --: | --------- |
@@ -367,10 +395,11 @@ Stockfish 1500 and 6.3 against Maia-3 (1.5.1: 0.9 and 1.4).
 | 1.5 | against 1.4.1 | 18,000 | -1.0 | -2.2 to +0.1 |
 | 1.6 | against 1.5.1 | 32,400 | -0.3 | -1.2 to +0.5 |
 | 1.6 | prover time in undecided positions off vs on | 28,800 | +0.3 | -0.6 to +1.2 |
+| 1.7 | against 1.6 (upstream `88337401` merged) | 76,000 | +1.7 | +1.1 to +2.3 |
 
 Smother hunting costs no measurable strength against an equal opponent.
 
-### 7.3 Earlier measurements (any-piece smothers, 1.0-1.5.1)
+### 7.4 Earlier measurements (any-piece smothers, 1.0-1.5.1)
 
 Before 1.6, a smother by any piece counted. Smothers per 100 games, 5+0.05:
 
@@ -432,7 +461,7 @@ variants, the prep phase, a zugzwang-aware prover and keeping our knights.
 
 ## 9. Testing your own changes
 
-- `./stockfish bench` must still report **1210779** nodes (the bench of the
+- `./stockfish bench` must still report **1128273** nodes (the bench of the
   upstream base commit; it runs with brutal mode off).
 - `notes/scripts/puzzles.py ENGINE smothered.csv N SEED` re-runs the prover
   regression test (the Lichess puzzle database filtered on `smotheredMate`).

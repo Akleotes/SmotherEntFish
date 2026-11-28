@@ -5,6 +5,24 @@ Strength figures are Elo against the previous version at full strength
 (SPRT, 10 seconds + 0.1 per move) unless stated; smother figures are per 100
 games. The full record of every experiment is in `notes/HANDOFF.md`.
 
+## 1.7 (28 November 2026): newer Stockfish
+
+- **Stronger:** Stockfish's latest search and network (upstream commit
+  `88337401`, network `nn-684d0e60e71d`) merged in: +1.7 Elo against 1.6 over
+  76,000 games (95%: +1.1 to +2.3). Bench 1128273.
+- **Smothers unchanged:** on the same openings, 3.12 knight smothers per 100
+  games pooled against 3.19 for 1.6 (within the noise), no losses.
+- **HumanElo refitted:** the new engine's `UCI_Elo` limiter plays weaker at the
+  same setting, so the rating map was refitted and measured against 1.6 at
+  1580, 1700, 1735, 1880, 2200 and 2400: each rating plays as it did in 1.6.
+- New experimental options, off by default, each measured with no gain: a
+  zugzwang-aware prover (`SmotherProverZugzwang`, `SmotherProverThreatQuiet`),
+  knight keeping (`SmotherKnightKeep`, `SmotherKnightKeepCp`), a prover budget
+  after an escape (`SmotherEscapeMoves`, `SmotherEscapePercent`), a stalemate
+  check in construction (`SmotherBuildStalemate`) and once-repeated positions
+  on smother lines (`SmotherRepeatOnce`).
+- Volunteer network: Helper kick no longer stops at an unreachable fork.
+
 ## 1.6 (26 November 2026): knight smothers
 
 - **Plays for the textbook smothered mate:** a knight mates a king that its own
