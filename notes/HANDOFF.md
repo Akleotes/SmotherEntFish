@@ -2431,3 +2431,14 @@ strength (600 / 600 wins each). grid77 / 77b complete (a8e399 arrived):
 1894 vs 1969 (-0.8); 2200 (old 1410 row): 1931 vs 2112 (-2.7). grid79 =
 merged + refit, grid79b = 1.6, fresh seed 109000: 1580, 1880 and the real
 top (2400: refit limiter 1452, 1.6 1450) vs the bracketing Maia-3 levels.
+
+grid79 / grid79b (complete; seed 109000; merged + refit vs 1.6): 50% points
+1580: 1509 +- 35 vs 1607 +- 39 (z -1.9); 1880: 1925 vs 1866 (+0.9); 2400
+(the real top; refit limiter 1452, 1.6 1450): 2511 +- 113 vs 2530 +- 96
+(z -0.1). Pooled with grid77: 1580 1520 +- 25 vs 1601 +- 29 (z -2.1, weak
+in both runs); 1880 1909 vs 1910 (0). So 1735, 1880, 2200 (1425 row) and
+2400 pass; 1580 is about 80 weak. Merged slope there is about 4.4 rating
+points per mille of blunders (1320/72 1361, /41 1520, /10 1634), so the
+refit's 1580 row goes 41 -> 22 per mille. grid80 = merged + refit, grid80b
+= 1.6, fresh seed 110000: 1580 (vs Maia-3 1300/1700) and the unmeasured
+1700 row (refit 1320/4 vs 1.6's 1320/20; vs 1500/1900).

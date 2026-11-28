@@ -237,7 +237,7 @@ Skill make_skill(const OptionsMap& options) {
         // Maia-3 scale vs 1961 for 1.6). Each rating gets the setting that
         // plays like 1.6's did; the blunder-driven low end is unchanged.
         constexpr int mapRefit[][3] = {{1020, 1320, 130}, {1255, 1320, 110}, {1400, 1320, 90},
-                                       {1490, 1320, 72},  {1580, 1320, 41},  {1700, 1320, 4},
+                                       {1490, 1320, 72},  {1580, 1320, 22},  {1700, 1320, 4},
                                        {1735, 1325, 0},   {1780, 1342, 0},   {1815, 1355, 0},
                                        {1880, 1387, 0},   {2200, 1425, 0},   {2420, 1455, 0}};
         const auto&   map           = options["HumanEloRefit"] ? mapRefit : map16;
