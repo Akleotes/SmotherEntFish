@@ -2420,3 +2420,14 @@ grid78 = merged + refit, grid78b = 1.6 (7e892f2a), fresh seed 108000,
 labels 2200 and 2420 vs Maia-3 1900 and 2300, 600 games each, sent to the
 11 reliable accounts. Helper kick dispatched from this branch (its fix for
 the unreachable-fork crash is not on main yet).
+
+grid78 / grid78b (complete; seed 108000; merged + refit with the 2200 row
+at limiter 1425 vs 1.6): HumanElo 2200 vs Maia-3 1900 55.6 / 54.7 (z +0.3),
+vs 2300 40.8 / 43.2 (z -0.9); 50% point 2051 +- 37 vs 2063 +- 48 (z -0.2).
+The 2200 point passes. The 2420 cells are void: HumanElo's range ends at
+2400, so setoption 2420 was ignored and both engines played at full
+strength (600 / 600 wins each). grid77 / 77b complete (a8e399 arrived):
+50% points 1580: 1531 vs 1595 (z -1.1); 1735: 1795 vs 1763 (+0.6); 1880:
+1894 vs 1969 (-0.8); 2200 (old 1410 row): 1931 vs 2112 (-2.7). grid79 =
+merged + refit, grid79b = 1.6, fresh seed 109000: 1580, 1880 and the real
+top (2400: refit limiter 1452, 1.6 1450) vs the bracketing Maia-3 levels.
