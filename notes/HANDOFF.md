@@ -2442,3 +2442,14 @@ points per mille of blunders (1320/72 1361, /41 1520, /10 1634), so the
 refit's 1580 row goes 41 -> 22 per mille. grid80 = merged + refit, grid80b
 = 1.6, fresh seed 110000: 1580 (vs Maia-3 1300/1700) and the unmeasured
 1700 row (refit 1320/4 vs 1.6's 1320/20; vs 1500/1900).
+
+grid80 / grid80b (complete; seed 110000; merged + refit vs 1.6): 1580 (new
+row 1320/22) vs Maia-3 1300 61.3 / 61.2 (z 0.0), vs 1700 50.8 / 47.6
+(+1.2); 50% point 1731 +- 76 vs 1630 +- 46 (z +1.1; the point is noisy
+because both scores sit near 50-61%). 1700 (refit 1320/4, 1.6 1320/20) vs
+1500 58.2 / 56.9 (+0.5), vs 1900 44.0 / 46.2 (-0.9); point 1731 vs 1760
+(-0.4). The refit is validated at every measured row: 1580, 1700, 1735,
+1880, 2200 (1425) and 2400, no cell beyond |z| 1.2 in grid79-80. Proposal
+to the user: fold the refit into HumanElo (one map, HumanEloRefit removed:
+it was only a test switch) and release 1.7 with the upstream merge; waits
+for their OK.
