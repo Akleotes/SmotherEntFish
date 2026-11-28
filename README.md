@@ -58,21 +58,23 @@ Against an opponent who defends well, the game never becomes decided and
 Smotherfish plays exactly like Stockfish. Every change is verified to cost no
 measurable strength before it becomes a default.
 
-## Version 1.6 at a glance
+## Version 1.7 at a glance
 
-Version 1.6 plays for the textbook (knight) smothered mate.
+Version 1.7 brings in Stockfish's latest search and network (upstream commit
+`88337401`, network `nn-684d0e60e71d`) and keeps 1.6's play for the textbook
+(knight) smothered mate.
 
-| | 1.5.1 | **1.6** |
+| | 1.6 | **1.7** |
 | --- | ---: | ---: |
-| Knight smothers per 100 games vs Stockfish (`UCI_Elo` 1500), 5+0.05 | 0.7 | **3.8** |
-| Knight smothers per 100 games vs Maia-3 1500 (human-like), 5+0.05 | 0.3 | **3.3** |
-| Knight smothers per 100 games vs Stockfish 1500, 3+2 | 0.9 | **3.7** |
-| Knight smothers per 100 games vs Maia-3 1500, 3+2 | 1.4 | **6.3** |
-| Strength against 1.5.1, 10+0.1, 32,400 games | | **-0.3 Elo** (95%: -1.2 to +0.5) |
+| Strength against 1.6, 10+0.1, 76,000 games | | **+1.7 Elo** (95%: +1.1 to +2.3) |
+| Knight smothers per 100 games vs Stockfish (`UCI_Elo` 1500), 5+0.05 | 3.7 | **3.7** |
+| Knight smothers per 100 games vs Maia-3 1500 (human-like), 5+0.05 | 3.6 | **3.0** |
+| Knight smothers per 100 games vs Stockfish 2500, 5+0.05 | 1.0 | **1.6** |
+| All opponents pooled, same openings | 3.19 | **3.12** |
 
-1.6 trades other kinds of smothered mates (a queen against a boxed king, or a
-box with one covered gap) for knight smothers. `SmotherClassic false` restores
-1.5.1's aim. The [test status page][status-link] shows how games end, version by
+The smother rates match within the noise (no cell differs significantly, no
+losses). `HumanElo` was refitted for the new engine: each rating plays as it
+did in 1.6. The [test status page][status-link] shows how games end, version by
 version.
 
 ## Download
@@ -81,12 +83,12 @@ Prebuilt binaries are on the [Releases page][release-link].
 
 | File | For |
 | ---- | --- |
-| `smotherfish-1.6-android-arm64-dotprod` | Android phones from about 2019 on (try this first) |
-| `smotherfish-1.6-android-arm64` | Older Android phones, or if the first does not start |
-| `smotherfish-1.6-windows-x86-64-avx2.exe` | Windows PCs from about 2015 on |
-| `smotherfish-1.6-windows-x86-64.exe` | Older Windows PCs |
-| `smotherfish-1.6-linux-x86-64-avx2` | Linux, CPUs from about 2015 on |
-| `smotherfish-1.6-linux-x86-64` | Linux, older CPUs |
+| `smotherfish-1.7-android-arm64-dotprod` | Android phones from about 2019 on (try this first) |
+| `smotherfish-1.7-android-arm64` | Older Android phones, or if the first does not start |
+| `smotherfish-1.7-windows-x86-64-avx2.exe` | Windows PCs from about 2015 on |
+| `smotherfish-1.7-windows-x86-64.exe` | Older Windows PCs |
+| `smotherfish-1.7-linux-x86-64-avx2` | Linux, CPUs from about 2015 on |
+| `smotherfish-1.7-linux-x86-64` | Linux, older CPUs |
 
 Every binary is checked against the bench signature before release. Keep the
 file name: DroidFish treats an engine named `stockfish` specially.
@@ -97,7 +99,7 @@ Like Stockfish, Smotherfish has no graphical interface. Add it as a UCI engine
 in any chess GUI, for example DroidFish (Android), Arena, Cute Chess, En Croissant
 or ChessBase, or run it as a Lichess bot through
 [lichess-bot](https://github.com/lichess-bot-devs/lichess-bot). It identifies
-itself as `Smotherfish 1.6 (Stockfish dev-20261122-3e8fde75)`.
+itself as `Smotherfish 1.7 (Stockfish dev-20261126-88337401)`.
 
 No settings are needed: smother hunting is on by default. Common profiles:
 
@@ -135,7 +137,9 @@ the previous version at full strength, the method Stockfish's own Fishtest uses.
 
 - **Strength.** 1.2 against unmodified Stockfish: -0.3 Elo over 43,200 games
   (95%: -1.1 to +0.4); 1.3 at 60+0.6: +0.5 Elo over 7,320 games. Later versions
-  are each within noise of their predecessor (1.6: -0.3 Elo over 32,400 games).
+  are each within noise of their predecessor (1.6: -0.3 Elo over 32,400 games),
+  except 1.7, which brings in newer Stockfish: +1.7 Elo against 1.6 over 76,000
+  games (95%: +1.1 to +2.3).
 - **Research.** The guide's "Findings" section summarises what limits smothered
   mates and which ideas did not work (learned networks, trap steering, keeping
   material, deeper proving), so they are not repeated.
@@ -159,7 +163,7 @@ cd src
 make -j profile-build
 ```
 
-`./stockfish bench` must report **1210779** nodes, the same as the upstream
+`./stockfish bench` must report **1128273** nodes, the same as the upstream
 commit: the bench runs with smother hunting off, and the smother features do
 not change Stockfish's normal search.
 
