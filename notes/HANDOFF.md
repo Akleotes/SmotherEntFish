@@ -2465,3 +2465,21 @@ builds, checks bench, tags v1.7), then publish results.json to gh-pages.
 Released Nov 28 04:28 UTC: v1.7 (release run 46107487803, all six binaries
 checked against bench 1128273). Status page results.json published (release
 1.7, HumanElo audit line).
+
+Stalemates, second look (Nov 28; notes/scripts/stalemate_anatomy.py,
+stalemate_trigger.py, stalemate_promotions.py, stalemate_queen.py on the
+122,000 games of grid69-74). 265 stalemates by us (0.22% of games). The
+defender promoted after we led by +8 in 94% of them (about 53% of all won
+games), and in 239 our stalemating capture took the promoted piece: the
+defender's king was boxed, the new queen checked until we took it.
+Construction counts the queen at 1/8 and SmotherBuildKeep rewards every
+kept piece, so taking it scored about even. A cash-in trigger on the
+defender's mobility is not specific (a boxed king with one legal move
+comes before 41% of knight smothers). A boxed king with a defender queen
+off the ring comes before 74% of stalemates (median 10 plies before the
+end) but only 7.7% of knight smothers and 7.2% of other wins; with rooks
+too it is 64% of knight smothers (rooks build the box), so queens only.
+New option SmotherBuildDesperado N (off; bench unchanged): construction
+points lost in that configuration. grid81 (SF1500 x5000, Maia-3 1500
+x1500) and grid81b (SF2000 x2000, SF2500 x2000): B vs D20 vs D40, seed
+111000, chunk 50. Read stalemates per arm and knight smothers.
