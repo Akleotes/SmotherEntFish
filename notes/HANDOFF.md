@@ -2507,3 +2507,14 @@ every other move pays the penalty, so the guard pushes the engine into
 the capture. SmotherBuildStalemate closes exactly that hole (alone it did
 nothing, grid72). grid83 / 83b: B vs NS40 vs NS100 (desperado guard plus
 SmotherBuildStalemate), seed 113000, same cells as grid82.
+
+grid83 (complete; seed 113000; 11,000 per arm): B 2.42 per 100, 22
+stalemates, 29 draws, 0 losses; NS40 2.25 (z -0.8), 20, 27, 0; NS100 2.33
+(z -0.4), 12 (z -1.7), 15, 1. NS100 halves draws at no significant smother
+cost. The guard arms of grid81-83 lost 3 games, B none in 32,500: all at
+0.1-0.2 s left (SF2500 never above +6; SF1500 while +4; SF2000 while +11).
+A guard of 100 points (8 pawns) can push construction scores below the
+floor, so lines that give material back look better: the guard now stops
+at floor + 1. Range raised to 1000 (C300 needs it). grid84 / 84b: B vs C100
+vs C300 (both with SmotherBuildStalemate), seed 114000, 16,000 per arm
+(SF1500 x6000, SF2000 x6000, SF2500 x3000, Maia-3 1500 x1000).

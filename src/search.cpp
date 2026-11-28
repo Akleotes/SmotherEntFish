@@ -2791,7 +2791,9 @@ Value Search::Worker::evaluate(const Position& pos) {
             // and a queen off its ring is its only piece that can move (71% of
             // those stalemates, 1.1% of knight smothers). With any free queen
             // (grid81) it cut stalemates 12 -> 3 but knight smothers 2.60 ->
-            // 2.02 per 100.
+            // 2.02 per 100. Needs SmotherBuildStalemate: in the trigger
+            // position taking the queen is stalemate, which the quiescence
+            // search cannot see (grid82: alone, stalemates 13 -> 30).
             if (buildDesperado)
             {
                 const Color    them = ~shapeUs;
@@ -2815,8 +2817,10 @@ Value Search::Worker::evaluate(const Position& pos) {
                         for (Bitboard b = pos.pieces(them, pt); b && !moves;)
                             moves =
                               Attacks::attacks_bb(pt, pop_lsb(b), pos.pieces()) & ~pos.pieces(them);
+                    // Never below the floor: the guard must not make a line
+                    // that gives back material look better.
                     if (!moves)
-                        u -= buildDesperado * buildUnit;
+                        u = std::max(u - buildDesperado * buildUnit, std::min(u, buildFloor + 1));
                 }
             }
             u = std::min(u, VALUE_TB_WIN_IN_MAX_PLY - 1);
