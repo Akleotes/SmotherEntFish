@@ -2497,3 +2497,13 @@ measurement): the free queen is the defender's only piece that can move
 0.8% of other wins. SmotherBuildDesperado now uses it (bench unchanged).
 grid82 (SF1500 x4000, Maia-3 1500 x1000) and grid82b (SF2000 x4000,
 SF2500 x2000): B vs N40 vs N100, seed 112000.
+
+grid82 (complete; seed 112000; 11,000 games per arm; narrow trigger):
+B 2.42 per 100, 13 stalemates, 0 losses; N40 2.21 (z -1.0), 22, 0; N100
+2.25 (z -0.8), 30 (z +2.6), 1. More stalemates, not fewer. In the
+trigger position taking the queen is always stalemate, and the quiescence
+search scores that capture as a big win (it does not see stalemate) while
+every other move pays the penalty, so the guard pushes the engine into
+the capture. SmotherBuildStalemate closes exactly that hole (alone it did
+nothing, grid72). grid83 / 83b: B vs NS40 vs NS100 (desperado guard plus
+SmotherBuildStalemate), seed 113000, same cells as grid82.
