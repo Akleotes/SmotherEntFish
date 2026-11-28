@@ -2529,3 +2529,14 @@ construction a defender queen off its king's ring counts at full value
 (never below the floor), so the search stops the pawn before it promotes.
 grid85 / 85b: B vs QF vs QFS (with SmotherBuildStalemate), seed 115000,
 same cells as grid84.
+
+grid85 (complete; seed 115000; 16,000 per arm): B 2.45 per 100, 23
+stalemates, 32 draws, 1 loss (mated by SF2000: B can lose too, so the
+single losses of the guard arms are within the base rate); QF 2.14 (z
+-1.8), 36 stalemates, 45 draws, 0; QFS 2.14 (z -1.8), 22, 32, 0. Queen at
+full value: no. Stalemate work closed: five fixes over about 180,000 games
+(grid81-85); the best (guard 100-300 with SmotherBuildStalemate) removes
+up to a third of the stalemates, without a clear result, and the others
+cost knight smothers or add stalemates. Stalemates are about 0.2% of games.
+All three options stay off. Guide: 3.5 rows and a Findings row; status
+page: grid81-85 verdicts and an audit line.

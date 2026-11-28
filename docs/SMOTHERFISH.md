@@ -228,7 +228,9 @@ All options are standard UCI options; the defaults are what was measured best.
 | `SmotherProverZugzwang`, `SmotherProverThreatQuiet` | 0, false | The prover's threat test after a quiet move: skip it when the defender has at most N replies (zugzwang), or let it use one more quiet move. Finds more proofs, but they are escaped (grid69): no gain. |
 | `SmotherKnightKeep`, `SmotherKnightKeepCp` | 0, 200 | Points (cp) per knight of ours, up to two, from a previous score of `SmotherKnightKeepCp` and through construction. Keeps the knights but lowers knight smothers (grid70). |
 | `SmotherEscapeMoves`, `SmotherEscapePercent` | 0, 20 | After an escaped proof: a prover budget with no node cap for N of our moves, at this share of the clock left. New meaning in 1.7 (1.6 removed older options of these names). No gain (grid71, grid73). |
-| `SmotherBuildStalemate` | false | In construction mode, a defender to move with an immobile king and no legal move scores as a draw. Stalemates did not drop: they are set up beyond the horizon (grid72). |
+| `SmotherBuildStalemate` | false | In construction mode, a defender to move with an immobile king and no legal move scores as a draw. Stalemates did not drop alone (grid72); needed with `SmotherBuildDesperado`. |
+| `SmotherBuildDesperado` | 0 | Construction points lost (never below the floor) while the defender's king has no square and a queen off its ring is its only piece that can move: the promoted queen that forces our stalemates. With `SmotherBuildStalemate` at 100-300 it removed up to a third of the stalemates without a clear result (grid81-84). |
+| `SmotherBuildQueenFull` | false | In construction mode a defender queen off its king's ring counts at full value, not 1/8 (never below the floor), to stop the pawn before it promotes. More stalemates and fewer knight smothers (grid85). |
 | `SmotherRepeatOnce` | 0 | Let a smother line pass through a position seen once before in the game: 1 after an escape, 2 always (a third occurrence still fails). No gain (grid74). |
 
 ### 3.6 Other
@@ -450,6 +452,7 @@ further.
 | Does keeping the right pieces help? | 4,989 games | Games that still have our knight and queen, enemy pieces and king-side pawns at +8 smother about twice as often, but rewarding the engine for keeping them (the prep phase) did not raise the rate. |
 | Does a better predictor help? | 4.5 million positions, AUC 0.936 (linear) and 0.968 (network) | Used as the construction score, both only tie the hand score; at high weights the search gives up material and loses games. |
 | Is the prover blind to zugzwang? | 4,016 games; grid69, 18,800 games | Yes: its threat test rejects every zugzwang line, and with it relaxed a forced knight smother is proven in 3.0% of smother-less games (0.5% now). In play those proofs are escaped (delivered 61% vs 76%): a defender with few moves mostly has a quicker plain mate to run into. No gain. |
+| Why do we stalemate won games? | 265 stalemates in 122,000 games (0.2%); grid81-85, about 180,000 games | 239 ended with us taking a queen the defender had just promoted next to its boxed king: construction counts the queen at 1/8 and rewards kept pieces, so the promotion cost almost nothing. Five fixes (a guard on the boxed king and free queen, the queen at full value, with and without a stalemate check) removed at most a third of the stalemates, or cost knight smothers. Left off. |
 | Does keeping our knights help? | 3,635 games; grid70, 19,800 games | 0 / 1 / 2 knights at +8 go with 0.48 / 3.65 / 6.07 knight smothers per 100, but a bonus that keeps them (no knight at +8: 26% to 9-13%) lowers the rate (2.10 vs 2.98, z -3.1). Correlation, not a lever. |
 
 What did not help (each measured over thousands of games): more prover time,
@@ -457,7 +460,8 @@ steering towards traps at all times, a shaping bonus, robust or strict proofs,
 earlier construction (more draws), a lower floor, blocker-survivability terms,
 search-control changes in construction mode, keeping our own mating pieces,
 knight safety, ready squares, a safe-exit penalty, starving and holding
-variants, the prep phase, a zugzwang-aware prover and keeping our knights.
+variants, the prep phase, a zugzwang-aware prover, keeping our knights and
+the stalemate fixes.
 
 ## 9. Testing your own changes
 
