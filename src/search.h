@@ -421,6 +421,9 @@ class Worker {
     // the defender's king has no square and a queen off the ring is its only
     // piece that can move.
     int  buildDesperado = 0;
+    // Construction mode (SmotherBuildQueenFull): the defender's queens off the
+    // ring count at full value.
+    bool buildQueenFull = false;
     bool seekSmother = false;  // won mode: only smothered mates score as mate
     bool seekClassic = false;
     // Construction mode (SmotherBuild): above buildFloor the evaluation stops

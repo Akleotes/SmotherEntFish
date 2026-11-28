@@ -1033,6 +1033,7 @@ bool Search::Worker::iterative_deepening() {
             buildEscape    = int(options["SmotherBuildEscape"]);
             buildStalemate  = bool(options["SmotherBuildStalemate"]);
             buildDesperado  = int(options["SmotherBuildDesperado"]);
+            buildQueenFull  = bool(options["SmotherBuildQueenFull"]);
             buildKnightSafe = 0;
             shapeWeight    = 0;
         }
@@ -2779,8 +2780,24 @@ Value Search::Worker::evaluate(const Position& pos) {
         Value u = pos.side_to_move() == shapeUs ? v : -v;
         if (u >= buildFloor)
         {
-            u = buildFloor + (u - buildFloor) / buildMatDiv
-              + Smother::build_score(pos, shapeUs, buildSurvive, buildCap, buildVersion, buildKeep, buildKeepNear, buildStarve, buildStarveAt, buildOwnKeep, buildEscape, buildKnightSafe)
+            // SmotherBuildQueenFull (off by default): a defender queen off its
+            // king's ring counts at full value. The defender promoted after we
+            // led by +8 in 94% of our stalemates (grid69-74) and the promoted
+            // queen then forced them; at 1/8 (and with the reward for kept
+            // pieces) a promotion cost us almost nothing. Never below the
+            // floor, so giving material back never looks better.
+            Value q = VALUE_ZERO;
+            if (buildQueenFull)
+                q = popcount(pos.pieces(~shapeUs, QUEEN)
+                             & ~Attacks::attacks_bb(KING, pos.square<KING>(~shapeUs)))
+                  * QueenValue;
+            Value base = buildFloor + (u + q - buildFloor) / buildMatDiv - q;
+            if (q)
+                base = std::max(base, buildFloor + 1);
+            u = base
+              + Smother::build_score(pos, shapeUs, buildSurvive, buildCap, buildVersion, buildKeep,
+                                     buildKeepNear, buildStarve, buildStarveAt, buildOwnKeep,
+                                     buildEscape, buildKnightSafe)
                   * buildUnit;
             // Desperado guard (SmotherBuildDesperado, off by default). 239 of
             // the 265 stalemates we gave in 122,000 games (grid69-74) ended

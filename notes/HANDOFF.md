@@ -2518,3 +2518,14 @@ floor, so lines that give material back look better: the guard now stops
 at floor + 1. Range raised to 1000 (C300 needs it). grid84 / 84b: B vs C100
 vs C300 (both with SmotherBuildStalemate), seed 114000, 16,000 per arm
 (SF1500 x6000, SF2000 x6000, SF2500 x3000, Maia-3 1500 x1000).
+
+grid84 (complete; seed 114000; 16,000 per arm; guard stops at the floor,
+with SmotherBuildStalemate): B 2.34 per 100, 35 stalemates, 44 draws, 0
+losses; C100 2.23 (z -0.7), 32, 43, 0; C300 2.31 (z -0.2), 24 (z -1.4),
+36, 0. Capped, the guard keeps the smothers and loses no games but removes
+at most a third of the stalemates. The decision comes earlier: the
+promotion. New option SmotherBuildQueenFull (off; bench unchanged): in
+construction a defender queen off its king's ring counts at full value
+(never below the floor), so the search stops the pawn before it promotes.
+grid85 / 85b: B vs QF vs QFS (with SmotherBuildStalemate), seed 115000,
+same cells as grid84.
