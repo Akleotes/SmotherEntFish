@@ -1,14 +1,16 @@
 {
  "base": "4c013135",
  "exclude": [
-  "2456cd"
+  "2456cd",
+  "c79670"
  ],
  "notes": {
   "dc665d": "no working schedule: needs Run workflow by hand",
   "superseded": "refill parts replaced by a later refill; merge and status skip them",
   "2456cd": "excluded Nov 26: owner made the fork private to use their own Actions",
   "sync": "Helper kick keeps these forks (IDs or all) synced with Sync fork (fast-forward only) and refills their Maia cache. Left on for all, forks never fall behind base.",
-  "jobs": "jobs at once by ID, overriding the HELPER_JOBS a fork publishes (default 20); own = our account. d32e35 sets HELPER_JOBS 100 itself (measured 108-109)."
+  "jobs": "jobs at once by ID, overriding the HELPER_JOBS a fork publishes (default 20); own = our account. d32e35 sets HELPER_JOBS 140 itself (raised Nov 28; measured about 152 at once).",
+  "c79670": "excluded Nov 28: fork unreadable (git and API answer not found) since Nov 27 18:25 UTC"
  },
  "bases": {},
  "superseded": [
