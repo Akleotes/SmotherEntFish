@@ -2787,9 +2787,11 @@ Value Search::Worker::evaluate(const Position& pos) {
             // with us taking a queen the defender had just promoted: its king
             // was boxed, so the queen checked until we took it. Construction
             // counts the queen at 1/8 and rewards every kept piece, so taking
-            // it scored about even. A boxed king with a queen off its ring
-            // came before 74% of those stalemates but only 7.7% of knight
-            // smothers.
+            // it scored about even. Trigger: the defender's king has no square
+            // and a queen off its ring is its only piece that can move (71% of
+            // those stalemates, 1.1% of knight smothers). With any free queen
+            // (grid81) it cut stalemates 12 -> 3 but knight smothers 2.60 ->
+            // 2.02 per 100.
             if (buildDesperado)
             {
                 const Color    them = ~shapeUs;
@@ -2797,12 +2799,23 @@ Value Search::Worker::evaluate(const Position& pos) {
                 const Bitboard ring = Attacks::attacks_bb(KING, ksq);
                 if (pos.pieces(them, QUEEN) & ~ring)
                 {
-                    const Bitboard occ  = pos.pieces() ^ square_bb(ksq);
-                    Bitboard       to   = ring & ~pos.pieces(them);
-                    bool           free = false;
-                    while (to && !free)
-                        free = !(pos.attackers_to(pop_lsb(to), occ) & pos.pieces(shapeUs));
-                    if (!free)
+                    const Bitboard occ   = pos.pieces() ^ square_bb(ksq);
+                    Bitboard       to    = ring & ~pos.pieces(them);
+                    bool           moves = false;
+                    while (to && !moves)
+                        moves = !(pos.attackers_to(pop_lsb(to), occ) & pos.pieces(shapeUs));
+                    // Any other piece of the defender's that can move
+                    // (pseudo-legal: pins ignored, so the guard errs off).
+                    const Bitboard pawns = pos.pieces(them, PAWN);
+                    moves = moves || (pawn_single_push_bb(them, pawns) & ~pos.pieces())
+                         || ((them == WHITE ? pawn_attacks_bb<WHITE>(pawns)
+                                            : pawn_attacks_bb<BLACK>(pawns))
+                             & pos.pieces(shapeUs));
+                    for (PieceType pt : {KNIGHT, BISHOP, ROOK})
+                        for (Bitboard b = pos.pieces(them, pt); b && !moves;)
+                            moves =
+                              Attacks::attacks_bb(pt, pop_lsb(b), pos.pieces()) & ~pos.pieces(them);
+                    if (!moves)
                         u -= buildDesperado * buildUnit;
                 }
             }

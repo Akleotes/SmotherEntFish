@@ -2483,3 +2483,17 @@ New option SmotherBuildDesperado N (off; bench unchanged): construction
 points lost in that configuration. grid81 (SF1500 x5000, Maia-3 1500
 x1500) and grid81b (SF2000 x2000, SF2500 x2000): B vs D20 vs D40, seed
 111000, chunk 50. Read stalemates per arm and knight smothers.
+
+grid81 (complete; seed 111000; 10,500 games per arm; knight smothers per
+100, our stalemates, losses): B 2.60, 12 stalemates, 0; D20 2.22 (z -1.8),
+8, 0; D40 2.02 (z -2.8), 3 (z -2.3), 1 (mated at move 38 vs SF2000 with
+0.1 s left, before construction). By opponent B / D20 / D40: SF1500 3.26 /
+2.62 / 2.44; Maia-3 1500 2.73 / 3.53 / 2.93; SF2000 1.95 / 1.30 / 1.55;
+SF2500 1.50 / 1.15 / 0.75. The guard removes the stalemates but costs
+knight smothers: rejected. The broad trigger touches many search nodes
+outside the stalemate pattern. Narrower trigger (stalemate_qonly
+measurement): the free queen is the defender's only piece that can move
+(pseudo-legal, pins ignored): 71% of stalemates, 1.1% of knight smothers,
+0.8% of other wins. SmotherBuildDesperado now uses it (bench unchanged).
+grid82 (SF1500 x4000, Maia-3 1500 x1000) and grid82b (SF2000 x4000,
+SF2500 x2000): B vs N40 vs N100, seed 112000.
