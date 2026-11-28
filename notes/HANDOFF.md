@@ -2465,3 +2465,78 @@ builds, checks bench, tags v1.7), then publish results.json to gh-pages.
 Released Nov 28 04:28 UTC: v1.7 (release run 46107487803, all six binaries
 checked against bench 1128273). Status page results.json published (release
 1.7, HumanElo audit line).
+
+Stalemates, second look (Nov 28; notes/scripts/stalemate_anatomy.py,
+stalemate_trigger.py, stalemate_promotions.py, stalemate_queen.py on the
+122,000 games of grid69-74). 265 stalemates by us (0.22% of games). The
+defender promoted after we led by +8 in 94% of them (about 53% of all won
+games), and in 239 our stalemating capture took the promoted piece: the
+defender's king was boxed, the new queen checked until we took it.
+Construction counts the queen at 1/8 and SmotherBuildKeep rewards every
+kept piece, so taking it scored about even. A cash-in trigger on the
+defender's mobility is not specific (a boxed king with one legal move
+comes before 41% of knight smothers). A boxed king with a defender queen
+off the ring comes before 74% of stalemates (median 10 plies before the
+end) but only 7.7% of knight smothers and 7.2% of other wins; with rooks
+too it is 64% of knight smothers (rooks build the box), so queens only.
+New option SmotherBuildDesperado N (off; bench unchanged): construction
+points lost in that configuration. grid81 (SF1500 x5000, Maia-3 1500
+x1500) and grid81b (SF2000 x2000, SF2500 x2000): B vs D20 vs D40, seed
+111000, chunk 50. Read stalemates per arm and knight smothers.
+
+grid81 (complete; seed 111000; 10,500 games per arm; knight smothers per
+100, our stalemates, losses): B 2.60, 12 stalemates, 0; D20 2.22 (z -1.8),
+8, 0; D40 2.02 (z -2.8), 3 (z -2.3), 1 (mated at move 38 vs SF2000 with
+0.1 s left, before construction). By opponent B / D20 / D40: SF1500 3.26 /
+2.62 / 2.44; Maia-3 1500 2.73 / 3.53 / 2.93; SF2000 1.95 / 1.30 / 1.55;
+SF2500 1.50 / 1.15 / 0.75. The guard removes the stalemates but costs
+knight smothers: rejected. The broad trigger touches many search nodes
+outside the stalemate pattern. Narrower trigger (stalemate_qonly
+measurement): the free queen is the defender's only piece that can move
+(pseudo-legal, pins ignored): 71% of stalemates, 1.1% of knight smothers,
+0.8% of other wins. SmotherBuildDesperado now uses it (bench unchanged).
+grid82 (SF1500 x4000, Maia-3 1500 x1000) and grid82b (SF2000 x4000,
+SF2500 x2000): B vs N40 vs N100, seed 112000.
+
+grid82 (complete; seed 112000; 11,000 games per arm; narrow trigger):
+B 2.42 per 100, 13 stalemates, 0 losses; N40 2.21 (z -1.0), 22, 0; N100
+2.25 (z -0.8), 30 (z +2.6), 1. More stalemates, not fewer. In the
+trigger position taking the queen is always stalemate, and the quiescence
+search scores that capture as a big win (it does not see stalemate) while
+every other move pays the penalty, so the guard pushes the engine into
+the capture. SmotherBuildStalemate closes exactly that hole (alone it did
+nothing, grid72). grid83 / 83b: B vs NS40 vs NS100 (desperado guard plus
+SmotherBuildStalemate), seed 113000, same cells as grid82.
+
+grid83 (complete; seed 113000; 11,000 per arm): B 2.42 per 100, 22
+stalemates, 29 draws, 0 losses; NS40 2.25 (z -0.8), 20, 27, 0; NS100 2.33
+(z -0.4), 12 (z -1.7), 15, 1. NS100 halves draws at no significant smother
+cost. The guard arms of grid81-83 lost 3 games, B none in 32,500: all at
+0.1-0.2 s left (SF2500 never above +6; SF1500 while +4; SF2000 while +11).
+A guard of 100 points (8 pawns) can push construction scores below the
+floor, so lines that give material back look better: the guard now stops
+at floor + 1. Range raised to 1000 (C300 needs it). grid84 / 84b: B vs C100
+vs C300 (both with SmotherBuildStalemate), seed 114000, 16,000 per arm
+(SF1500 x6000, SF2000 x6000, SF2500 x3000, Maia-3 1500 x1000).
+
+grid84 (complete; seed 114000; 16,000 per arm; guard stops at the floor,
+with SmotherBuildStalemate): B 2.34 per 100, 35 stalemates, 44 draws, 0
+losses; C100 2.23 (z -0.7), 32, 43, 0; C300 2.31 (z -0.2), 24 (z -1.4),
+36, 0. Capped, the guard keeps the smothers and loses no games but removes
+at most a third of the stalemates. The decision comes earlier: the
+promotion. New option SmotherBuildQueenFull (off; bench unchanged): in
+construction a defender queen off its king's ring counts at full value
+(never below the floor), so the search stops the pawn before it promotes.
+grid85 / 85b: B vs QF vs QFS (with SmotherBuildStalemate), seed 115000,
+same cells as grid84.
+
+grid85 (complete; seed 115000; 16,000 per arm): B 2.45 per 100, 23
+stalemates, 32 draws, 1 loss (mated by SF2000: B can lose too, so the
+single losses of the guard arms are within the base rate); QF 2.14 (z
+-1.8), 36 stalemates, 45 draws, 0; QFS 2.14 (z -1.8), 22, 32, 0. Queen at
+full value: no. Stalemate work closed: five fixes over about 180,000 games
+(grid81-85); the best (guard 100-300 with SmotherBuildStalemate) removes
+up to a third of the stalemates, without a clear result, and the others
+cost knight smothers or add stalemates. Stalemates are about 0.2% of games.
+All three options stay off. Guide: 3.5 rows and a Findings row; status
+page: grid81-85 verdicts and an audit line.
