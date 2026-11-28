@@ -225,6 +225,8 @@ All options are standard UCI options; the defaults are what was measured best.
 | `SmotherBuildNetScale` | 0 | A small learned network (`src/smother_net.h`: the 17 features and the 5x5 squares around the enemy king, 16 hidden units) as the construction score. 6 equals the hand score; 20 and more lose games. The UCI command `smothernet` prints its inputs and output. |
 | `SmotherSteer`, `SmotherSteerFloor`, `SmotherSteerLines`, `SmotherSteerTime`, `SmotherSteerWonOnly`, `SmotherTrapDepth` | 0 / various | Trap steering: among near-equal moves, prefer the one that sets a smother trap. Did not raise the rate when used at all times and cost strength against strong opponents; kept for a planned test against human-like opponents. |
 | `SmotherWinMargin`, `SmotherWinLines`, `SmotherWinTrapDepth`, `SmotherWinTrapNodes`, `SmotherWinSteerTime`, `SmotherMateDelays`, `SmotherMateSlack` | various | Trap-steering parameters in won positions and while a forced mate is in hand. |
+| `SmotherProverZugzwang`, `SmotherProverThreatQuiet` | 0, false | The prover's threat test after a quiet move: skip it when the defender has at most N replies (zugzwang), or let it use one more quiet move. Finds more proofs, but they are escaped (grid69): no gain. |
+| `SmotherKnightKeep`, `SmotherKnightKeepCp` | 0, 200 | Points (cp) per knight of ours, up to two, from a previous score of `SmotherKnightKeepCp` and through construction. Keeps the knights but lowers knight smothers (grid70). |
 
 ### 3.6 Other
 
@@ -418,13 +420,15 @@ further.
 | Does the engine model the defender realistically? | 500 won positions | Its expected reply matched the real one 81% of the time; its lines rarely drop material. |
 | Does keeping the right pieces help? | 4,989 games | Games that still have our knight and queen, enemy pieces and king-side pawns at +8 smother about twice as often, but rewarding the engine for keeping them (the prep phase) did not raise the rate. |
 | Does a better predictor help? | 4.5 million positions, AUC 0.936 (linear) and 0.968 (network) | Used as the construction score, both only tie the hand score; at high weights the search gives up material and loses games. |
+| Is the prover blind to zugzwang? | 4,016 games; grid69, 18,800 games | Yes: its threat test rejects every zugzwang line, and with it relaxed a forced knight smother is proven in 3.0% of smother-less games (0.5% now). In play those proofs are escaped (delivered 61% vs 76%): a defender with few moves mostly has a quicker plain mate to run into. No gain. |
+| Does keeping our knights help? | 3,635 games; grid70, 19,800 games | 0 / 1 / 2 knights at +8 go with 0.48 / 3.65 / 6.07 knight smothers per 100, but a bonus that keeps them (no knight at +8: 26% to 9-13%) lowers the rate (2.10 vs 2.98, z -3.1). Correlation, not a lever. |
 
 What did not help (each measured over thousands of games): more prover time,
 steering towards traps at all times, a shaping bonus, robust or strict proofs,
 earlier construction (more draws), a lower floor, blocker-survivability terms,
 search-control changes in construction mode, keeping our own mating pieces,
 knight safety, ready squares, a safe-exit penalty, starving and holding
-variants, and the prep phase.
+variants, the prep phase, a zugzwang-aware prover and keeping our knights.
 
 ## 9. Testing your own changes
 

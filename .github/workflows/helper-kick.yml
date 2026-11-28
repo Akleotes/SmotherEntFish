@@ -123,7 +123,9 @@ jobs:
                           print(f"::warning::{hid}: could not sync (HTTP {e.code})")
               if not todo:
                   print(f"{hid}: nothing waiting"); continue
-              st, _ = api(f"/repos/{repo}/actions/workflows/helper-poll.yml/dispatches", {"ref": f.get("default_branch", "smotherfish")})
+              # Keep the response: the warning below reads its message (a NameError
+              # here stopped the whole kick at the first fork it could not start).
+              st, body = api(f"/repos/{repo}/actions/workflows/helper-poll.yml/dispatches", {"ref": f.get("default_branch", "smotherfish")})
               if st == 422:
                   # The workflow is disabled on the fork (GitHub can do this, e.g. after
                   # Actions were paused): enable it and try once more.

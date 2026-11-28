@@ -2220,3 +2220,225 @@ the same shift at every level), yet knight smothers fell: the knight-supply
 dose-response is correlation (games that keep knights are the ones that
 smother), not a lever. Option stays off. With grid69 and grid52, supply
 and prover-coverage levers are closed at 5+0.05.
+
+Escapes (Nov 27, offline on 12,200 1.6 games of grid69/70 B arms; scripts
+prover_strict.py, prover_escape.py): 551 proof games, 410 delivered. At the
+first proof a strict proof existed in 38% (delivered 97%); only non-strict
+62% (delivered 61%); 7 of 141 escaped games had a strict proof, so
+preferring strict proofs cannot help. After an escape 120 of 141 games
+never get another proof (the game runs a median 105 plies more). Our first
+three positions after each escape, 10M nodes: a forced knight smother in
+65 of 186 (35%), 44 at the first move, median 80k nodes; only 23 of those
+games ended in one. Caveat: proved from the FEN, without the game history
+the in-game prover's anti-repetition rule uses, so some hits may not count
+in play. New options (off; bench unchanged): SmotherEscapeMoves N (prover
+budget for N of our moves after an escape, no node cap) and
+SmotherEscapePercent (share of the clock left, was hard-wired 20).
+grid71: B vs E3 (3 moves, 20%) vs E3P40 (3 moves, 40%); SF1500 x4000,
+Maia-3 1500 x2000, SF2500 x1200, SF2600 x400 at 10+0.1.
+
+Stalemates (Nov 27, from the game records of grid69/70, 38,600 games): 96
+draws, 77 of them stalemates by us at a median +20 material (also 9
+threefold, 8 at the 400-ply cap, 2 fifty moves; we never lost on time, all
+68 time endings were the opponent). In all 77 we were in check from the
+defender's last free piece and took it; 42 times every legal move
+stalemated, 35 times we had 1-7 other moves; in 76 our previous move had
+left the defender's king with no move. Cause: the quiescence search does
+not detect stalemate, and the build score rewards a king with no free
+square most, so "take the last free piece, the defender cannot move"
+scores as a perfect box. New option SmotherBuildStalemate (off; bench
+unchanged): in construction mode a defender to move, not in check, with an
+immobile king and no legal move scores as a draw. grid72: B vs ST; SF1500
+x4000, Maia-3 1500 x2000, SF2500 x1200, SF2600 x400 at 10+0.1. Read the
+stalemate draws per arm as well as knight smothers.
+
+Upstream merge (Nov 27): upstream master 88337401 (11 commits since the 1.6
+base 3e8fde75: new net nn-684d0e60e71d, pawn correction history split by
+queens, futility pruning for promotions in qsearch, cached repetition
+look-behind, cleanups) merged on the dev branch, no conflicts. Bench with
+smother hunting off = upstream's, 1128273; engine name base
+dev-20261126-88337401. sprt-up1 (merge vs 1.6 = ef777425, both defaults,
+10+0.1, [0, 3]): 16 accounts, 400 runners x 200 games, one wave each,
+seed_offset 7,000,000 + 100,000 per account, base_ref pinned to ef777425.
+Combine with notes/scripts/sprt_stats.py 0 3 0.05 0.05 over every
+account's results. A release also needs: README.md and docs/SMOTHERFISH.md
+bench, release.yml BENCH, android-build.yml bench, version, and a smother
+grid on the merged engine (the B arms of grid72, seed 99000, are the
+paired comparison).
+
+Queue (Nov 27, 16:55 UTC; the user is away, work continues autonomously;
+every engine test goes through the volunteer workflow, never locally):
+1. grid71 (escape budget). If it gains: a 3+2 check (Maia-3 1500 and
+   SF1500) and an SPRT. If not: the likely blocker is the prover's
+   anti-repetition rule after an escape (the offline hits were proved from
+   the FEN); next try allowing a position seen once before (not twice)
+   inside the escape window, and watch draws.
+2. grid72 (stalemate-aware construction). Mechanism: stalemate draws per
+   arm should drop from about 2 per 1,000 games vs SF1500 to near 0. If
+   clean: candidate default for a bug-fix release after an SPRT.
+3. sprt-up1 (upstream merge). If it passes: a smother grid on the merged
+   engine (B, seed 99000, paired with grid72's B arms), then check the
+   HumanElo calibration (the UCI_Elo limiter may play differently with the
+   new net), then a release proposal for the user (1.7: merge + whichever
+   of 1-2 passed).
+4. Defaults, releases and anything touching other people's forks wait for
+   the user. PR #6 holds all of the above; merging needs the user's OK.
+
+grid71 (escape budget; 22,800 games, all 16 accounts; knight smothers per
+100, z vs B): SF1500 (4,000 each) B 3.17, E3 (3 moves at 20% of the clock)
+3.45 (+0.7), E3P40 (40%) 3.55 (+0.9); Maia-3 1500 (2,000) 3.70 / 3.30 /
+3.30; SF2500 (1,200) 0.92 / 1.92 (+2.1) / 1.25; SF2600 10+0.1 (400) 1.00 /
+3.00 (+2.0) / 2.00. Pooled 5+0.05: 2.94 / 3.15 (+0.7) / 3.10 (+0.5).
+Mechanism vs SF1500: escaped games re-proved 25 -> 37 (E3), re-proved and
+smothered 18 -> 28; vs Maia-3 no change. One loss (E3P40, on time at 0.1 s,
+in a game with no proof, so not the budget). Not significant overall; the
+two strong-opponent cells are both z ~2 on small counts (23 vs 11, 12 vs
+4), so grid73 confirms E3 on fresh seeds with more games at SF2000-2600.
+
+grid72 (SmotherBuildStalemate; 15,200 games; knight smothers per 100):
+SF1500 (4,000) B 3.65, ST 3.33; Maia-3 1500 (2,000) 3.60 / 3.60; SF2500
+(1,200) 1.00 / 1.08; SF2600 10+0.1 (400) 0.50 / 1.00; pooled 5+0.05 3.19 vs
+3.03 (z -0.6). No losses. Stalemates by us 14 (B) vs 16 (ST): the fix did
+not remove them, so qsearch's stalemate blindness is not the cause. Most
+are perpetual-or-stalemate swindles set up beyond the horizon: construction
+boxes the king (no king move) while one defender piece is still loose; in
+42 of the earlier 77 every reply already stalemated. About 0.2% of games;
+option stays off. A real fix would keep a desperado from existing when the
+box closes (capture loose off-ring pieces first), against Keep's reward for
+every kept piece; not worth it at this rate unless it ties to smothers.
+
+grid73 (escape budget confirmation, fresh seeds, pre-merge 1.6 engine;
+24,000 games; knight smothers per 100, z vs B): SF1500 (4,000 each) B 3.50,
+E3 3.67 (+0.4); Maia-3 1500 (2,000) 3.20 / 3.25; SF2000 (2,000) 2.30 /
+2.20; SF2500 (3,000) 1.73 / 1.33 (-1.25); SF2600 10+0.1 (1,000) 1.30 /
+1.20. Pooled 5+0.05 2.75 vs 2.69. With grid71, all opponents: B 531/19,600
+= 2.71, E3 547/19,600 = 2.79 (z +0.5). grid71's strong-opponent cells did
+not replicate. Mechanism: escaped games re-proved 24 (B) vs 22 (E3) against
+SF1500, so prover time is not what blocks a second proof (the offline 35%
+were proved from the FEN, without the game history the anti-repetition
+rule uses). No losses; every time ending was the opponent. Escape budget
+stays off.
+
+Prover repetition rule: loops() rejects a smother line through any position
+seen even once before (game or line). A second occurrence cannot be a draw
+by itself and is_draw() still catches a third, so that is stricter than a
+draw guard needs; construction shuffles (king g8-h8 and back) and after an
+escape the natural re-smother often revisits positions of the escaped line.
+New option SmotherRepeatOnce (off; 1 = in the escape window, needs
+SmotherEscapeMoves; 2 = always): allow a once-seen game position; a repeat
+on the line itself or a third occurrence still fails. grid74, on the MERGED
+engine with grid72's seeds (99000): B vs R2 vs R1E (+ SmotherEscapeMoves
+3); SF1500 x4000, Maia-3 1500 x2000, SF2500 x1200, SF2600 x400 at 10+0.1.
+Its B arms pair with grid72's B arms (1.6 engine, same openings): the
+merged engine's smother rates, needed before any release. Watch draws.
+
+sprt-up1 final (upstream 88337401 merge vs 1.6 = ef777425, both defaults,
+10+0.1, [0, 3]): 76,000 games (38,000 pairs) from 15 accounts (c79670's
+share never started: its fork stopped serving anonymous git reads after
+18:25 UTC, as 2456cd did on Nov 26), pentanomial [18, 2082, 33446, 2423,
+31], +1.7 Elo (95% +1.1 to +2.3), LLR 5.43 > 2.94: H1. The merge is a real
+strength gain. Remaining before a release: the merged engine's smother
+rates (grid74 B vs grid72 B, same openings), the HumanElo calibration on
+the new net, then README/guide/release.yml/android-build.yml bench 1128273
+and a version number, with the user's approval.
+
+HumanElo calibration check for the merge: the same HumanElo points (1020,
+1490, 1880, 2200, each vs the two Maia-3 levels of the guide's table, 600
+games each, seed 103000) on the merged engine (grid75) and on 1.6
+(grid75b, built from 7e892f2a). Paired by seed; if the merged scores move
+by more than noise, the HumanElo map needs refitting before a release.
+c79670 is left out of these shares (ONLY=) while its fork is unreadable.
+
+grid74 (merged engine; 21,360 of 22,800 games, c79670's share never ran;
+knight smothers per 100, z vs B): SF1500 B 3.72, R2 (SmotherRepeatOnce 2)
+3.21 (-1.2), R1E (1 + SmotherEscapeMoves 3) 2.73 (-2.4); Maia-3 1500 3.00 /
+3.55 / 3.36; SF2500 1.58 / 1.17 / 1.58; SF2600 10+0.1 1.25 / 2.00 / 0.75.
+Pooled 5+0.05: R2 2.95, R1E 2.66 vs 3.12. No losses, no extra repetition
+draws. Allowing once-seen positions adds proofs that are escaped more
+(delivered vs SF1500 82% -> 67-69%). Options stay off.
+Merged engine vs 1.6 (grid74 B vs grid72 B, same seeds): SF1500 3.72 vs
+3.65, Maia-3 1500 3.00 vs 3.60, SF2500 1.58 vs 1.00, SF2600 1.25 vs 0.50;
+pooled 5+0.05 3.12 vs 3.19 (z -0.2); scores 99.7-100%, no losses. The
+merge keeps the smother rates. With sprt-up1 (+1.7 Elo, H1), it is a
+release candidate once grid75/75b (HumanElo calibration) are read.
+
+Helper kick bug (found Nov 27 20:20 UTC): since c79670's fork stopped
+answering (about 18:25), every kick run failed with "NameError: name
+'body' is not defined". When a fork's poll could not be started, the
+warning read `body`, which only the retry path sets; the crash at c79670
+stopped the kick before every fork listed after it (97884e onwards). Forks
+whose own 15-minute schedule works still picked up shares; 0cf451, 701ef3,
+f2d74f and d32e35 never did, so grid75/75b sit at 2,880 of 4,800 games
+each. Fix on the dev branch: keep the first dispatch's response (st, body
+= api(...)). It only takes effect once merged into smotherfish (Helper
+kick runs from the default branch).
+
+grid75 / grid75b (HumanElo calibration, merged engine vs 1.6, paired seeds
+103000, 600 games each incl. refills; score vs Maia-3, merged / 1.6 / guide):
+1020 vs 1100 48.9 / 51.1 / 47.3; vs 1500 32.5 / 35.4 / 33.5; 1490 vs 1100
+61.0 / 60.6 / 60.9; vs 1500 44.1 / 44.0 / 49.6; 1880 vs 1500 59.7 / 65.3 /
+68.2 (z -2.2); vs 1900 41.7 / 52.1 / 47.8 (z -3.9); 2200 vs 1900 53.9 / 55.9
+/ 59.5; vs 2300 39.2 / 43.1 / 42.0. The blunder-driven low end is
+unchanged; the limiter-driven top end plays weaker on the merged engine
+(1320 limiter, no blunders: 50% point about Maia-3 1716 vs about 1960 for
+1.6, logit interpolation). A release with the merge needs a refit of the
+upper HumanElo map (make_skill): grid76 measures the merged engine's
+limiter at 1360 / 1400 / 1455 / 1520 and the 1735 point (1320 + 10 per
+mille) to fit it.
+
+grid76 (merged engine, limiter anchors; 5,520 of 6,000 games, a8e399 still
+running) with grid75: rating = Maia-3 level at 50% (logit fit). Merged:
+1320/130 per mille 1075, 1320/72 1361, 1320/10 1634, 1320/0 1715, 1360/0
+1883, 1400/0 2000 (incl. grid75's HumanElo-2200 games, the same setting),
+1455/0 2478, 1520/0 2581. 1.6 measured the same way today: 1020-label
+1127, 1490-label 1356, 1880-label 1961, 2200-label 2084 (today's Maia-3
+scale reads lower at the bottom than the guide's original calibration, for
+both engines, so the refit matches 1.6 as measured today, not the guide's
+numbers). Proposed map for the merged engine (rating, limiter, per mille):
+1020 1320 130, 1255 1320 110, 1400 1320 90, 1490 1320 72 (unchanged), 1580
+1320 41, 1700 1320 4, 1735 1325 0, 1780 1342 0, 1815 1355 0, 1880 1387 0,
+2200 1410 0, 2420 1455 0. The 1580-1815 targets interpolate 1.6's rating
+by label (not measured today); 2420 kept (1.6's top not measured). In code
+as HumanEloRefit (off by default; the default table gained an explicit
+2200 1400 0 row, identical to its interpolation: every rating 1000-2499
+maps to the same setting, checked). Validation on fresh seeds (107000):
+grid77 = merged + HumanEloRefit, grid77b = 1.6, labels 1580 / 1735 / 1880 /
+2200 vs bracketing Maia-3 levels; the pairs should match.
+
+grid77 / grid77b (4,320 of 4,800 games each, a8e399's share missing from
+both; paired, same seeds). Score merged+refit / 1.6 and the label's 50%
+point (Maia-3 level, logit fit): 1580: vs 1300 58.8 / 59.9, vs 1700 43.6 /
+46.4, point 1531 / 1595 (n.s.); 1735: 61.3 / 61.3, 45.8 / 45.0, point 1794 /
+1778; 1880: 65.8 / 63.3, 51.9 / 52.7, point 1952 / 1999; 2200: vs 1900 51.0 /
+56.8 (z -2.2), vs 2300 38.2 / 44.0 (z -2.2), point 1931 / 2112. Mean z
+-0.61, 2 of 8 beyond 2. Refit not validated: 1735 and 1880 match, 1580 a
+little weak (not significant), 2200 too weak. Full grid76 (a8e399 arrived)
+moved the merged limiter-1400 point from 2000 to 1877 (1360: 1855), which is
+why the 1410 anchor fell short. Raised the refit's 2200 row to limiter 1425
+(interpolating 1400 -> 1877 and 1455 -> 2478 toward 2112 gives about 1421).
+grid78 = merged + refit, grid78b = 1.6 (7e892f2a), fresh seed 108000,
+labels 2200 and 2420 vs Maia-3 1900 and 2300, 600 games each, sent to the
+11 reliable accounts. Helper kick dispatched from this branch (its fix for
+the unreachable-fork crash is not on main yet).
+
+grid78 / grid78b (complete; seed 108000; merged + refit with the 2200 row
+at limiter 1425 vs 1.6): HumanElo 2200 vs Maia-3 1900 55.6 / 54.7 (z +0.3),
+vs 2300 40.8 / 43.2 (z -0.9); 50% point 2051 +- 37 vs 2063 +- 48 (z -0.2).
+The 2200 point passes. The 2420 cells are void: HumanElo's range ends at
+2400, so setoption 2420 was ignored and both engines played at full
+strength (600 / 600 wins each). grid77 / 77b complete (a8e399 arrived):
+50% points 1580: 1531 vs 1595 (z -1.1); 1735: 1795 vs 1763 (+0.6); 1880:
+1894 vs 1969 (-0.8); 2200 (old 1410 row): 1931 vs 2112 (-2.7). grid79 =
+merged + refit, grid79b = 1.6, fresh seed 109000: 1580, 1880 and the real
+top (2400: refit limiter 1452, 1.6 1450) vs the bracketing Maia-3 levels.
+
+grid79 / grid79b (complete; seed 109000; merged + refit vs 1.6): 50% points
+1580: 1509 +- 35 vs 1607 +- 39 (z -1.9); 1880: 1925 vs 1866 (+0.9); 2400
+(the real top; refit limiter 1452, 1.6 1450): 2511 +- 113 vs 2530 +- 96
+(z -0.1). Pooled with grid77: 1580 1520 +- 25 vs 1601 +- 29 (z -2.1, weak
+in both runs); 1880 1909 vs 1910 (0). So 1735, 1880, 2200 (1425 row) and
+2400 pass; 1580 is about 80 weak. Merged slope there is about 4.4 rating
+points per mille of blunders (1320/72 1361, /41 1520, /10 1634), so the
+refit's 1580 row goes 41 -> 22 per mille. grid80 = merged + refit, grid80b
+= 1.6, fresh seed 110000: 1580 (vs Maia-3 1300/1700) and the unmeasured
+1700 row (refit 1320/4 vs 1.6's 1320/20; vs 1500/1900).
