@@ -2462,3 +2462,6 @@ row), new experimental options listed in 3.5; CHANGELOG and
 notes/release/v1.7.md; results.json release entry and a HumanElo audit line.
 Release: merge PR #8, then push release/v1.7 from smotherfish (release.yml
 builds, checks bench, tags v1.7), then publish results.json to gh-pages.
+Released Nov 28 04:28 UTC: v1.7 (release run 46107487803, all six binaries
+checked against bench 1128273). Status page results.json published (release
+1.7, HumanElo audit line).
